@@ -1,52 +1,70 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { useAuth } from '../../contexts/AuthContext.jsx'; // Updated extension
+import { useAuth } from '../../contexts/AuthContext.jsx';
+import Button from '../../components/ui/Button'; // Import Button
 
 function AvailableRewards() {
-  const { userData } = useAuth(); // Get employee's data (including companyId and points)
+  const { currentUser, userData } = useAuth(); // Need currentUser for UID
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [redeemingId, setRedeemingId] = useState(null); // Track which reward is being redeemed
+  const [redeemError, setRedeemError] = useState('');
 
-  // Fetch rewards for the employee's company
+  // Fetch rewards
   useEffect(() => {
     const fetchRewards = async () => {
       if (!userData?.companyId) {
-        setError("Employee company information not available.");
-        setLoading(false);
-        return;
+        setError("Employee company information not available."); setLoading(false); return;
       }
-
-      setLoading(true);
-      setError('');
-      try {
-        const rewardsCol = collection(db, 'rewards');
-        // Query rewards for the specific company
-        // Later, you might add: where('isActive', '==', true)
-        const q = query(rewardsCol, where('companyId', '==', userData.companyId));
-        const rewardSnapshot = await getDocs(q);
-        const rewardList = rewardSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setRewards(rewardList);
+      console.log(`AvailableRewards: Fetching rewards for companyId: ${userData.companyId}`); // Log company ID
+      setLoading(true); setError('');
+       try {
+         const rewardsCol = collection(db, 'rewards');
+         // Temporarily remove isActive filter for debugging/MVP simplicity
+         const q = query(
+             rewardsCol,
+             where('companyId', '==', userData.companyId)
+             // where('isActive', '==', true) // Temporarily removed
+         );
+         const snapshot = await getDocs(q);
+        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("AvailableRewards: Fetched rewards list:", list); // Log the fetched list
+        setRewards(list);
       } catch (err) {
-        console.error("Error fetching rewards:", err);
-        setError('Failed to load rewards.');
+        console.error("Error fetching rewards:", err); setError('Failed to load rewards.');
       } finally {
         setLoading(false);
       }
     };
-
     fetchRewards();
-  }, [userData?.companyId]); // Re-fetch if companyId changes
+  }, [userData?.companyId]);
 
-  const handleRedeem = (rewardId, pointsRequired) => {
-    // Basic check if user has enough points (more robust logic needed later)
-    if ((userData?.points ?? 0) < pointsRequired) {
-        alert("You don't have enough points to redeem this reward.");
-        return;
+  // Handle Redeem Reward
+  const handleRedeem = async (rewardId, pointsRequired) => {
+    // ... (redeem logic remains the same) ...
+    setRedeemingId(rewardId); setRedeemError('');
+    if (!currentUser || !userData) {
+        setRedeemError("User data not available."); setRedeemingId(null); return;
     }
-    // Placeholder for actual redeem logic (Phase 5 in full plan)
-    alert(`Redeem functionality for reward ID ${rewardId} (cost: ${pointsRequired} points) is not implemented in this MVP.`);
+    if ((userData.points ?? 0) < pointsRequired) {
+        setRedeemError("Not enough points."); alert("You don't have enough points to redeem this reward."); setRedeemingId(null); return;
+    }
+    if (!window.confirm(`Are you sure you want to redeem this reward for ${pointsRequired} points?`)) {
+        setRedeemingId(null); return;
+    }
+    try {
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userDocRef, { points: increment(-pointsRequired) });
+      alert(`Successfully redeemed reward for ${pointsRequired} points! Your points balance will update shortly.`);
+    } catch (err) {
+      console.error("Error redeeming reward:", err);
+      setRedeemError('Failed to redeem reward. Please try again.');
+      alert('Failed to redeem reward. Please try again.');
+    } finally {
+      setRedeemingId(null);
+    }
   };
 
   return (
@@ -57,32 +75,41 @@ function AvailableRewards() {
       </p>
 
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-      {loading ? (
-        <p>Loading rewards...</p>
-      ) : (
+      {redeemError && <p className="text-sm text-red-600 mb-4">{redeemError}</p>}
+
+      {loading ? <p>Loading rewards...</p> : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {rewards.length === 0 ? (
-            <p className="text-gray-500 col-span-full">No rewards currently available for your company.</p>
+            <p className="text-gray-500 col-span-full">No active rewards currently available.</p>
           ) : (
-            rewards.map((reward) => (
-              <div key={reward.id} className="border rounded-lg p-4 flex flex-col justify-between bg-gray-50 shadow-sm">
-                <div>
-                  {/* Add image later: <img src={reward.imageUrl || 'placeholder.png'} alt={reward.name} className="w-full h-32 object-cover mb-3 rounded"/> */}
-                  <h3 className="text-lg font-medium text-gray-900">{reward.name}</h3>
-                  {/* Add description later: <p className="text-sm text-gray-600 mt-1">{reward.description}</p> */}
+            rewards.map((reward) => {
+              // Ensure isActive is checked correctly, defaulting to true if undefined for safety
+              const isActive = reward.isActive !== undefined ? reward.isActive : true;
+              if (!isActive) return null; // Don't render inactive rewards (double check)
+
+              const canAfford = (userData?.points ?? 0) >= reward.pointsRequired;
+              const isRedeemingThis = redeemingId === reward.id;
+              return (
+                // Removed isActive check from className as we filter non-active ones above
+                <div key={reward.id} className={`border rounded-lg p-4 flex flex-col justify-between bg-gray-50 shadow-sm`}>
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">{reward.name}</h3>
+                  </div>
+                  <div className="mt-4 flex justify-between items-center">
+                    <span className="text-indigo-600 font-semibold">{reward.pointsRequired} Points</span>
+                    <Button
+                      onClick={() => handleRedeem(reward.id, reward.pointsRequired)}
+                      disabled={!canAfford || isRedeemingThis} // Removed !reward.isActive check as we filter above
+                      variant="primary"
+                      className="bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                      size="sm"
+                    >
+                      {isRedeemingThis ? 'Redeeming...' : 'Redeem'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="mt-4 flex justify-between items-center">
-                  <span className="text-indigo-600 font-semibold">{reward.pointsRequired} Points</span>
-                  <button
-                    onClick={() => handleRedeem(reward.id, reward.pointsRequired)}
-                    className="px-3 py-1 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
-                    disabled={(userData?.points ?? 0) < reward.pointsRequired} // Disable if not enough points
-                  >
-                    Redeem (MVP)
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}

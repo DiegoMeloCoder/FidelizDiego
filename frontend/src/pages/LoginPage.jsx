@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase/config';
-import { useAuth } from '../contexts/AuthContext.jsx'; // Updated extension
+import { useAuth } from '../contexts/AuthContext.jsx';
+import Button from '../components/ui/Button'; // Import Button
+import Input from '../components/ui/Input';   // Import Input
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,21 +12,13 @@ function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { currentUser } = useAuth(); // Check if user is already logged in
-
-  // Redirect if user is already logged in (handled by RootRedirect in App.jsx now, but good practice)
-  // useEffect(() => {
-  //   if (currentUser) {
-  //     navigate('/'); // Redirect to root, which will handle role-based redirect
-  //   }
-  // }, [currentUser, navigate]);
+  // const { currentUser } = useAuth(); // No longer needed directly here for redirect
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Basic validation
     if (!email || !password) {
       setError('Please enter both email and password.');
       setLoading(false);
@@ -33,20 +27,16 @@ function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // AuthProvider's onAuthStateChanged will detect the login and fetch data.
-      // We navigate to the root, and RootRedirect in App.jsx will handle
-      // sending the user to the correct dashboard based on their role.
       navigate('/'); // Navigate to root after successful login
     } catch (err) {
       console.error("Firebase Login Error:", err);
-      // Provide user-friendly error messages
       switch (err.code) {
         case 'auth/invalid-email':
           setError('Invalid email format.');
           break;
         case 'auth/user-not-found':
         case 'auth/wrong-password':
-        case 'auth/invalid-credential': // More generic error in newer SDK versions
+        case 'auth/invalid-credential':
           setError('Invalid email or password.');
           break;
         default:
@@ -58,7 +48,6 @@ function LoginPage() {
   };
 
   return (
-    // Basic Layout & Styling (AuthLayout can be added later)
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-gray-900">Fideliz Login</h1>
@@ -70,7 +59,8 @@ function LoginPage() {
             >
               Email address
             </label>
-            <input
+            {/* Use Input component */}
+            <Input
               id="email"
               name="email"
               type="email"
@@ -78,8 +68,8 @@ function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full px-3 py-2 mt-1 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="you@example.com"
+              className="mt-1" // Keep margin if needed
             />
           </div>
           <div>
@@ -89,7 +79,8 @@ function LoginPage() {
             >
               Password
             </label>
-            <input
+            {/* Use Input component */}
+            <Input
               id="password"
               name="password"
               type="password"
@@ -97,19 +88,21 @@ function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full px-3 py-2 mt-1 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Password"
+              className="mt-1" // Keep margin if needed
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div>
-            <button
+            {/* Use Button component */}
+            <Button
               type="submit"
               disabled={loading}
-              className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              variant="primary" // Explicitly set variant
+              className="w-full justify-center" // Add w-full and justify-center
             >
               {loading ? 'Logging in...' : 'Sign in'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
