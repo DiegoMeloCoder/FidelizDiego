@@ -7,12 +7,14 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import Spinner from '../../components/ui/Spinner';
+import Alert from '../../components/ui/Alert'; // Import Alert
 
 function ManageEmployees() {
   const { userData: adminUserData } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [listError, setListError] = useState(''); // Renamed for clarity
 
   // Add Form State
   const [newEmployeeName, setNewEmployeeName] = useState('');
@@ -35,11 +37,10 @@ function ManageEmployees() {
   }, [adminUserData?.companyId]);
 
   const fetchEmployees = async () => {
-    // ... (fetch logic remains the same, ensure isActive is fetched or defaulted) ...
      if (!adminUserData?.companyId) {
-        setError("Admin company information not available."); setLoading(false); return;
+        setListError("Admin company information not available."); setLoading(false); return; // Use listError
       }
-      setLoading(true); setError('');
+      setLoading(true); setListError(''); // Clear listError
       try {
         const usersCol = collection(db, 'users');
         const q = query(
@@ -52,7 +53,7 @@ function ManageEmployees() {
         const list = snapshot.docs.map(doc => ({ id: doc.id, isActive: true, ...doc.data() }));
         setEmployees(list);
       } catch (err) {
-        console.error("Error fetching employees:", err); setError('Failed to load employees.');
+        console.error("Error fetching employees:", err); setListError('Failed to load employees.'); // Use listError
       } finally {
         setLoading(false);
       }
@@ -82,9 +83,11 @@ function ManageEmployees() {
       await setDoc(userDocRef, newEmployeeData);
       setEmployees(prev => [...prev, { id: newUser.uid, ...newEmployeeData }]);
       setNewEmployeeName(''); setNewEmployeeEmail(''); setNewEmployeePassword('');
+      // TODO: Replace alert with Alert component, maybe outside the form?
       alert('Employee added successfully! Note: Your session might be affected; refresh if needed.');
     } catch (err) {
       console.error("Error adding employee:", err);
+      // Use addError state for form-specific errors
       if (err.code === 'auth/email-already-in-use') {
         setAddError('This email address is already registered.');
       } else if (err.code === 'auth/weak-password') {
@@ -125,6 +128,7 @@ function ManageEmployees() {
         emp.id === editingEmployee.id ? { ...emp, ...updatedData } : emp
       ));
       closeModal();
+      // Optionally show success alert
     } catch (err) {
       console.error("Error updating employee:", err); setEditError('Failed to update employee.');
     } finally {
@@ -143,9 +147,10 @@ function ManageEmployees() {
         ));
         // Note: This doesn't disable the Firebase Auth user, only marks inactive in Firestore.
         // Full deactivation requires backend/Admin SDK.
+        // Optionally show success alert
       } catch (err) {
         console.error("Error setting employee inactive:", err);
-        setError(`Failed to set employee "${employeeName || 'N/A'}" to inactive.`);
+        setListError(`Failed to set employee "${employeeName || 'N/A'}" to inactive.`); // Use listError for table-level feedback
       }
     }
   };
@@ -159,9 +164,10 @@ function ManageEmployees() {
         setEmployees(prev => prev.map(emp =>
           emp.id === employeeId ? { ...emp, isActive: true } : emp
         ));
+        // Optionally show success alert
       } catch (err) {
         console.error("Error setting employee active:", err);
-        setError(`Failed to set employee "${employeeName || 'N/A'}" to active.`);
+        setListError(`Failed to set employee "${employeeName || 'N/A'}" to active.`); // Use listError
       }
     }
   };
@@ -188,13 +194,19 @@ function ManageEmployees() {
          </div>
          {addError && <p className="text-sm text-red-600 mb-2">{addError}</p>}
          <Button type="submit" disabled={adding} variant="primary">
+           {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
            {adding ? 'Adding...' : 'Add Employee'}
          </Button>
       </form>
 
       {/* Employees List */}
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-      {loading ? <p>Loading employees...</p> : (
+      {/* Use Alert for list-level errors */}
+      {listError && <Alert type="error" className="mb-4">{listError}</Alert>}
+      {loading ? (
+        <div className="flex justify-center items-center p-8">
+          <Spinner size="lg" />
+        </div>
+      ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -223,9 +235,15 @@ function ManageEmployees() {
                     <td className="td-style text-right space-x-2"> {/* Actions */}
                       <Button variant="secondary" size="sm" onClick={() => handleEditClick(employee)}>Edit</Button>
                       {employee.isActive ? (
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(employee.id, employee.name)}>Set Inactive</Button>
+                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(employee.id, employee.name)}>
+                           {/* TODO: Add loading state */}
+                           Set Inactive
+                         </Button>
                       ) : (
-                         <Button variant="secondary" size="sm" onClick={() => handleActivateClick(employee.id, employee.name)}>Set Active</Button>
+                         <Button variant="secondary" size="sm" onClick={() => handleActivateClick(employee.id, employee.name)}>
+                           {/* TODO: Add loading state */}
+                           Set Active
+                         </Button>
                       )}
                     </td>
                   </tr>
@@ -261,10 +279,14 @@ function ManageEmployees() {
                         <span className="ml-2 text-sm text-gray-700">Active (User can log in)</span>
                     </label>
                  </div>
-                 {editError && <p className="text-sm text-red-600 mb-4">{editError}</p>}
+                 {/* Use Alert for edit errors */}
+                 {editError && <Alert type="error" className="mb-4">{editError}</Alert>}
                  <div className="flex justify-end space-x-3">
-                     <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
-                     <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+                     <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
+                     <Button type="submit" variant="primary" disabled={saving}>
+                       {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
+                       {saving ? 'Saving...' : 'Save Changes'}
+                     </Button>
                  </div>
              </form>
          </Modal>

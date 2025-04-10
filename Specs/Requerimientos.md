@@ -295,10 +295,10 @@ Fase 9: Documentación y Entrega Final
 o	README.md: Instrucciones detalladas de instalación, configuración local, variables de entorno, scripts npm, flujo de despliegue.
 o	Documentación API: Generar/mantener documentación OpenAPI/Swagger para el backend.
 o	Documentación de Arquitectura: Diagramas básicos (componentes, flujo de datos).
-o	Limpiar y finalizar orden_de_desarrollo.txt.
+o	Limpiar y finalizar Requerimientos.md.
 2.	[PENDIENTE] Revisión Final y Handover:
 o	Demo completa.
 o	Revisión de código final.
 o	Entrega de accesos y documentación.
-Este plan detallado proporciona una guía exhaustiva. Debería actualizarse (orden_de_desarrollo.txt) a medida que se completan las tareas o surgen cambios. La comunicación constante será clave para asegurar el éxito del proyecto.
+Este plan detallado proporciona una guía exhaustiva. Debería actualizarse (Requerimientos.md) a medida que se completan las tareas o surgen cambios. La comunicación constante será clave para asegurar el éxito del proyecto.
 

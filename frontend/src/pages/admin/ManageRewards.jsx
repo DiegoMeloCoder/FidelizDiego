@@ -5,12 +5,14 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import Spinner from '../../components/ui/Spinner';
+import Alert from '../../components/ui/Alert'; // Import Alert
 
 function ManageRewards() {
   const { userData } = useAuth();
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [listError, setListError] = useState(''); // Renamed for clarity
 
   // Add Form State
   const [newRewardName, setNewRewardName] = useState('');
@@ -20,7 +22,7 @@ function ManageRewards() {
 
   // Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingReward, setEditingReward] = useState(null); // { id, name, pointsRequired, isActive }
+  const [editingReward, setEditingReward] = useState(null);
   const [editName, setEditName] = useState('');
   const [editPoints, setEditPoints] = useState('');
   const [editIsActive, setEditIsActive] = useState(true);
@@ -30,22 +32,21 @@ function ManageRewards() {
   // Fetch rewards
   useEffect(() => {
     fetchRewards();
-  }, [userData?.companyId]); // Re-fetch if companyId changes
+  }, [userData?.companyId]);
 
   const fetchRewards = async () => {
     if (!userData?.companyId) {
-      setError("Admin company information not available."); setLoading(false); return;
+      setListError("Admin company information not available."); setLoading(false); return;
     }
-    setLoading(true); setError('');
+    setLoading(true); setListError('');
     try {
       const rewardsCol = collection(db, 'rewards');
       const q = query(rewardsCol, where('companyId', '==', userData.companyId));
       const snapshot = await getDocs(q);
-      // Default isActive to true if missing
       const list = snapshot.docs.map(doc => ({ id: doc.id, isActive: true, ...doc.data() }));
       setRewards(list);
     } catch (err) {
-      console.error("Error fetching rewards:", err); setError('Failed to load rewards.');
+      console.error("Error fetching rewards:", err); setListError('Failed to load rewards.');
     } finally {
       setLoading(false);
     }
@@ -61,17 +62,18 @@ function ManageRewards() {
     if (!userData?.companyId) {
       setAddError("Cannot add reward: Admin's company ID is missing."); return;
     }
-    setAdding(true); setAddError('');
+    setAdding(true); setAddError(''); setListError(''); // Clear errors
     try {
       const rewardsCol = collection(db, 'rewards');
       const newRewardData = {
         name: newRewardName.trim(), pointsRequired: points,
-        companyId: userData.companyId, isActive: true, // Default to active
+        companyId: userData.companyId, isActive: true,
         createdAt: serverTimestamp()
       };
       const docRef = await addDoc(rewardsCol, newRewardData);
       setRewards(prev => [...prev, { id: docRef.id, ...newRewardData }]);
       setNewRewardName(''); setNewRewardPoints('');
+      // TODO: Show success Alert
     } catch (err) {
       console.error("Error adding reward:", err); setAddError('Failed to add reward.');
     } finally {
@@ -83,8 +85,8 @@ function ManageRewards() {
   const handleEditClick = (reward) => {
     setEditingReward(reward);
     setEditName(reward.name);
-    setEditPoints(reward.pointsRequired.toString()); // Keep as string for input
-    setEditIsActive(reward.isActive !== undefined ? reward.isActive : true); // Default to true if missing
+    setEditPoints(reward.pointsRequired.toString());
+    setEditIsActive(reward.isActive !== undefined ? reward.isActive : true);
     setEditError('');
     setIsModalOpen(true);
   };
@@ -96,19 +98,14 @@ function ManageRewards() {
     if (!editName.trim() || !editingReward || isNaN(points) || points <= 0) {
       setEditError('Please enter a valid name and positive points value.'); return;
     }
-    setSaving(true); setEditError('');
+    setSaving(true); setEditError(''); setListError(''); // Clear errors
     try {
       const rewardDocRef = doc(db, 'rewards', editingReward.id);
-      const updatedData = {
-        name: editName.trim(),
-        pointsRequired: points,
-        isActive: editIsActive,
-      };
+      const updatedData = { name: editName.trim(), pointsRequired: points, isActive: editIsActive };
       await updateDoc(rewardDocRef, updatedData);
-      setRewards(prev => prev.map(r =>
-        r.id === editingReward.id ? { ...r, ...updatedData } : r
-      ));
+      setRewards(prev => prev.map(r => r.id === editingReward.id ? { ...r, ...updatedData } : r));
       closeModal();
+      // TODO: Show success Alert
     } catch (err) {
       console.error("Error updating reward:", err); setEditError('Failed to update reward.');
     } finally {
@@ -119,34 +116,36 @@ function ManageRewards() {
   // Delete Reward (Logical Delete)
   const handleDeleteClick = async (rewardId, rewardName) => {
     if (window.confirm(`Are you sure you want to set reward "${rewardName}" to inactive?`)) {
+      setListError(''); // Clear previous errors
+      // TODO: Add button loading state
       try {
         const rewardDocRef = doc(db, 'rewards', rewardId);
         await updateDoc(rewardDocRef, { isActive: false });
-        setRewards(prev => prev.map(r =>
-          r.id === rewardId ? { ...r, isActive: false } : r
-        ));
+        setRewards(prev => prev.map(r => r.id === rewardId ? { ...r, isActive: false } : r));
+        // TODO: Show success Alert
       } catch (err) {
         console.error("Error setting reward inactive:", err);
-        setError(`Failed to set reward "${rewardName}" to inactive.`);
+        setListError(`Failed to set reward "${rewardName}" to inactive.`);
       }
     }
   };
 
+   // Activate Reward
    const handleActivateClick = async (rewardId, rewardName) => {
     if (window.confirm(`Are you sure you want to set reward "${rewardName}" to active?`)) {
+       setListError(''); // Clear previous errors
+       // TODO: Add button loading state
       try {
         const rewardDocRef = doc(db, 'rewards', rewardId);
         await updateDoc(rewardDocRef, { isActive: true });
-        setRewards(prev => prev.map(r =>
-          r.id === rewardId ? { ...r, isActive: true } : r
-        ));
+        setRewards(prev => prev.map(r => r.id === rewardId ? { ...r, isActive: true } : r));
+        // TODO: Show success Alert
       } catch (err) {
         console.error("Error setting reward active:", err);
-        setError(`Failed to set reward "${rewardName}" to active.`);
+        setListError(`Failed to set reward "${rewardName}" to active.`);
       }
     }
   };
-
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -167,13 +166,22 @@ function ManageRewards() {
            <Input type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} placeholder="Reward Name" required />
            <Input type="number" value={newRewardPoints} onChange={(e) => setNewRewardPoints(e.target.value)} placeholder="Points Required" required min="1" />
          </div>
-         {addError && <p className="text-sm text-red-600 mb-2">{addError}</p>}
-         <Button type="submit" disabled={adding} variant="primary">{adding ? 'Adding...' : 'Add Reward'}</Button>
+         {/* Use Alert for add errors */}
+         {addError && <Alert type="error" className="mb-2">{addError}</Alert>}
+         <Button type="submit" disabled={adding} variant="primary">
+           {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
+           {adding ? 'Adding...' : 'Add Reward'}
+         </Button>
        </form>
 
       {/* Rewards List */}
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-      {loading ? <p>Loading rewards...</p> : (
+      {/* Use Alert for list-level errors */}
+      {listError && <Alert type="error" className="mb-4">{listError}</Alert>}
+      {loading ? (
+        <div className="flex justify-center items-center p-8">
+          <Spinner size="lg" />
+        </div>
+       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -200,9 +208,15 @@ function ManageRewards() {
                     <td className="td-style text-right space-x-2">
                       <Button variant="secondary" size="sm" onClick={() => handleEditClick(reward)}>Edit</Button>
                       {reward.isActive ? (
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.name)}>Set Inactive</Button>
+                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.name)}>
+                           {/* TODO: Add loading state */}
+                           Set Inactive
+                         </Button>
                       ) : (
-                         <Button variant="secondary" size="sm" onClick={() => handleActivateClick(reward.id, reward.name)}>Set Active</Button>
+                         <Button variant="secondary" size="sm" onClick={() => handleActivateClick(reward.id, reward.name)}>
+                           {/* TODO: Add loading state */}
+                           Set Active
+                         </Button>
                       )}
                     </td>
                   </tr>
@@ -237,16 +251,20 @@ function ManageRewards() {
                         <span className="ml-2 text-sm text-gray-700">Active</span>
                     </label>
                  </div>
-                 {editError && <p className="text-sm text-red-600 mb-4">{editError}</p>}
+                 {/* Use Alert for edit errors */}
+                 {editError && <Alert type="error" className="mb-4">{editError}</Alert>}
                  <div className="flex justify-end space-x-3">
-                     <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
-                     <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+                     <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
+                     <Button type="submit" variant="primary" disabled={saving}>
+                       {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
+                       {saving ? 'Saving...' : 'Save Changes'}
+                     </Button>
                  </div>
              </form>
          </Modal>
       )}
 
-       {/* Basic Table Styling (can be moved to index.css or App.css) */}
+       {/* Basic Table Styling */}
        <style jsx>{`
          .th-style { padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
          .td-style { padding: 1rem 1.5rem; white-space: nowrap; font-size: 0.875rem; }

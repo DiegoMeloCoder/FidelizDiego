@@ -7,6 +7,7 @@ import React from 'react';
 // - type: Button type (button, submit, reset), defaults to 'button'
 // - variant: 'primary', 'secondary', 'danger', etc. (defaults to primary)
 // - disabled: Boolean to disable the button
+// - size: 'sm', 'md', 'lg' (defaults to 'md')
 // - className: Additional classes to merge
 // - otherProps: Any other standard button attributes (e.g., title)
 
@@ -15,12 +16,13 @@ function Button({
   onClick,
   type = 'button',
   variant = 'primary',
+  size = 'md', // Added size prop with default
   disabled = false,
   className = '',
   ...otherProps
 }) {
-  // Base styles
-  const baseStyles = 'px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center';
+  // Base styles - removed padding/text size, will be handled by size variant
+  const baseStyles = 'font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center';
 
   // Variant styles
   let variantStyles = '';
@@ -37,8 +39,23 @@ function Button({
       break;
   }
 
+  // Size styles
+  let sizeStyles = '';
+  switch (size) {
+    case 'sm':
+      sizeStyles = 'px-3 py-1.5 text-xs'; // Adjusted padding and text size
+      break;
+    case 'lg':
+      sizeStyles = 'px-5 py-2.5 text-base'; // Adjusted padding and text size
+      break;
+    case 'md':
+    default:
+      sizeStyles = 'px-4 py-2 text-sm'; // Default padding and text size
+      break;
+  }
+
   // Merge classes
-  const mergedClassName = `${baseStyles} ${variantStyles} ${className}`;
+  const mergedClassName = `${baseStyles} ${sizeStyles} ${variantStyles} ${className}`;
 
   return (
     <button

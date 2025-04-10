@@ -3,14 +3,18 @@ import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'fi
 import { db } from '../../firebase/config';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import Modal from '../../components/ui/Modal'; // Import the actual Modal component
+import Modal from '../../components/ui/Modal';
+import Spinner from '../../components/ui/Spinner';
+import Alert from '../../components/ui/Alert'; // Import Alert
 
 function ManageCompanies() {
   const [companies, setCompanies] = useState([]);
   const [newCompanyName, setNewCompanyName] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [listError, setListError] = useState(''); // Renamed for clarity
   const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState(''); // Specific error for adding
+  const [deleteError, setDeleteError] = useState(''); // Specific error for deleting
 
   // State for Edit Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,7 +31,7 @@ function ManageCompanies() {
 
   const fetchCompanies = async () => {
     setLoading(true);
-    setError('');
+    setListError(''); // Clear list error on fetch
     try {
       const companiesCol = collection(db, 'companies');
       const companySnapshot = await getDocs(companiesCol);
@@ -35,7 +39,7 @@ function ManageCompanies() {
       setCompanies(companyList);
     } catch (err) {
       console.error("Error fetching companies:", err);
-      setError('Failed to load companies.');
+      setListError('Failed to load companies.'); // Use specific error state
     } finally {
       setLoading(false);
     }
@@ -44,16 +48,17 @@ function ManageCompanies() {
   // Add Company
   const handleAddCompany = async (e) => {
     e.preventDefault();
-    if (!newCompanyName.trim()) { setError('Company name cannot be empty.'); return; }
-    setAdding(true); setError('');
+    if (!newCompanyName.trim()) { setAddError('Company name cannot be empty.'); return; } // Use addError
+    setAdding(true); setAddError(''); setDeleteError(''); // Clear errors
     try {
       const companiesCol = collection(db, 'companies');
       const newCompanyData = { name: newCompanyName.trim(), status: 'active', createdAt: serverTimestamp() };
       const docRef = await addDoc(companiesCol, newCompanyData);
       setCompanies(prev => [...prev, { id: docRef.id, ...newCompanyData }]);
       setNewCompanyName('');
+      // Optionally show success alert here
     } catch (err) {
-      console.error("Error adding company:", err); setError('Failed to add company.');
+      console.error("Error adding company:", err); setAddError('Failed to add company.'); // Use addError
     } finally {
       setAdding(false);
     }
@@ -84,6 +89,7 @@ function ManageCompanies() {
         c.id === editingCompany.id ? { ...c, name: editName.trim(), status: editStatus } : c
       ));
       closeModal();
+      // Optionally show success alert here
     } catch (err) {
       console.error("Error updating company:", err); setEditError('Failed to update company.');
     } finally {
@@ -105,9 +111,10 @@ function ManageCompanies() {
           c.id === companyId ? { ...c, status: 'inactive' } : c
         ));
         // Or filter out if you prefer: setCompanies(prev => prev.filter(c => c.id !== companyId));
+        // Optionally show success alert here
       } catch (err) {
         console.error("Error deleting company (logically):", err);
-        setError(`Failed to set company "${companyName}" to inactive.`); // Show error specific to delete
+        setDeleteError(`Failed to set company "${companyName}" to inactive.`); // Use deleteError
       }
     }
   };
@@ -129,12 +136,22 @@ function ManageCompanies() {
           <label htmlFor="new-company-name" className="block text-sm font-medium text-gray-700 mb-1">New Company Name</label>
           <Input id="new-company-name" type="text" value={newCompanyName} onChange={(e) => setNewCompanyName(e.target.value)} placeholder="Enter company name" required className="mt-0" />
         </div>
-        <Button type="submit" disabled={adding} variant="primary" className="shrink-0">{adding ? 'Adding...' : 'Add Company'}</Button>
+        <Button type="submit" disabled={adding} variant="primary" className="shrink-0">
+          {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
+          {adding ? 'Adding...' : 'Add Company'}
+        </Button>
       </form>
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+      {/* Use Alert component for errors */}
+      {addError && <Alert type="error" className="mb-4">{addError}</Alert>}
+      {deleteError && <Alert type="error" className="mb-4">{deleteError}</Alert>}
+      {listError && <Alert type="error" className="mb-4">{listError}</Alert>}
 
       {/* Companies List */}
-      {loading ? <p>Loading companies...</p> : (
+      {loading ? (
+        <div className="flex justify-center items-center p-8">
+          <Spinner size="lg" />
+        </div>
+      ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -160,8 +177,11 @@ function ManageCompanies() {
                     <td className="td-style text-gray-500">{company.id}</td>
                     <td className="td-style text-right space-x-2"> {/* Actions Buttons */}
                       <Button variant="secondary" size="sm" onClick={() => handleEditClick(company)}>Edit</Button>
-                      {company.status !== 'inactive' && ( // Only show delete for active companies
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(company.id, company.name)}>Set Inactive</Button>
+                      {company.status !== 'inactive' && (
+                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(company.id, company.name)}>
+                           {/* TODO: Add loading state for delete button */}
+                           Set Inactive
+                         </Button>
                       )}
                     </td>
                   </tr>
@@ -188,10 +208,14 @@ function ManageCompanies() {
                          <option value="pending_payment">Pending Payment</option> {/* Added from requirements */}
                      </select>
                  </div>
-                 {editError && <p className="text-sm text-red-600 mb-4">{editError}</p>}
+                 {/* Use Alert for edit errors */}
+                 {editError && <Alert type="error" className="mb-4">{editError}</Alert>}
                  <div className="flex justify-end space-x-3">
-                     <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
-                     <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
+                     <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
+                     <Button type="submit" variant="primary" disabled={saving}>
+                       {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
+                       {saving ? 'Saving...' : 'Save Changes'}
+                     </Button>
                  </div>
              </form>
          </Modal>
