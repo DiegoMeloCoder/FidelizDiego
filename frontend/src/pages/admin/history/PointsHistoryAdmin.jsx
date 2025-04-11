@@ -71,20 +71,24 @@ function PointsHistoryAdmin() {
                 <th className={thStyle}>Date</th>
                 <th className={thStyle}>Employee</th>
                 <th className={thStyle}>Amount</th>
+                <th className={thStyle}>Justification</th> {/* Added Column */}
                 <th className={thStyle}>Assigned By</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {history.length === 0 ? (
-                <tr><td colSpan="4" className={`${tdStyle} text-center text-gray-500`}>No points assignment history found.</td></tr>
+                 // Corrected colSpan and className application
+                <tr><td colSpan="5" className={`${tdStyle} text-center text-gray-500`}>No points assignment history found.</td></tr>
               ) : (
                 history.map((entry) => (
                   <tr key={entry.id}>
+                     {/* Corrected className application */}
                     <td className={`${tdStyle} text-gray-500`}>{formatDate(entry.fechaAsignacion)}</td>
                     <td className={`${tdStyle} font-medium text-gray-900`}>{entry.empleadoName || entry.empleadoEmail}</td>
                     <td className={`${tdStyle} font-semibold ${entry.cantidad >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {entry.cantidad > 0 ? '+' : ''}{entry.cantidad}
                     </td>
+                    <td className={`${tdStyle} text-gray-700`}>{entry.justificacionTexto || 'N/A'}</td> {/* Display Justification */}
                     <td className={`${tdStyle} text-gray-500`}>{entry.adminEmail}</td>
                   </tr>
                 ))
