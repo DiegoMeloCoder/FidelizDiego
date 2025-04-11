@@ -5,20 +5,20 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Spinner from '../../components/ui/Spinner';
-import Alert from '../../components/ui/Alert'; // Import Alert
+import Alert from '../../components/ui/Alert';
 
 function ManageCompanies() {
   const [companies, setCompanies] = useState([]);
   const [newCompanyName, setNewCompanyName] = useState('');
   const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState(''); // Renamed for clarity
+  const [listError, setListError] = useState('');
   const [adding, setAdding] = useState(false);
-  const [addError, setAddError] = useState(''); // Specific error for adding
-  const [deleteError, setDeleteError] = useState(''); // Specific error for deleting
+  const [addError, setAddError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   // State for Edit Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCompany, setEditingCompany] = useState(null); // { id, name, status }
+  const [editingCompany, setEditingCompany] = useState(null);
   const [editName, setEditName] = useState('');
   const [editStatus, setEditStatus] = useState('active');
   const [saving, setSaving] = useState(false);
@@ -31,7 +31,7 @@ function ManageCompanies() {
 
   const fetchCompanies = async () => {
     setLoading(true);
-    setListError(''); // Clear list error on fetch
+    setListError('');
     try {
       const companiesCol = collection(db, 'companies');
       const companySnapshot = await getDocs(companiesCol);
@@ -39,7 +39,7 @@ function ManageCompanies() {
       setCompanies(companyList);
     } catch (err) {
       console.error("Error fetching companies:", err);
-      setListError('Failed to load companies.'); // Use specific error state
+      setListError('Failed to load companies.');
     } finally {
       setLoading(false);
     }
@@ -48,17 +48,17 @@ function ManageCompanies() {
   // Add Company
   const handleAddCompany = async (e) => {
     e.preventDefault();
-    if (!newCompanyName.trim()) { setAddError('Company name cannot be empty.'); return; } // Use addError
-    setAdding(true); setAddError(''); setDeleteError(''); // Clear errors
+    if (!newCompanyName.trim()) { setAddError('Company name cannot be empty.'); return; }
+    setAdding(true); setAddError(''); setDeleteError('');
     try {
       const companiesCol = collection(db, 'companies');
       const newCompanyData = { name: newCompanyName.trim(), status: 'active', createdAt: serverTimestamp() };
       const docRef = await addDoc(companiesCol, newCompanyData);
       setCompanies(prev => [...prev, { id: docRef.id, ...newCompanyData }]);
       setNewCompanyName('');
-      // Optionally show success alert here
+      // TODO: Show success Alert
     } catch (err) {
-      console.error("Error adding company:", err); setAddError('Failed to add company.'); // Use addError
+      console.error("Error adding company:", err); setAddError('Failed to add company.');
     } finally {
       setAdding(false);
     }
@@ -68,7 +68,7 @@ function ManageCompanies() {
   const handleEditClick = (company) => {
     setEditingCompany(company);
     setEditName(company.name);
-    setEditStatus(company.status || 'active'); // Default if status is missing
+    setEditStatus(company.status || 'active');
     setEditError('');
     setIsModalOpen(true);
   };
@@ -77,19 +77,13 @@ function ManageCompanies() {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editName.trim() || !editingCompany) { setEditError('Company name cannot be empty.'); return; }
-    setSaving(true); setEditError('');
+    setSaving(true); setEditError(''); setListError('');
     try {
       const companyDocRef = doc(db, 'companies', editingCompany.id);
-      await updateDoc(companyDocRef, {
-        name: editName.trim(),
-        status: editStatus,
-      });
-      // Update local state
-      setCompanies(prev => prev.map(c =>
-        c.id === editingCompany.id ? { ...c, name: editName.trim(), status: editStatus } : c
-      ));
+      await updateDoc(companyDocRef, { name: editName.trim(), status: editStatus });
+      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, name: editName.trim(), status: editStatus } : c));
       closeModal();
-      // Optionally show success alert here
+      // TODO: Show success Alert
     } catch (err) {
       console.error("Error updating company:", err); setEditError('Failed to update company.');
     } finally {
@@ -100,21 +94,16 @@ function ManageCompanies() {
   // Delete Company (Logical Delete)
   const handleDeleteClick = async (companyId, companyName) => {
     if (window.confirm(`Are you sure you want to set company "${companyName}" to inactive? This is a logical delete.`)) {
-      // Consider adding a loading state for delete
+      setDeleteError(''); setListError(''); // Clear errors
+      // TODO: Add button loading state
       try {
         const companyDocRef = doc(db, 'companies', companyId);
-        await updateDoc(companyDocRef, {
-          status: 'inactive', // Set status to inactive
-        });
-        // Update local state
-        setCompanies(prev => prev.map(c =>
-          c.id === companyId ? { ...c, status: 'inactive' } : c
-        ));
-        // Or filter out if you prefer: setCompanies(prev => prev.filter(c => c.id !== companyId));
-        // Optionally show success alert here
+        await updateDoc(companyDocRef, { status: 'inactive' });
+        setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, status: 'inactive' } : c));
+        // TODO: Show success Alert
       } catch (err) {
         console.error("Error deleting company (logically):", err);
-        setDeleteError(`Failed to set company "${companyName}" to inactive.`); // Use deleteError
+        setDeleteError(`Failed to set company "${companyName}" to inactive.`);
       }
     }
   };
@@ -125,6 +114,10 @@ function ManageCompanies() {
     setEditName('');
     setEditStatus('active');
   };
+
+  // Define Tailwind classes for table cells
+  const thStyle = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
+  const tdStyle = "px-6 py-4 whitespace-nowrap text-sm";
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
@@ -148,38 +141,35 @@ function ManageCompanies() {
 
       {/* Companies List */}
       {loading ? (
-        <div className="flex justify-center items-center p-8">
-          <Spinner size="lg" />
-        </div>
+        <div className="flex justify-center items-center p-8"><Spinner size="lg" /></div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="th-style">Name</th>
-                <th className="th-style">Status</th>
-                <th className="th-style">ID</th>
-                <th className="th-style text-right">Actions</th> {/* Actions Column */}
+                <th className={thStyle}>Name</th>
+                <th className={thStyle}>Status</th>
+                <th className={thStyle}>ID</th>
+                <th className={`${thStyle} text-right`}>Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {companies.length === 0 ? (
-                <tr><td colSpan="4" className="td-style text-center text-gray-500">No companies found.</td></tr>
+                <tr><td colSpan="4" className={`${tdStyle} text-center text-gray-500`}>No companies found.</td></tr>
               ) : (
                 companies.map((company) => (
                   <tr key={company.id}>
-                    <td className="td-style font-medium text-gray-900">{company.name}</td>
-                    <td className="td-style">
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{company.name}</td>
+                    <td className={tdStyle}>
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${company.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {company.status}
                       </span>
                     </td>
-                    <td className="td-style text-gray-500">{company.id}</td>
-                    <td className="td-style text-right space-x-2"> {/* Actions Buttons */}
+                    <td className={`${tdStyle} text-gray-500`}>{company.id}</td>
+                    <td className={`${tdStyle} text-right space-x-2`}>
                       <Button variant="secondary" size="sm" onClick={() => handleEditClick(company)}>Edit</Button>
                       {company.status !== 'inactive' && (
                          <Button variant="danger" size="sm" onClick={() => handleDeleteClick(company.id, company.name)}>
-                           {/* TODO: Add loading state for delete button */}
                            Set Inactive
                          </Button>
                       )}
@@ -205,10 +195,9 @@ function ManageCompanies() {
                      <select id="edit-status" value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                          <option value="active">Active</option>
                          <option value="inactive">Inactive</option>
-                         <option value="pending_payment">Pending Payment</option> {/* Added from requirements */}
+                         <option value="pending_payment">Pending Payment</option>
                      </select>
                  </div>
-                 {/* Use Alert for edit errors */}
                  {editError && <Alert type="error" className="mb-4">{editError}</Alert>}
                  <div className="flex justify-end space-x-3">
                      <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
@@ -221,15 +210,9 @@ function ManageCompanies() {
          </Modal>
       )}
 
-      {/* Basic Table Styling (can be moved to index.css or App.css) */}
-      <style jsx>{`
-        .th-style { padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
-        .td-style { padding: 1rem 1.5rem; white-space: nowrap; font-size: 0.875rem; }
-      `}</style>
+      {/* Removed <style jsx> block */}
     </div>
   );
 }
-
-// Removed the placeholder Modal definition
 
 export default ManageCompanies;
