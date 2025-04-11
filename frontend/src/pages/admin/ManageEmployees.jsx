@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { db, auth } from '../../firebase/config';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'; // Added serverTimestamp
+import { initializeApp, deleteApp } from 'firebase/app'; // Added for secondary app
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // Added getAuth
+import { db, firebaseConfig } from '../../firebase/config'; // Import firebaseConfig, keep db for Firestore ops
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -81,32 +82,61 @@ function ManageEmployees() {
     }
 
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
-    let newUserCredential = null;
+    let tempApp = null; // Variable to hold the temporary app instance
+    let newUser = null; // Variable to hold the created user
     try {
-      newUserCredential = await createUserWithEmailAndPassword(auth, newEmployeeEmail, newEmployeePassword);
-      const newUser = newUserCredential.user;
-      const userDocRef = doc(db, 'users', newUser.uid);
+      // 1. Initialize temporary Firebase app
+      const tempAppName = `secondary-auth-${Date.now()}`;
+      tempApp = initializeApp(firebaseConfig, tempAppName);
+      const tempAuth = getAuth(tempApp);
+
+      // 2. Create Firebase Auth user using the temporary instance
+      console.log("Creating user with temporary auth instance...");
+      const userCredential = await createUserWithEmailAndPassword(tempAuth, newEmployeeEmail, newEmployeePassword);
+      newUser = userCredential.user;
+      console.log("User created successfully in temporary auth instance:", newUser.uid);
+
+      // 3. Create Firestore user document (using the main 'db' instance)
+      const userDocRef = doc(db, 'users', newUser.uid); // Use main db instance
       const newEmployeeData = {
-        email: newEmployeeEmail, name: newEmployeeName.trim(), role: 'Employee',
-        companyId: adminUserData.companyId, points: 0, isActive: true,
+        email: newEmployeeEmail,
+        name: newEmployeeName.trim(),
+        role: 'Employee',
+        companyId: adminUserData.companyId,
+        points: 0, // Initial points
+        isActive: true, // Employees are active by default
+        createdAt: serverTimestamp() // Add createdAt timestamp
       };
-      await setDoc(userDocRef, newEmployeeData);
-      setEmployees(prev => [...prev, { id: newUser.uid, ...newEmployeeData }]);
+      await setDoc(userDocRef, newEmployeeData); // Use main db instance
+
+      // 4. Update local state
+      setEmployees(prev => [...prev, { id: newUser.uid, ...newEmployeeData, isActive: true }]); // Ensure isActive is set locally
       setNewEmployeeName(''); setNewEmployeeEmail(''); setNewEmployeePassword('');
-      setSuccessMessage(`Employee ${newEmployeeData.name} added successfully! Note: Your session might be affected; refresh if needed.`);
+      setSuccessMessage(`Employee ${newEmployeeData.name} added successfully.`);
       clearMessages();
     } catch (err) {
       console.error("Error adding employee:", err);
+      // Handle specific auth errors from the temporary instance
       if (err.code === 'auth/email-already-in-use') {
         setAddError('This email address is already registered.');
       } else if (err.code === 'auth/weak-password') {
         setAddError('Password is too weak (min. 6 characters).');
       } else {
+         // General error (could be auth or Firestore)
         setAddError('Failed to add employee. Check console for details.');
       }
       clearMessages();
     } finally {
       setAdding(false);
+       // 5. Clean up the temporary Firebase app instance regardless of success/failure
+       if (tempApp) {
+        try {
+          await deleteApp(tempApp);
+          console.log("Temporary Firebase app instance deleted.");
+        } catch (deleteError) {
+          console.error("Error deleting temporary Firebase app instance:", deleteError);
+        }
+      }
     }
   };
 

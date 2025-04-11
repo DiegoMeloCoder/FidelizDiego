@@ -23,5 +23,5 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 // const analytics = getAnalytics(app); // Optional: Uncomment if you need Analytics
 
-// Export the services for use in other parts of the app
-export { app, auth, db };
+// Export the services AND the config for use in other parts of the app
+export { app, auth, db, firebaseConfig };

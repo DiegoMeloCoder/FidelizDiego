@@ -12,7 +12,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Import Pages
 import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
-import ManageCompanies from './pages/manager/ManageCompanies'; // Import ManageCompanies
+import ManageCompanies from './pages/manager/ManageCompanies';
+import ManageAdmins from './pages/manager/ManageAdmins'; // Import ManageAdmins
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageEmployees from './pages/admin/ManageEmployees';
 import ManageRewards from './pages/admin/ManageRewards';
@@ -79,7 +80,7 @@ function App() {
           {/* Nested routes render inside AppLayout's <Outlet /> */}
           <Route index element={<ManagerDashboard />} /> {/* Default page for /manager */}
           <Route path="companies" element={<ManageCompanies />} />
-          {/* Add more manager routes here */}
+          <Route path="admins" element={<ManageAdmins />} /> {/* Add Admins Route */}
         </Route>
 
         <Route

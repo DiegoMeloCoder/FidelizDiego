@@ -8,6 +8,7 @@ import Button from '../ui/Button';
 import {
   HomeIcon, // Dashboard
   BuildingOffice2Icon, // Companies / Company Info
+  UserGroupIcon, // Admins (Manager view)
   UsersIcon, // Employees / Users
   GiftIcon, // Rewards
   DocumentMagnifyingGlassIcon, // Justifications
@@ -82,6 +83,9 @@ function AppLayout() {
             </Link>
             <Link to="/manager/companies" className={`${linkBaseClasses} ${isActive('/manager/companies') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <BuildingOffice2Icon className={`${iconClasses} ${isActive('/manager/companies') ? activeIconClasses : ''}`} /> Companies
+            </Link>
+            <Link to="/manager/admins" className={`${linkBaseClasses} ${isActive('/manager/admins') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
+              <UserGroupIcon className={`${iconClasses} ${isActive('/manager/admins') ? activeIconClasses : ''}`} /> Admins
             </Link>
           </>
         )}
