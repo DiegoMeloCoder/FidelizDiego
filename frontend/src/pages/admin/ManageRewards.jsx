@@ -6,13 +6,14 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Spinner from '../../components/ui/Spinner';
-import Alert from '../../components/ui/Alert'; // Import Alert
+import Alert from '../../components/ui/Alert';
 
 function ManageRewards() {
   const { userData } = useAuth();
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState(''); // Renamed for clarity
+  const [listError, setListError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(''); // State for success messages
 
   // Add Form State
   const [newRewardName, setNewRewardName] = useState('');
@@ -29,6 +30,16 @@ function ManageRewards() {
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState('');
 
+  // Function to clear messages after a delay
+  const clearMessages = () => {
+    setTimeout(() => {
+      setAddError('');
+      setListError('');
+      setEditError('');
+      setSuccessMessage('');
+    }, 4000);
+  };
+
   // Fetch rewards
   useEffect(() => {
     fetchRewards();
@@ -38,7 +49,7 @@ function ManageRewards() {
     if (!userData?.companyId) {
       setListError("Admin company information not available."); setLoading(false); return;
     }
-    setLoading(true); setListError('');
+    setLoading(true); setListError(''); setSuccessMessage('');
     try {
       const rewardsCol = collection(db, 'rewards');
       const q = query(rewardsCol, where('companyId', '==', userData.companyId));
@@ -47,6 +58,7 @@ function ManageRewards() {
       setRewards(list);
     } catch (err) {
       console.error("Error fetching rewards:", err); setListError('Failed to load rewards.');
+      clearMessages();
     } finally {
       setLoading(false);
     }
@@ -57,12 +69,12 @@ function ManageRewards() {
     e.preventDefault();
     const points = parseInt(newRewardPoints, 10);
     if (!newRewardName.trim() || isNaN(points) || points <= 0) {
-      setAddError('Please enter a valid name and positive points value.'); return;
+      setAddError('Please enter a valid name and positive points value.'); clearMessages(); return;
     }
     if (!userData?.companyId) {
-      setAddError("Cannot add reward: Admin's company ID is missing."); return;
+      setAddError("Cannot add reward: Admin's company ID is missing."); clearMessages(); return;
     }
-    setAdding(true); setAddError(''); setListError(''); // Clear errors
+    setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
     try {
       const rewardsCol = collection(db, 'rewards');
       const newRewardData = {
@@ -73,9 +85,11 @@ function ManageRewards() {
       const docRef = await addDoc(rewardsCol, newRewardData);
       setRewards(prev => [...prev, { id: docRef.id, ...newRewardData }]);
       setNewRewardName(''); setNewRewardPoints('');
-      // TODO: Show success Alert
+      setSuccessMessage(`Reward "${newRewardData.name}" added successfully.`);
+      clearMessages();
     } catch (err) {
       console.error("Error adding reward:", err); setAddError('Failed to add reward.');
+      clearMessages();
     } finally {
       setAdding(false);
     }
@@ -87,7 +101,7 @@ function ManageRewards() {
     setEditName(reward.name);
     setEditPoints(reward.pointsRequired.toString());
     setEditIsActive(reward.isActive !== undefined ? reward.isActive : true);
-    setEditError('');
+    setEditError(''); setSuccessMessage('');
     setIsModalOpen(true);
   };
 
@@ -96,18 +110,20 @@ function ManageRewards() {
     e.preventDefault();
     const points = parseInt(editPoints, 10);
     if (!editName.trim() || !editingReward || isNaN(points) || points <= 0) {
-      setEditError('Please enter a valid name and positive points value.'); return;
+      setEditError('Please enter a valid name and positive points value.'); clearMessages(); return;
     }
-    setSaving(true); setEditError(''); setListError(''); // Clear errors
+    setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
       const rewardDocRef = doc(db, 'rewards', editingReward.id);
       const updatedData = { name: editName.trim(), pointsRequired: points, isActive: editIsActive };
       await updateDoc(rewardDocRef, updatedData);
       setRewards(prev => prev.map(r => r.id === editingReward.id ? { ...r, ...updatedData } : r));
       closeModal();
-      // TODO: Show success Alert
+      setSuccessMessage(`Reward "${editName.trim()}" updated successfully.`);
+      clearMessages();
     } catch (err) {
       console.error("Error updating reward:", err); setEditError('Failed to update reward.');
+      clearMessages();
     } finally {
       setSaving(false);
     }
@@ -116,16 +132,18 @@ function ManageRewards() {
   // Delete Reward (Logical Delete)
   const handleDeleteClick = async (rewardId, rewardName) => {
     if (window.confirm(`Are you sure you want to set reward "${rewardName}" to inactive?`)) {
-      setListError(''); // Clear previous errors
+      setListError(''); setSuccessMessage('');
       // TODO: Add button loading state
       try {
         const rewardDocRef = doc(db, 'rewards', rewardId);
         await updateDoc(rewardDocRef, { isActive: false });
         setRewards(prev => prev.map(r => r.id === rewardId ? { ...r, isActive: false } : r));
-        // TODO: Show success Alert
+        setSuccessMessage(`Reward "${rewardName}" set to inactive.`);
+        clearMessages();
       } catch (err) {
         console.error("Error setting reward inactive:", err);
         setListError(`Failed to set reward "${rewardName}" to inactive.`);
+        clearMessages();
       }
     }
   };
@@ -133,16 +151,18 @@ function ManageRewards() {
    // Activate Reward
    const handleActivateClick = async (rewardId, rewardName) => {
     if (window.confirm(`Are you sure you want to set reward "${rewardName}" to active?`)) {
-       setListError(''); // Clear previous errors
+       setListError(''); setSuccessMessage('');
        // TODO: Add button loading state
       try {
         const rewardDocRef = doc(db, 'rewards', rewardId);
         await updateDoc(rewardDocRef, { isActive: true });
         setRewards(prev => prev.map(r => r.id === rewardId ? { ...r, isActive: true } : r));
-        // TODO: Show success Alert
+        setSuccessMessage(`Reward "${rewardName}" set to active.`);
+        clearMessages();
       } catch (err) {
         console.error("Error setting reward active:", err);
         setListError(`Failed to set reward "${rewardName}" to active.`);
+        clearMessages();
       }
     }
   };
@@ -155,6 +175,10 @@ function ManageRewards() {
     setEditIsActive(true);
   };
 
+  // Define Tailwind classes for table cells
+  const thStyle = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
+  const tdStyle = "px-6 py-4 whitespace-nowrap text-sm";
+
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6">Manage Rewards</h1>
@@ -166,7 +190,6 @@ function ManageRewards() {
            <Input type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} placeholder="Reward Name" required />
            <Input type="number" value={newRewardPoints} onChange={(e) => setNewRewardPoints(e.target.value)} placeholder="Points Required" required min="1" />
          </div>
-         {/* Use Alert for add errors */}
          {addError && <Alert type="error" className="mb-2">{addError}</Alert>}
          <Button type="submit" disabled={adding} variant="primary">
            {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
@@ -174,47 +197,45 @@ function ManageRewards() {
          </Button>
        </form>
 
-      {/* Rewards List */}
-      {/* Use Alert for list-level errors */}
+      {/* Display feedback messages */}
       {listError && <Alert type="error" className="mb-4">{listError}</Alert>}
+      {successMessage && <Alert type="success" className="mb-4">{successMessage}</Alert>}
+
+      {/* Rewards List */}
       {loading ? (
-        <div className="flex justify-center items-center p-8">
-          <Spinner size="lg" />
-        </div>
+        <div className="flex justify-center items-center p-8"><Spinner size="lg" /></div>
        ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="th-style">Name</th>
-                <th className="th-style">Points Required</th>
-                <th className="th-style">Status</th>
-                <th className="th-style text-right">Actions</th>
+                <th className={thStyle}>Name</th>
+                <th className={thStyle}>Points Required</th>
+                <th className={thStyle}>Status</th>
+                <th className={`${thStyle} text-right`}>Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {rewards.length === 0 ? (
-                <tr><td colSpan="4" className="td-style text-center text-gray-500">No rewards found.</td></tr>
+                <tr><td colSpan="4" className={`${tdStyle} text-center text-gray-500`}>No rewards found.</td></tr>
               ) : (
                 rewards.map((reward) => (
                   <tr key={reward.id}>
-                    <td className="td-style font-medium text-gray-900">{reward.name}</td>
-                    <td className="td-style text-gray-500">{reward.pointsRequired}</td>
-                    <td className="td-style">
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{reward.name}</td>
+                    <td className={`${tdStyle} text-gray-500`}>{reward.pointsRequired}</td>
+                    <td className={tdStyle}>
                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${reward.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                          {reward.isActive ? 'Active' : 'Inactive'}
                        </span>
                     </td>
-                    <td className="td-style text-right space-x-2">
+                    <td className={`${tdStyle} text-right space-x-2`}>
                       <Button variant="secondary" size="sm" onClick={() => handleEditClick(reward)}>Edit</Button>
                       {reward.isActive ? (
                          <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.name)}>
-                           {/* TODO: Add loading state */}
                            Set Inactive
                          </Button>
                       ) : (
                          <Button variant="secondary" size="sm" onClick={() => handleActivateClick(reward.id, reward.name)}>
-                           {/* TODO: Add loading state */}
                            Set Active
                          </Button>
                       )}
@@ -251,7 +272,6 @@ function ManageRewards() {
                         <span className="ml-2 text-sm text-gray-700">Active</span>
                     </label>
                  </div>
-                 {/* Use Alert for edit errors */}
                  {editError && <Alert type="error" className="mb-4">{editError}</Alert>}
                  <div className="flex justify-end space-x-3">
                      <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
@@ -263,12 +283,6 @@ function ManageRewards() {
              </form>
          </Modal>
       )}
-
-       {/* Basic Table Styling */}
-       <style jsx>{`
-         .th-style { padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
-         .td-style { padding: 1rem 1.5rem; white-space: nowrap; font-size: 0.875rem; }
-       `}</style>
     </div>
   );
 }

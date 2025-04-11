@@ -5,19 +5,19 @@ Principios: Calidad, Escalabilidad, Seguridad, Pruebas, UX/UI Moderna, Documenta
 Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, Auth0/JWT, Redis, OpenAI, AWS, Docker, GitHub Actions, Jest, Joi/Express-validator.
 
 Fase 0: Configuración Inicial y Fundamentos
-1.	[HECHO/PENDIENTE] Repositorio y Estructura del Proyecto:
-o	Crear repositorio monorepo o multi-repo (backend/frontend) en GitHub.
+1.	[HECHO (Parcial) - MVP Firebase] Repositorio y Estructura del Proyecto:
+o	[HECHO] Crear repositorio monorepo o multi-repo (backend/frontend) en GitHub. (Repositorio Creado y Conectado)
 o	Definir estructura de carpetas clara y escalable:
-	Backend: config, controllers, middleware, models, routes, services, utils, tests.
-	Frontend: src/components, src/pages, src/contexts (o store), src/hooks, src/services, src/assets, src/utils.
+	Backend: [N/A - MVP Firebase] config, controllers, middleware, models, routes, services, utils, tests.
+	Frontend: [HECHO - MVP Firebase] src/components, src/pages, src/contexts (o store), src/hooks, src/services, src/assets, src/utils. (Estructura básica creada)
 o	Inicializar orden_de_desarrollo.txt (este documento).
 2.	[PENDIENTE] Configuración Docker:
 o	Dockerfile para backend (Node.js multi-stage build).
 o	Dockerfile para frontend (servir build estático con Nginx o similar).
 o	docker-compose.yml para desarrollo (backend, frontend, postgres, redis).
-3.	[PENDIENTE] Inicialización de Proyectos:
-o	Backend: npm init, instalar dependencias core (Express, Sequelize, pg, dotenv, cors, bcrypt, jsonwebtoken, etc.). Configurar base con Express.
-o	Frontend: Crear proyecto React (Vite/CRA), instalar dependencias (React Router, Axios/Fetch, TailwindCSS). Configurar Tailwind.
+3.	[HECHO (Parcial) - MVP Firebase] Inicialización de Proyectos:
+o	Backend: [N/A - MVP Firebase] npm init, instalar dependencias core (Express, Sequelize, pg, dotenv, cors, bcrypt, jsonwebtoken, etc.). Configurar base con Express.
+o	Frontend: [HECHO - MVP Firebase] Crear proyecto React (Vite/CRA), instalar dependencias (React Router, Axios/Fetch, TailwindCSS). Configurar Tailwind. (Usando Vite, React Router, Firebase, Tailwind v3)
 4.	[PENDIENTE] Configuración CI/CD Básica (GitHub Actions):
 o	Workflow para linting y formateo (ESLint, Prettier) en cada push/PR.
 o	Workflow para construir (sin desplegar aún) en cada push/PR a main/develop.
@@ -25,219 +25,162 @@ o	Workflow para construir (sin desplegar aún) en cada push/PR a main/develop.
 o	Configurar ESLint y Prettier para backend (Node/JS o TS) y frontend (React/JS o TS) con reglas estándar (ej. Airbnb) pero ajustables.
 Fase 1: Diseño Detallado de la Base de Datos y Modelos Core
 •	Objetivo: Definir una estructura de BD robusta, normalizada y optimizada para multi-tenancy y consultas futuras, minimizando bugs de datos.
-•	Tecnología: PostgreSQL + Sequelize ORM.
-1.	[PENDIENTE] Definición de Modelos y Relaciones (Sequelize):
-o	Roles:
+•	Tecnología: [CAMBIADO A FIRESTORE - MVP Firebase] PostgreSQL + Sequelize ORM.
+1.	[HECHO (Adaptado) - MVP Firebase] Definición de Modelos y Relaciones (Firestore):
+o	[HECHO - Firestore] Roles: (Implementado como campo 'role' en colección 'users')
 	id: INTEGER, PRIMARY KEY, AUTO_INCREMENT
 	nombre: VARCHAR(50), UNIQUE, NOT NULL (Valores: 'Manager', 'Administrador', 'Empleado')
-o	Usuarios: (Representa la cuenta de login, vinculada a Auth0)
-	id: VARCHAR(255), PRIMARY KEY (Usar sub de Auth0)
-	email: VARCHAR(255), UNIQUE, NOT NULL
-	nombre: VARCHAR(255)
-	rol_id: INTEGER, FOREIGN KEY (Roles.id), NOT NULL
-	fecha_registro: TIMESTAMP WITH TIME ZONE, DEFAULT NOW()
-	Índices: email, rol_id
-o	Empresas: (Cada registro es un tenant)
-	id: SERIAL, PRIMARY KEY
-	nombre: VARCHAR(255), NOT NULL
-	logo_url: VARCHAR(512)
-	color_primario: VARCHAR(7) (Hex ej. '#FFFFFF')
-	color_secundario: VARCHAR(7)
-	limite_puntos_admin_mes: INTEGER, NOT NULL, DEFAULT 1000 (Límite por Admin)
-	limite_puntos_empleado_mes: INTEGER, NOT NULL, DEFAULT 500 (Límite por Empleado)
-	estado_suscripcion: VARCHAR(20), NOT NULL, DEFAULT 'activa' (Valores: 'activa', 'pendiente_pago', 'inactiva')
-	fecha_vencimiento_pago: DATE
-	fecha_registro: TIMESTAMP WITH TIME ZONE, DEFAULT NOW()
-	Índices: estado_suscripcion
-o	Empleados: (Vincula un Usuario a una Empresa con un rol específico dentro de ella)
-	id: SERIAL, PRIMARY KEY
-	usuario_id: VARCHAR(255), FOREIGN KEY (Usuarios.id), NOT NULL
-	empresa_id: INTEGER, FOREIGN KEY (Empresas.id), NOT NULL
-	cargo: VARCHAR(255), NOT NULL
-	celular: VARCHAR(50), NOT NULL
-	fecha_contratacion: DATE
-	esta_activo: BOOLEAN, DEFAULT TRUE, NOT NULL (Para desactivaciones lógicas)
-	Restricción: UNIQUE (usuario_id) - Un usuario solo puede ser empleado/admin de una empresa.
-	Índices: usuario_id, empresa_id, esta_activo
-o	Recompensas:
-	id: SERIAL, PRIMARY KEY
-	empresa_id: INTEGER, FOREIGN KEY (Empresas.id), NOT NULL
-	nombre: VARCHAR(255), NOT NULL
-	descripcion: TEXT
-	puntos_requeridos: INTEGER, NOT NULL, CHECK (puntos_requeridos > 0)
-	stock: INTEGER, DEFAULT NULL (NULL = ilimitado, >= 0)
-	imagen_url: VARCHAR(512)
-	esta_activa: BOOLEAN, DEFAULT TRUE, NOT NULL (Para borrado lógico)
-	Índices: empresa_id, esta_activa
-o	JustificacionesPuntos:
-	id: SERIAL, PRIMARY KEY
-	empresa_id: INTEGER, FOREIGN KEY (Empresas.id), NULL (NULL para justificaciones globales/predeterminadas)
-	texto_justificacion: VARCHAR(255), NOT NULL
-	es_predeterminada: BOOLEAN, DEFAULT FALSE, NOT NULL
-	esta_activa: BOOLEAN, DEFAULT TRUE, NOT NULL
-	Restricción: UNIQUE (empresa_id, texto_justificacion)
-	Índices: empresa_id, esta_activa
-o	PuntosAsignados: (Historial de asignaciones)
-	id: SERIAL, PRIMARY KEY
-	empleado_receptor_id: INTEGER, FOREIGN KEY (Empleados.id), NOT NULL
-	admin_asignador_id: INTEGER, FOREIGN KEY (Empleados.id), NOT NULL (El empleado que asigna debe tener rol Admin)
-	cantidad: INTEGER, NOT NULL, CHECK (cantidad != 0) (Positivo para dar, negativo para quitar)
-	justificacion_id: INTEGER, FOREIGN KEY (JustificacionesPuntos.id), NULL
-	fecha_asignacion: TIMESTAMP WITH TIME ZONE, DEFAULT NOW()
-	mes_asignacion: INTEGER NOT NULL (Extraído de fecha_asignacion, para facilitar consultas de límites)
-	anio_asignacion: INTEGER NOT NULL (Extraído de fecha_asignacion)
-	Índices: empleado_receptor_id, admin_asignador_id, fecha_asignacion, (mes_asignacion, anio_asignacion)
-o	Canjes: (Historial de canjes)
-	id: SERIAL, PRIMARY KEY
-	empleado_id: INTEGER, FOREIGN KEY (Empleados.id), NOT NULL
-	recompensa_id: INTEGER, FOREIGN KEY (Recompensas.id), NOT NULL
-	puntos_costo: INTEGER, NOT NULL (Costo en el momento del canje)
-	fecha_canje: TIMESTAMP WITH TIME ZONE, DEFAULT NOW()
-	Índices: empleado_id, recompensa_id, fecha_canje
-o	PuntosAcumuladosAnual: (Tabla para manejar saldos y ranking anual fácilmente)
-	id: SERIAL, PRIMARY KEY
-	empleado_id: INTEGER, FOREIGN KEY (Empleados.id), NOT NULL
-	anio: INTEGER, NOT NULL
-	puntos_totales: INTEGER, DEFAULT 0, NOT NULL
-	Restricción: UNIQUE (empleado_id, anio)
-	Índices: (anio, puntos_totales DESC) - Para ranking
-2.	[PENDIENTE] Implementar Migraciones Sequelize:
-o	Crear archivos de migración para cada tabla definida.
-o	Asegurar orden correcto de creación y aplicación de FKs.
-3.	[PENDIENTE] Implementar Seeds Iniciales:
-o	Roles: 'Manager', 'Administrador', 'Empleado'.
-o	Usuarios: Manager (diego29melo@gmail.com), Admin Udenar (ienadiego29melo@gmail.com), Empleado Udenar (dlxstudios29@gmail.com).
-o	Empresas: Alkosto, Coacremat, Udenar (con datos iniciales, estado 'activa').
-o	Empleados: Asociar usuarios a empresas/roles correspondientes, añadir cargo/celular.
-o	JustificacionesPuntos: Crear 3-5 justificaciones globales (empresa_id = NULL, es_predeterminada = TRUE).
+o	[HECHO - Firestore] Usuarios: (Colección 'users', ID = UID de Auth)
+	id: UID de Auth
+	email: (string)
+	nombre: (string, opcional)
+	role: (string: 'Manager', 'Admin', 'Employee')
+	companyId: (string, ref a `companies`, solo para Admin/Employee)
+	points: (number, solo para Employee)
+	isActive: (boolean, solo para Employee/Admin)
+o	[HECHO - Firestore] Empresas: (Colección 'companies')
+	id: ID de Documento Firestore
+	nombre: (string)
+	status: (string: 'active', 'inactive', 'pending_payment')
+	createdAt: (timestamp)
+o	[N/A - MVP Firebase] Empleados: (Info integrada en 'users')
+o	[HECHO - Firestore] Recompensas: (Colección 'rewards')
+	id: ID de Documento Firestore
+	companyId: (string, ref a `companies`)
+	nombre: (string)
+	pointsRequired: (number)
+	isActive: (boolean)
+	createdAt: (timestamp)
+o	[PENDIENTE] JustificacionesPuntos:
+o	[HECHO - Firestore] PuntosAsignados: (Colección 'puntosAsignados')
+	id: ID de Documento Firestore
+	adminId: (string, UID)
+	adminEmail: (string)
+	empleadoId: (string, UID)
+	empleadoEmail: (string)
+	empleadoName: (string)
+	companyId: (string, ref a `companies`)
+	cantidad: (number)
+	fechaAsignacion: (timestamp)
+o	[HECHO - Firestore] Canjes: (Colección 'canjes')
+	id: ID de Documento Firestore
+	empleadoId: (string, UID)
+	empleadoEmail: (string)
+	companyId: (string, ref a `companies`)
+	recompensaId: (string, ref a `rewards`)
+	recompensaNombre: (string)
+	puntosCosto: (number)
+	fechaCanje: (timestamp)
+o	[PENDIENTE] PuntosAcumuladosAnual: (Se maneja con campo 'points' en 'users' por ahora)
+2.	[N/A - MVP Firebase] Implementar Migraciones Sequelize:
+3.	[HECHO (Manual) - MVP Firebase] Implementar Seeds Iniciales:
+o	Roles: (Implícito en 'users')
+o	Usuarios: Manager, Admin, Empleado creados manualmente.
+o	Empresas: 'Empresa Demo' creada manualmente.
+o	Empleados: (Info en 'users')
+o	JustificacionesPuntos: [PENDIENTE]
 Fase 2: Backend - Autenticación, Autorización y Core API
-1.	[PENDIENTE] Integración Auth0:
-o	Configurar aplicación Regular Web App en Auth0.
-o	Implementar endpoints backend (/login, /callback, /logout).
-o	Middleware para verificar JWT (extraído de Authorization: Bearer header) en rutas protegidas. Usar librería express-oauth2-jwt-bearer o similar.
-o	Sincronización de usuarios: Al primer login vía Auth0, verificar si el usuario (sub, email) existe en Usuarios. Si no, crearlo (rol por defecto 'Empleado' o pendiente de asignación).
-2.	[PENDIENTE] Middleware Core Backend:
-o	errorHandler: Middleware global para capturar y formatear errores.
-o	extractUserInfo: Middleware para adjuntar info del usuario (id, rol_id, email) y su empleado_id y empresa_id (si aplica) al objeto req después de validar JWT.
-o	checkRole(rolesPermitidos): Middleware para verificar si el rol_id del usuario está en la lista permitida para el endpoint.
-o	checkTenant: Middleware para rutas de Admin/Empleado que verifica que las operaciones solo afecten a la empresa_id asociada al usuario. Crucial para multi-tenancy.
-o	checkSubscription: Middleware (o chequeo dentro de checkTenant) que verifica estado_suscripcion de la empresa para permitir/bloquear acciones según las reglas definidas (aviso, bloqueo login empleados, etc.).
-3.	[PENDIENTE] Endpoints API - Perfil de Usuario:
-o	GET /api/v1/profile/me: Devuelve info del usuario logueado (rol, empresa asociada si aplica, cargo, celular).
-o	PUT /api/v1/profile/me: Permite al usuario actualizar campos permitidos (ej. celular, ¿cargo si es empleado?). Incluir validación (Joi/Express-validator).
+1.	[HECHO (Adaptado) - MVP Firebase] Integración Auth0: (Usando Firebase Auth Email/Password)
+2.	[HECHO (Adaptado) - MVP Firebase] Middleware Core Backend: (Lógica implementada en Frontend: `ProtectedRoute`, `AuthContext`)
+o	checkRole: [HECHO (Adaptado)]
+o	checkTenant: [HECHO (Adaptado) - Implícito al usar `userData.companyId` en queries]
+o	checkSubscription: [PENDIENTE]
+3.	[PENDIENTE] Endpoints API - Perfil de Usuario: (Se podría implementar en Frontend leyendo/escribiendo doc 'users')
 Fase 3: Backend - Funcionalidades Manager
-1.	[PENDIENTE] Endpoints API - Gestión de Empresas (CRUD):
-o	Rutas bajo /api/v1/manager/empresas. Protegidas por checkRole(['Manager']).
-o	POST /: Crear nueva empresa (nombre, límites, etc.).
-o	GET /: Listar todas las empresas (con paginación/filtros básicos).
-o	GET /:empresaId: Obtener detalles de una empresa.
-o	PUT /:empresaId: Actualizar empresa (nombre, logo, colores, límites, estado suscripción, fecha vencimiento). Validación.
-o	DELETE /:empresaId: Desactivar/Eliminar empresa (considerar borrado lógico).
+1.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Gestión de Empresas (CRUD): (Implementado en Frontend + Firestore)
+o	POST /: [HECHO (Adaptado)] Crear nueva empresa (nombre, estado).
+o	GET /: [HECHO (Adaptado)] Listar todas las empresas.
+o	GET /:empresaId: [PENDIENTE]
+o	PUT /:empresaId: [HECHO (Adaptado)] Actualizar empresa (nombre, estado).
+o	DELETE /:empresaId: [HECHO (Adaptado)] Desactivar empresa (lógico).
 2.	[PENDIENTE] Endpoints API - Gestión de Administradores:
-o	Rutas bajo /api/v1/manager/empresas/:empresaId/admins. Protegidas por checkRole(['Manager']).
-o	POST /: Asignar un usuario existente como Admin de esa empresa (requiere usuario_id). Crear registro en Empleados si no existe, asociar a la empresa, y asegurar que Usuarios.rol_id sea 'Administrador'.
-o	DELETE /:usuarioId: Revocar rol de Admin a un usuario en esa empresa.
-o	GET /: Listar los Admins de una empresa.
 3.	[PENDIENTE] Endpoints API - Dashboard Manager:
-o	Ruta /api/v1/manager/dashboard. Protegida por checkRole(['Manager']).
-o	Devolver JSON con: totalEmpresasActivas, totalUsuariosGlobales, y un array statsPorEmpresa [{ empresaId, nombre, totalEmpleados, totalPuntosAsignadosMes, totalCanjesMes, estadoSuscripcion }]. Optimizar consultas SQL/Sequelize (aggregations).
 Fase 4: Backend - Funcionalidades Administrador
-•	Nota: Todas las rutas de Admin deben usar checkRole(['Administrador']) y checkTenant.
-1.	[PENDIENTE] Endpoints API - Gestión de Empleados (CRUD):
-o	Rutas bajo /api/v1/admin/empleados.
-o	POST /: Crear nuevo empleado (requiere email, nombre, cargo, celular). Backend debe:
-	Verificar si existe un Usuario con ese email. Si no, ¿invitar/crear cuenta básica? (Definir flujo).
-	Crear registro en Empleados asociando usuario_id, empresa_id (del admin), cargo, celular.
-	Asegurar que Usuarios.rol_id sea 'Empleado'.
-o	POST /bulk-upload: (Funcionalidad avanzada, ver Fase 7).
-o	GET /: Listar empleados de su empresa (paginado, filtros por nombre/cargo, estado activo).
-o	GET /:empleadoId: Obtener detalles de un empleado.
-o	PUT /:empleadoId: Actualizar empleado (cargo, celular, ¿cambiar rol dentro de la empresa si se implementa?, estado activo). Validación.
-o	DELETE /:empleadoId: Desactivar empleado (esta_activo = false).
-2.	[PENDIENTE] Endpoints API - Gestión de Recompensas (CRUD):
-o	Rutas bajo /api/v1/admin/recompensas.
-o	POST /: Crear recompensa para su empresa. Validación.
-o	GET /: Listar recompensas de su empresa (activas e inactivas).
-o	GET /:recompensaId: Obtener detalles.
-o	PUT /:recompensaId: Actualizar recompensa. Validación.
-o	DELETE /:recompensaId: Desactivar recompensa (esta_activa = false).
+1.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Gestión de Empleados (CRUD): (Implementado en Frontend + Firestore)
+o	POST /: [HECHO (Adaptado)] Crear nuevo empleado (email, nombre, password). (Con limitación de logout)
+o	POST /bulk-upload: [PENDIENTE]
+o	GET /: [HECHO (Adaptado)] Listar empleados de su empresa.
+o	GET /:empleadoId: [PENDIENTE]
+o	PUT /:empleadoId: [HECHO (Adaptado)] Actualizar empleado (nombre, isActive).
+o	DELETE /:empleadoId: [HECHO (Adaptado)] Desactivar empleado (lógico).
+2.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Gestión de Recompensas (CRUD): (Implementado en Frontend + Firestore)
+o	POST /: [HECHO (Adaptado)] Crear recompensa (nombre, puntos).
+o	GET /: [HECHO (Adaptado)] Listar recompensas de su empresa.
+o	GET /:recompensaId: [PENDIENTE]
+o	PUT /:recompensaId: [HECHO (Adaptado)] Actualizar recompensa (nombre, puntos, isActive).
+o	DELETE /:recompensaId: [HECHO (Adaptado)] Desactivar/Activar recompensa (lógico).
 3.	[PENDIENTE] Endpoints API - Gestión de Justificaciones (CRUD):
-o	Rutas bajo /api/v1/admin/justificaciones.
-o	POST /: Crear justificación personalizada para su empresa (es_predeterminada = false). Validación.
-o	GET /: Listar justificaciones (predeterminadas globales + personalizadas de su empresa).
-o	PUT /:justificacionId: Actualizar justificación personalizada. Validación.
-o	DELETE /:justificacionId: Desactivar justificación personalizada (esta_activa = false).
-4.	[PENDIENTE] Endpoint API - Asignación/Deducción de Puntos:
-o	POST /api/v1/admin/puntos/asignar.
-o	Body: { empleadoReceptorId, cantidad, justificacionId? }.
+4.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Asignación/Deducción de Puntos: (Implementado en Frontend + Firestore)
+o	POST /api/v1/admin/puntos/asignar: [HECHO (Adaptado)]
+o	Body: { empleadoReceptorId, cantidad }: [HECHO (Adaptado)]
 o	Lógica:
-	Verificar que empleadoReceptorId pertenece a la misma empresa que el admin.
-	Verificar que admin_asignador_id (el propio admin) no exceda limite_puntos_admin_mes en el mes actual. Consulta agregada a PuntosAsignados.
-	Verificar que empleadoReceptorId no exceda limite_puntos_empleado_mes en el mes actual. Consulta agregada.
-	Crear registro en PuntosAsignados (con mes/año extraídos).
-	Actualizar PuntosAcumuladosAnual para el empleado en el año actual (upsert: puntos_totales += cantidad). Usar transacción de BD.
-o	Validación de entrada.
-5.	[PENDIENTE] Endpoints API - Historiales (Admin):
-o	GET /api/v1/admin/historial/puntos: Historial de puntos asignados dentro de su empresa (paginado, filtros por empleado, admin asignador, fecha).
-o	GET /api/v1/admin/historial/canjes: Historial de canjes realizados por empleados de su empresa (paginado, filtros por empleado, recompensa, fecha).
-6.	[PENDIENTE] Endpoint API - Ranking (Admin):
-o	GET /api/v1/admin/ranking: Devuelve ranking anual de empleados de su empresa.
-o	Lógica: Consultar PuntosAcumuladosAnual para el año actual y empresa_id, ordenado por puntos_totales DESC. Unir con Empleados y Usuarios para obtener nombre, cargo. Marcar el top 5.
-o	Optimización: Usar Redis para cachear este resultado.
+	Verificar empleadoReceptorId: [HECHO (Adaptado)]
+	Verificar límites: [PENDIENTE]
+	Crear registro en PuntosAsignados: [HECHO (Adaptado)]
+	Actualizar PuntosAcumuladosAnual: [HECHO (Adaptado) - Actualiza campo 'points' en 'users']
+o	Validación de entrada: [PENDIENTE]
+5.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Historiales (Admin):
+o	GET /api/v1/admin/historial/puntos: [HECHO (Adaptado) - Vista Frontend implementada]
+o	GET /api/v1/admin/historial/canjes: [PENDIENTE]
+6.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Ranking (Admin):
+o	GET /api/v1/admin/ranking: [HECHO (Adaptado) - Vista Frontend implementada]
+o	Lógica: [HECHO (Adaptado) - Consulta Firestore 'users']
+o	Optimización: [PENDIENTE]
 Fase 5: Backend - Funcionalidades Empleado
-•	Nota: Todas las rutas de Empleado deben usar checkRole(['Empleado']) y checkTenant.
-1.	[PENDIENTE] Endpoint API - Dashboard Empleado:
-o	GET /api/v1/empleado/dashboard: Devuelve saldo de puntos actual (de PuntosAcumuladosAnual para el año actual) y quizás últimas 5 transacciones (de PuntosAsignados).
-2.	[PENDIENTE] Endpoint API - Historial de Puntos (Empleado):
-o	GET /api/v1/empleado/historial/puntos: Devuelve historial de puntos recibidos por el empleado (de PuntosAsignados, filtrado por empleado_receptor_id). Paginado.
-3.	[PENDiente] Endpoint API - Catálogo de Recompensas:
-o	GET /api/v1/empleado/recompensas: Lista recompensas activas (esta_activa = true) de su empresa.
-o	Optimización: Cachear con Redis (invalidar si admin modifica recompensas).
-4.	[PENDIENTE] Endpoint API - Canje de Recompensas:
-o	POST /api/v1/empleado/canjear/:recompensaId.
+1.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Dashboard Empleado:
+o	GET /api/v1/empleado/dashboard: [HECHO (Adaptado) - Muestra saldo de puntos desde 'users']
+2.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Historial de Puntos (Empleado):
+o	GET /api/v1/empleado/historial/puntos: [HECHO (Adaptado) - Vista Frontend implementada]
+3.	[HECHO - MVP Firebase] Endpoint API - Catálogo de Recompensas:
+o	GET /api/v1/empleado/recompensas: [HECHO (Adaptado) - Vista Frontend implementada]
+o	Optimización: [PENDIENTE]
+4.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Canje de Recompensas:
+o	POST /api/v1/empleado/canjear/:recompensaId: [HECHO (Adaptado) - Lógica Frontend + Firestore]
 o	Lógica:
-	Verificar que la recompensa existe, está activa y pertenece a la empresa del empleado.
-	Verificar saldo de puntos del empleado (de PuntosAcumuladosAnual) >= puntos_requeridos.
-	Verificar stock (stock > 0 o stock IS NULL).
-	Dentro de una transacción de BD:
-	Decrementar PuntosAcumuladosAnual.puntos_totales.
-	Decrementar Recompensas.stock si no es NULL.
-	Crear registro en Canjes.
-o	Validación.
-5.	[PENDIENTE] Endpoint API - Historial de Canjes (Empleado):
-o	GET /api/v1/empleado/historial/canjes: Devuelve historial de canjes propios del empleado (de Canjes). Paginado.
-6.	[PENDIENTE] Endpoint API - Ranking (Empleado):
-o	GET /api/v1/empleado/ranking: Similar al del Admin (GET /api/v1/admin/ranking), devuelve el ranking anual de su empresa (nombre, cargo, puntos). Marcar top 5. El empleado podrá ver su propia posición y la de sus compañeros.
-o	Optimización: Usar el mismo caché Redis que el Admin.
+	Verificar recompensa: [HECHO (Adaptado)]
+	Verificar saldo: [HECHO (Adaptado)]
+	Verificar stock: [PENDIENTE]
+	Transacción:
+	Decrementar Puntos: [HECHO (Adaptado) - Actualiza campo 'points' en 'users']
+	Decrementar Stock: [PENDIENTE]
+	Crear registro en Canjes: [HECHO (Adaptado)]
+o	Validación: [PENDIENTE]
+5.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Historial de Canjes (Empleado):
+o	GET /api/v1/empleado/historial/canjes: [HECHO (Adaptado) - Vista Frontend implementada]
+6.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Ranking (Empleado):
+o	GET /api/v1/empleado/ranking: [HECHO (Adaptado) - Vista Frontend implementada]
+o	Optimización: [PENDIENTE]
 Fase 6: Frontend - Desarrollo de Interfaces (React + Tailwind)
 •	Nota: Desarrollar componentes reutilizables (botones, inputs, tablas, modales, etc.). Usar Context API o Redux/Zustand para estado global (usuario, rol, tenantId, theme/colores empresa). Usar Axios/Fetch wrapper para API calls (manejo de JWT, errores).
-1.	[PENDIENTE] Configuración Base Frontend:
-o	React Router: Definir rutas públicas y protegidas (wrapper ProtectedRoute que verifique auth y rol).
-o	Gestor de Estado: Configurar provider/store.
-o	API Service: Módulo para llamadas al backend.
-o	Layouts: MainLayout (con Navbar/Sidebar), AuthLayout.
-2.	[PENDIENTE] Flujo de Autenticación UI:
-o	Página Login (botón que redirige a /api/v1/login del backend).
-o	Página/Componente Callback (maneja token recibido del backend, guarda en localStorage/sessionStorage, actualiza estado global).
-o	Manejo de Logout (limpia token, redirige a login).
-3.	[PENDIENTE] Dashboard Manager UI:
-o	Vista Empresas: Tabla (TanStack Table/React Table) con CRUD (modales para crear/editar). Búsqueda/Filtros.
-o	Vista Admins por Empresa: Modal/Vista para listar y asignar/revocar admins.
-o	Dashboard Principal: Tarjetas/Gráficos simples (Chart.js/Recharts) para estadísticas.
-4.	[PENDIENTE] Dashboard Administrador UI:
-o	Vistas CRUD para Empleados, Recompensas, Justificaciones (usando componentes de tabla y modales reutilizables).
-o	Formulario Asignar Puntos: Selector de empleado, selector de justificación, input puntos.
-o	Vistas de Historial (Puntos Asignados, Canjes Empresa): Tablas paginadas.
-o	Vista Ranking: Lista/Tabla resaltando top 5.
-o	Banner/Notificación para Estado de Suscripción (pendiente_pago).
-o	Botón "Generar Reporte IA". Display del resultado JSON.
-o	Estilización: Aplicar color_primario, color_secundario, logo_url de la empresa dinámicamente al layout/componentes.
-5.	[PENDIENTE] Dashboard Empleado UI:
-o	Vista Principal: Mostrar saldo de puntos, últimas transacciones.
-o	Vista Catálogo Recompensas: Cards/Lista con imagen, nombre, puntos. Botón "Canjear" (abre modal de confirmación).
-o	Vistas Historial (Mis Puntos, Mis Canjes): Tablas paginadas.
-o	Vista Ranking: Lista/Tabla mostrando nombre, cargo, puntos de compañeros. Resaltar top 5.
-o	Estilización: Aplicar colores/logo de la empresa.
+1.	[HECHO - MVP Firebase] Configuración Base Frontend:
+o	React Router: [HECHO]
+o	Gestor de Estado: [HECHO] (AuthContext)
+o	API Service: [N/A - MVP Firebase] (Interacción directa con Firebase)
+o	Layouts: [HECHO] (AppLayout)
+2.	[HECHO - MVP Firebase] Flujo de Autenticación UI:
+o	Página Login: [HECHO]
+o	Página/Componente Callback: [N/A - MVP Firebase]
+o	Manejo de Logout: [HECHO]
+3.	[HECHO (Parcial) - MVP Firebase] Dashboard Manager UI:
+o	Vista Empresas: [HECHO (Parcial)] (CRUD Básico)
+o	Vista Admins por Empresa: [PENDIENTE]
+o	Dashboard Principal: [PENDIENTE]
+4.	[HECHO (Parcial) - MVP Firebase] Dashboard Administrador UI:
+o	Vistas CRUD para Empleados, Recompensas: [HECHO (Parcial)] (CRUD Básico)
+o	Vistas CRUD para Justificaciones: [PENDIENTE]
+o	Formulario Asignar Puntos: [HECHO (Parcial)] (Sin justificaciones)
+o	Vistas de Historial (Puntos Asignados): [HECHO (Parcial)] (Básico)
+o	Vistas de Historial (Canjes Empresa): [PENDIENTE]
+o	Vista Ranking: [HECHO (Parcial)] (Básico)
+o	Banner/Notificación para Estado de Suscripción: [PENDIENTE]
+o	Botón "Generar Reporte IA": [PENDIENTE]
+o	Estilización: [PENDIENTE]
+5.	[HECHO (Parcial) - MVP Firebase] Dashboard Empleado UI:
+o	Vista Principal: [HECHO (Parcial)] (Mostrar saldo)
+o	Vista Catálogo Recompensas: [HECHO (Parcial)] (Listar/Canjear Básico)
+o	Vistas Historial (Mis Puntos, Mis Canjes): [HECHO (Parcial)] (Básico)
+o	Vista Ranking: [HECHO (Parcial)] (Básico)
+o	Estilización: [PENDIENTE]
 6.	[PENDIENTE] Diseño Responsivo:
 o	Asegurar que todas las vistas sean usables y estéticas en móviles, tablets y escritorio usando utilidades de Tailwind.
 Fase 7: Funcionalidades Avanzadas y Optimizaciones
@@ -301,4 +244,3 @@ o	Demo completa.
 o	Revisión de código final.
 o	Entrega de accesos y documentación.
 Este plan detallado proporciona una guía exhaustiva. Debería actualizarse (Requerimientos.md) a medida que se completan las tareas o surgen cambios. La comunicación constante será clave para asegurar el éxito del proyecto.
-

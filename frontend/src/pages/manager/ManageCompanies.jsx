@@ -15,6 +15,7 @@ function ManageCompanies() {
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(''); // State for success messages
 
   // State for Edit Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +25,17 @@ function ManageCompanies() {
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState('');
 
+  // Function to clear messages after a delay
+  const clearMessages = () => {
+    setTimeout(() => {
+      setAddError('');
+      setDeleteError('');
+      setListError('');
+      setEditError('');
+      setSuccessMessage('');
+    }, 4000); // Clear after 4 seconds
+  };
+
   // Fetch companies
   useEffect(() => {
     fetchCompanies();
@@ -31,7 +43,7 @@ function ManageCompanies() {
 
   const fetchCompanies = async () => {
     setLoading(true);
-    setListError('');
+    setListError(''); setSuccessMessage(''); // Clear messages on fetch
     try {
       const companiesCol = collection(db, 'companies');
       const companySnapshot = await getDocs(companiesCol);
@@ -40,6 +52,7 @@ function ManageCompanies() {
     } catch (err) {
       console.error("Error fetching companies:", err);
       setListError('Failed to load companies.');
+      clearMessages();
     } finally {
       setLoading(false);
     }
@@ -48,17 +61,19 @@ function ManageCompanies() {
   // Add Company
   const handleAddCompany = async (e) => {
     e.preventDefault();
-    if (!newCompanyName.trim()) { setAddError('Company name cannot be empty.'); return; }
-    setAdding(true); setAddError(''); setDeleteError('');
+    if (!newCompanyName.trim()) { setAddError('Company name cannot be empty.'); clearMessages(); return; }
+    setAdding(true); setAddError(''); setDeleteError(''); setSuccessMessage('');
     try {
       const companiesCol = collection(db, 'companies');
       const newCompanyData = { name: newCompanyName.trim(), status: 'active', createdAt: serverTimestamp() };
       const docRef = await addDoc(companiesCol, newCompanyData);
       setCompanies(prev => [...prev, { id: docRef.id, ...newCompanyData }]);
       setNewCompanyName('');
-      // TODO: Show success Alert
+      setSuccessMessage(`Company "${newCompanyData.name}" added successfully.`);
+      clearMessages();
     } catch (err) {
       console.error("Error adding company:", err); setAddError('Failed to add company.');
+      clearMessages();
     } finally {
       setAdding(false);
     }
@@ -69,23 +84,25 @@ function ManageCompanies() {
     setEditingCompany(company);
     setEditName(company.name);
     setEditStatus(company.status || 'active');
-    setEditError('');
+    setEditError(''); setSuccessMessage(''); // Clear messages when opening modal
     setIsModalOpen(true);
   };
 
   // Edit Company - Save Changes
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    if (!editName.trim() || !editingCompany) { setEditError('Company name cannot be empty.'); return; }
-    setSaving(true); setEditError(''); setListError('');
+    if (!editName.trim() || !editingCompany) { setEditError('Company name cannot be empty.'); clearMessages(); return; }
+    setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
       const companyDocRef = doc(db, 'companies', editingCompany.id);
       await updateDoc(companyDocRef, { name: editName.trim(), status: editStatus });
       setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, name: editName.trim(), status: editStatus } : c));
       closeModal();
-      // TODO: Show success Alert
+      setSuccessMessage(`Company "${editName.trim()}" updated successfully.`);
+      clearMessages();
     } catch (err) {
       console.error("Error updating company:", err); setEditError('Failed to update company.');
+      clearMessages();
     } finally {
       setSaving(false);
     }
@@ -94,16 +111,18 @@ function ManageCompanies() {
   // Delete Company (Logical Delete)
   const handleDeleteClick = async (companyId, companyName) => {
     if (window.confirm(`Are you sure you want to set company "${companyName}" to inactive? This is a logical delete.`)) {
-      setDeleteError(''); setListError(''); // Clear errors
+      setDeleteError(''); setListError(''); setSuccessMessage('');
       // TODO: Add button loading state
       try {
         const companyDocRef = doc(db, 'companies', companyId);
         await updateDoc(companyDocRef, { status: 'inactive' });
         setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, status: 'inactive' } : c));
-        // TODO: Show success Alert
+        setSuccessMessage(`Company "${companyName}" set to inactive.`);
+        clearMessages();
       } catch (err) {
         console.error("Error deleting company (logically):", err);
         setDeleteError(`Failed to set company "${companyName}" to inactive.`);
+        clearMessages();
       }
     }
   };
@@ -134,10 +153,12 @@ function ManageCompanies() {
           {adding ? 'Adding...' : 'Add Company'}
         </Button>
       </form>
-      {/* Use Alert component for errors */}
+
+      {/* Display feedback messages */}
       {addError && <Alert type="error" className="mb-4">{addError}</Alert>}
       {deleteError && <Alert type="error" className="mb-4">{deleteError}</Alert>}
       {listError && <Alert type="error" className="mb-4">{listError}</Alert>}
+      {successMessage && <Alert type="success" className="mb-4">{successMessage}</Alert>}
 
       {/* Companies List */}
       {loading ? (
@@ -172,6 +193,10 @@ function ManageCompanies() {
                          <Button variant="danger" size="sm" onClick={() => handleDeleteClick(company.id, company.name)}>
                            Set Inactive
                          </Button>
+                      )}
+                      {/* Add Activate button if needed */}
+                       {company.status === 'inactive' && (
+                         <Button variant="secondary" size="sm" onClick={() => handleEditClick(company)}>Edit/Activate</Button> // Or a dedicated Activate button
                       )}
                     </td>
                   </tr>
@@ -209,8 +234,6 @@ function ManageCompanies() {
              </form>
          </Modal>
       )}
-
-      {/* Removed <style jsx> block */}
     </div>
   );
 }

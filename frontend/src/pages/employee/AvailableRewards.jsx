@@ -1,23 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, updateDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore'; // Added addDoc, serverTimestamp
+import { collection, query, where, getDocs, doc, updateDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
-import Alert from '../../components/ui/Alert'; // Import Alert
+import Alert from '../../components/ui/Alert';
 
 function AvailableRewards() {
-  const { currentUser, userData, loading: authLoading } = useAuth(); // Added authLoading
+  const { currentUser, userData, loading: authLoading } = useAuth();
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState('');
   const [redeemingId, setRedeemingId] = useState(null);
   const [redeemError, setRedeemError] = useState('');
-  const [redeemSuccess, setRedeemSuccess] = useState(''); // State for success message
+  const [redeemSuccess, setRedeemSuccess] = useState('');
+
+  // Function to clear messages after a delay
+  const clearMessages = () => {
+    setTimeout(() => {
+      setListError('');
+      setRedeemError('');
+      setRedeemSuccess('');
+    }, 4000); // Clear after 4 seconds
+  };
+
 
   // Fetch rewards
   useEffect(() => {
-    // Wait for user data to be available before fetching
     if (authLoading) return;
 
     const fetchRewards = async () => {
@@ -25,7 +34,7 @@ function AvailableRewards() {
         setListError("Employee company information not available."); setLoading(false); return;
       }
       console.log(`AvailableRewards: Fetching rewards for companyId: ${userData.companyId}`);
-      setLoading(true); setListError(''); setRedeemSuccess(''); setRedeemError(''); // Clear messages on fetch
+      setLoading(true); setListError(''); setRedeemSuccess(''); setRedeemError('');
       try {
         const rewardsCol = collection(db, 'rewards');
         const q = query(
@@ -39,56 +48,51 @@ function AvailableRewards() {
         setRewards(list);
       } catch (err) {
         console.error("Error fetching rewards:", err); setListError('Failed to load rewards.');
+        clearMessages();
       } finally {
         setLoading(false);
       }
     };
     fetchRewards();
-  }, [userData?.companyId, authLoading]); // Depend on authLoading and companyId
+  }, [userData?.companyId, authLoading]);
 
   // Handle Redeem Reward
   const handleRedeem = async (rewardId, pointsRequired, rewardName) => {
     setRedeemingId(rewardId); setRedeemError(''); setRedeemSuccess('');
 
     if (!currentUser || !userData) {
-        setRedeemError("User data not available."); setRedeemingId(null); return;
+        setRedeemError("User data not available."); setRedeemingId(null); clearMessages(); return;
     }
     if ((userData.points ?? 0) < pointsRequired) {
-        setRedeemError(`Not enough points to redeem ${rewardName}.`); setRedeemingId(null); return;
+        setRedeemError(`Not enough points to redeem ${rewardName}.`); setRedeemingId(null); clearMessages(); return;
     }
     if (!window.confirm(`Redeem "${rewardName}" for ${pointsRequired} points?`)) {
         setRedeemingId(null); return;
     }
 
     try {
-      // 1. Update user points
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, { points: increment(-pointsRequired) });
 
-      // 2. Create history record in 'canjes' collection
       const historyColRef = collection(db, 'canjes');
       await addDoc(historyColRef, {
-        empleadoId: currentUser.uid,
-        empleadoEmail: currentUser.email,
-        companyId: userData.companyId,
-        recompensaId: rewardId,
-        recompensaNombre: rewardName, // Passed to handleRedeem
-        puntosCosto: pointsRequired,
+        empleadoId: currentUser.uid, empleadoEmail: currentUser.email,
+        companyId: userData.companyId, recompensaId: rewardId,
+        recompensaNombre: rewardName, puntosCosto: pointsRequired,
         fechaCanje: serverTimestamp(),
       });
 
       setRedeemSuccess(`Successfully redeemed ${rewardName}! Points will update soon.`);
+      clearMessages(); // Clear success message after delay
     } catch (err) {
       console.error("Error redeeming reward:", err);
       setRedeemError(`Failed to redeem ${rewardName}. Please try again.`);
+      clearMessages(); // Clear error message after delay
     } finally {
       setRedeemingId(null);
-      // Clear messages after a delay?
-      // setTimeout(() => { setRedeemSuccess(''); setRedeemError(''); }, 5000);
     }
   };
 
-  // Show loading spinner if auth or rewards are loading
   const isLoading = loading || authLoading;
 
   return (
@@ -99,14 +103,12 @@ function AvailableRewards() {
       </p>
 
       {/* Display feedback messages */}
-      {listError && <Alert type="error" className="mb-4">{listError}</Alert>}
-      {redeemError && <Alert type="error" className="mb-4">{redeemError}</Alert>}
-      {redeemSuccess && <Alert type="success" className="mb-4">{redeemSuccess}</Alert>}
+      {listError && <Alert type="error" className="mb-4" onClose={() => setListError('')}>{listError}</Alert>}
+      {redeemError && <Alert type="error" className="mb-4" onClose={() => setRedeemError('')}>{redeemError}</Alert>}
+      {redeemSuccess && <Alert type="success" className="mb-4" onClose={() => setRedeemSuccess('')}>{redeemSuccess}</Alert>}
 
       {isLoading ? (
-        <div className="flex justify-center items-center p-8">
-          <Spinner size="lg" />
-        </div>
+        <div className="flex justify-center items-center p-8"><Spinner size="lg" /></div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {rewards.length === 0 ? (
@@ -114,7 +116,6 @@ function AvailableRewards() {
           ) : (
             rewards.map((reward) => {
               const isActive = reward.isActive !== undefined ? reward.isActive : true;
-              // Filter out inactive rewards here instead of relying solely on the query
               if (!isActive) return null;
 
               const canAfford = (userData?.points ?? 0) >= reward.pointsRequired;
@@ -140,7 +141,6 @@ function AvailableRewards() {
               );
             })
           )}
-          {/* Render message if all rewards were filtered out */}
           {!loading && rewards.filter(r => r.isActive !== false).length === 0 && rewards.length > 0 && (
              <p className="text-gray-500 col-span-full">No *active* rewards currently available.</p>
           )}
