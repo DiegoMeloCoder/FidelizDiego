@@ -4,6 +4,7 @@ import { db } from '../../../firebase/config';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Spinner from '../../../components/ui/Spinner';
 import Alert from '../../../components/ui/Alert';
+import { DocumentTextIcon } from '@heroicons/react/24/outline'; // Optional icon
 
 function PointsHistoryAdmin() {
   const { userData } = useAuth();
@@ -50,54 +51,55 @@ function PointsHistoryAdmin() {
     return date.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
   };
 
-  // Define Tailwind classes for table cells
-  const thStyle = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
-  const tdStyle = "px-6 py-4 whitespace-nowrap text-sm";
+  // Define Tailwind classes for table cells - Refined
+  const thStyle = "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
+  const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
 
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Points Assignment History</h1>
+    <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
+      <h1 className="text-3xl font-bold text-gray-800 flex items-center">
+         <DocumentTextIcon className="h-7 w-7 mr-2 text-indigo-600" /> {/* Optional Icon */}
+         Points Assignment History
+      </h1>
 
-      {error && <Alert type="error" className="mb-4">{error}</Alert>}
+      {error && <Alert type="error">{error}</Alert>}
 
-      {loading ? (
-        <div className="flex justify-center items-center p-8"><Spinner size="lg" /></div>
-      ) : (
-        <div className="overflow-x-auto">
+      {/* History List - Improved Styling */}
+      <div className="overflow-x-auto border border-gray-200 rounded-md">
+        {loading ? (
+          <div className="flex justify-center items-center p-10"><Spinner size="lg" /></div>
+        ) : (
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 <th className={thStyle}>Date</th>
                 <th className={thStyle}>Employee</th>
                 <th className={thStyle}>Amount</th>
-                <th className={thStyle}>Justification</th> {/* Added Column */}
-                <th className={thStyle}>Assigned By</th>
+                <th className={thStyle}>Justification</th>
+                <th className={thStyle}>Assigned By (Admin)</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {history.length === 0 ? (
-                 // Corrected colSpan and className application
-                <tr><td colSpan="5" className={`${tdStyle} text-center text-gray-500`}>No points assignment history found.</td></tr>
+                <tr><td colSpan="5" className={`${tdStyle} text-center text-gray-500 py-6`}>No points assignment history found for this company.</td></tr>
               ) : (
                 history.map((entry) => (
-                  <tr key={entry.id}>
-                     {/* Corrected className application */}
+                  <tr key={entry.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className={`${tdStyle} text-gray-500`}>{formatDate(entry.fechaAsignacion)}</td>
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{entry.empleadoName || entry.empleadoEmail}</td>
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{entry.empleadoName || <span className="text-gray-400 italic">{entry.empleadoEmail}</span>}</td>
                     <td className={`${tdStyle} font-semibold ${entry.cantidad >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {entry.cantidad > 0 ? '+' : ''}{entry.cantidad}
                     </td>
-                    <td className={`${tdStyle} text-gray-700`}>{entry.justificacionTexto || 'N/A'}</td> {/* Display Justification */}
+                    <td className={`${tdStyle} text-gray-700`}>{entry.justificacionTexto || <span className="text-gray-400 italic">N/A</span>}</td>
                     <td className={`${tdStyle} text-gray-500`}>{entry.adminEmail}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
-      )}
-       {/* Removed <style jsx> block */}
+        )}
+      </div>
     </div>
   );
 }

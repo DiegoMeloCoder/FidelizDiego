@@ -8,6 +8,7 @@ import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Spinner from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
+import { PlusIcon, PencilSquareIcon, UserMinusIcon, UserPlusIcon } from '@heroicons/react/24/outline'; // Icons
 
 function ManageEmployees() {
   const { userData: adminUserData } = useAuth();
@@ -186,72 +187,90 @@ function ManageEmployees() {
     setEditIsActive(true);
   };
 
-  // Define Tailwind classes for table cells
-  const thStyle = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
-  const tdStyle = "px-6 py-4 whitespace-nowrap text-sm";
+  // Define Tailwind classes for table cells - Refined
+  const thStyle = "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
+  const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Manage Employees</h1>
+    <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
+      <h1 className="text-3xl font-bold text-gray-800">Manage Employees</h1>
 
-      {/* Add Employee Form */}
-      <form onSubmit={handleAddEmployee} className="mb-6 p-4 border rounded-md bg-gray-50">
-         <h2 className="text-lg font-medium text-gray-700 mb-3">Add New Employee</h2>
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-           <Input type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="Full Name" required />
-           <Input type="email" value={newEmployeeEmail} onChange={(e) => setNewEmployeeEmail(e.target.value)} placeholder="Email Address" required />
-           <Input type="password" value={newEmployeePassword} onChange={(e) => setNewEmployeePassword(e.target.value)} placeholder="Password (min. 6 chars)" required minLength="6" />
+      {/* Add Employee Form - Improved Layout */}
+      <form onSubmit={handleAddEmployee} className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
+         <h2 className="text-lg font-medium text-gray-700">Add New Employee</h2>
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <div>
+             <label htmlFor="new-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+             <Input id="new-employee-name" type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="John Doe" required className="mt-0 w-full"/>
+           </div>
+           <div>
+             <label htmlFor="new-employee-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+             <Input id="new-employee-email" type="email" value={newEmployeeEmail} onChange={(e) => setNewEmployeeEmail(e.target.value)} placeholder="john.doe@company.com" required className="mt-0 w-full"/>
+           </div>
+           <div>
+             <label htmlFor="new-employee-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+             <Input id="new-employee-password" type="password" value={newEmployeePassword} onChange={(e) => setNewEmployeePassword(e.target.value)} placeholder="Min. 6 characters" required minLength="6" className="mt-0 w-full"/>
+           </div>
          </div>
          {/* Use Alert for add errors */}
-         {addError && <Alert type="error" className="mb-2">{addError}</Alert>}
-         <Button type="submit" disabled={adding} variant="primary">
-           {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
-           {adding ? 'Adding...' : 'Add Employee'}
-         </Button>
+         {addError && <Alert type="error">{addError}</Alert>}
+         <div className="flex justify-end">
+           <Button type="submit" disabled={adding} variant="primary" className="inline-flex items-center">
+             {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PlusIcon className="h-5 w-5 mr-1.5"/>}
+             {adding ? 'Adding...' : 'Add Employee'}
+           </Button>
+         </div>
       </form>
 
       {/* Display feedback messages */}
-      {listError && <Alert type="error" className="mb-4">{listError}</Alert>}
-      {successMessage && <Alert type="success" className="mb-4">{successMessage}</Alert>}
+      <div className="space-y-3">
+        {listError && <Alert type="error">{listError}</Alert>}
+        {successMessage && <Alert type="success">{successMessage}</Alert>}
+      </div>
 
-      {/* Employees List */}
-      {loading ? (
-        <div className="flex justify-center items-center p-8"><Spinner size="lg" /></div>
-      ) : (
-        <div className="overflow-x-auto">
+      {/* Employees List - Improved Styling */}
+      <div className="overflow-x-auto border border-gray-200 rounded-md">
+        {loading ? (
+          <div className="flex justify-center items-center p-10"><Spinner size="lg" /></div>
+        ) : (
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead>
               <tr>
                 <th className={thStyle}>Name</th>
                 <th className={thStyle}>Email</th>
                 <th className={thStyle}>Points</th>
                 <th className={thStyle}>Status</th>
-                <th className={`${thStyle} text-right`}>Actions</th>
+                <th className={`${thStyle} text-right pr-6`}>Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {employees.length === 0 ? (
-                <tr><td colSpan="5" className={`${tdStyle} text-center text-gray-500`}>No employees found.</td></tr>
+                <tr><td colSpan="5" className={`${tdStyle} text-center text-gray-500 py-6`}>No employees found for this company.</td></tr>
               ) : (
                 employees.map((employee) => (
-                  <tr key={employee.id}>
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{employee.name || 'N/A'}</td>
+                  <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-150">
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{employee.name || <span className="text-gray-400 italic">No Name</span>}</td>
                     <td className={`${tdStyle} text-gray-500`}>{employee.email}</td>
-                    <td className={`${tdStyle} text-gray-500`}>{employee.points ?? 0}</td>
+                    <td className={`${tdStyle} text-gray-700 font-medium`}>{employee.points ?? 0}</td>
                     <td className={tdStyle}>
-                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                       {/* Improved Status Badge */}
+                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                         employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                       }`}>
                          {employee.isActive ? 'Active' : 'Inactive'}
                        </span>
                     </td>
-                    <td className={`${tdStyle} text-right space-x-2`}>
-                      <Button variant="secondary" size="sm" onClick={() => handleEditClick(employee)}>Edit</Button>
+                    <td className={`${tdStyle} text-right space-x-2 pr-6`}>
+                      <Button variant="secondary" size="sm" onClick={() => handleEditClick(employee)} className="inline-flex items-center">
+                        <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
+                      </Button>
                       {employee.isActive ? (
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(employee.id, employee.name)}>
-                           Set Inactive
+                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(employee.id, employee.name)} className="inline-flex items-center">
+                           <UserMinusIcon className="h-4 w-4 mr-1" /> Set Inactive
                          </Button>
                       ) : (
-                         <Button variant="secondary" size="sm" onClick={() => handleActivateClick(employee.id, employee.name)}>
-                           Set Active
+                         <Button variant="success" size="sm" onClick={() => handleActivateClick(employee.id, employee.name)} className="inline-flex items-center">
+                           <UserPlusIcon className="h-4 w-4 mr-1" /> Set Active
                          </Button>
                       )}
                     </td>
@@ -260,38 +279,38 @@ function ManageEmployees() {
               )}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
 
-       {/* Edit Modal */}
+       {/* Edit Modal - Refined */}
        {isModalOpen && editingEmployee && (
          <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Employee: ${editingEmployee.name || editingEmployee.email}`}>
-             <form onSubmit={handleSaveEdit}>
-                 <div className="mb-4">
+             <form onSubmit={handleSaveEdit} className="space-y-4">
+                 <div>
                      <label htmlFor="edit-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
-                     <Input id="edit-employee-name" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} required />
+                     <Input id="edit-employee-name" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} required className="mt-0 w-full"/>
                  </div>
-                 <div className="mb-4">
+                 <div>
                      <label htmlFor="edit-employee-email" className="block text-sm font-medium text-gray-700 mb-1">Email (Read-only)</label>
-                     <Input id="edit-employee-email" type="email" value={editingEmployee.email} readOnly disabled className="bg-gray-100" />
+                     <Input id="edit-employee-email" type="email" value={editingEmployee.email} readOnly disabled className="bg-gray-100 mt-0 w-full cursor-not-allowed" />
                  </div>
-                 <div className="mb-4">
-                    <label htmlFor="edit-employee-active" className="flex items-center">
+                 <div>
+                    <label htmlFor="edit-employee-active" className="flex items-center cursor-pointer">
                         <input
                             id="edit-employee-active"
                             type="checkbox"
                             checked={editIsActive}
                             onChange={(e) => setEditIsActive(e.target.checked)}
-                            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
                         />
                         <span className="ml-2 text-sm text-gray-700">Active (User can log in)</span>
                     </label>
                  </div>
-                 {editError && <Alert type="error" className="mb-4">{editError}</Alert>}
-                 <div className="flex justify-end space-x-3">
+                 {editError && <Alert type="error">{editError}</Alert>}
+                 <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
                      <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
-                     <Button type="submit" variant="primary" disabled={saving}>
-                       {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : null}
+                     <Button type="submit" variant="primary" disabled={saving} className="inline-flex items-center">
+                       {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PencilSquareIcon className="h-4 w-4 mr-1.5"/>}
                        {saving ? 'Saving...' : 'Save Changes'}
                      </Button>
                  </div>

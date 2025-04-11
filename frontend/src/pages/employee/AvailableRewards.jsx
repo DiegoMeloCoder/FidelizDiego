@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
+import { GiftIcon, StarIcon, CheckCircleIcon } from '@heroicons/react/24/outline'; // Icons
 
 function AvailableRewards() {
   const { currentUser, userData, loading: authLoading } = useAuth();
@@ -94,55 +95,94 @@ function AvailableRewards() {
   };
 
   const isLoading = loading || authLoading;
+  const currentPoints = userData?.points ?? 0;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Available Rewards</h1>
-      <p className="text-gray-600 mb-4">
-        Your current points: <span className="font-semibold">{authLoading ? '...' : (userData?.points ?? 'N/A')}</span>
-      </p>
+    <div className="space-y-6">
+       {/* Header and Points */}
+       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg shadow border border-gray-200">
+         <h1 className="text-3xl font-bold text-gray-800 flex items-center">
+           <GiftIcon className="h-7 w-7 mr-2 text-rose-600" />
+           Available Rewards
+         </h1>
+         <div className="text-right">
+            <p className="text-sm font-medium text-gray-500">Your Points</p>
+            <p className="text-2xl font-bold text-indigo-600 flex items-center justify-end">
+                <StarIcon className="h-5 w-5 mr-1 text-yellow-400"/>
+                {authLoading ? <Spinner size="xs" /> : currentPoints}
+            </p>
+         </div>
+       </div>
+
 
       {/* Display feedback messages */}
-      {listError && <Alert type="error" className="mb-4" onClose={() => setListError('')}>{listError}</Alert>}
-      {redeemError && <Alert type="error" className="mb-4" onClose={() => setRedeemError('')}>{redeemError}</Alert>}
-      {redeemSuccess && <Alert type="success" className="mb-4" onClose={() => setRedeemSuccess('')}>{redeemSuccess}</Alert>}
+      <div className="space-y-3">
+        {listError && <Alert type="error" onClose={() => setListError('')}>{listError}</Alert>}
+        {redeemError && <Alert type="error" onClose={() => setRedeemError('')}>{redeemError}</Alert>}
+        {redeemSuccess && <Alert type="success" onClose={() => setRedeemSuccess('')}>{redeemSuccess}</Alert>}
+      </div>
 
+      {/* Rewards Grid */}
       {isLoading ? (
-        <div className="flex justify-center items-center p-8"><Spinner size="lg" /></div>
+        <div className="flex justify-center items-center p-10"><Spinner size="lg" /></div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {rewards.length === 0 ? (
-            <p className="text-gray-500 col-span-full">No rewards currently available for your company.</p>
+            <p className="text-gray-500 col-span-full text-center py-10">No rewards currently available for your company.</p>
           ) : (
             rewards.map((reward) => {
-              const isActive = reward.isActive !== undefined ? reward.isActive : true;
-              if (!isActive) return null;
+              // Ensure isActive check handles undefined correctly (defaults to true)
+              const isActive = reward.isActive !== false;
+              if (!isActive) return null; // Skip rendering inactive rewards
 
-              const canAfford = (userData?.points ?? 0) >= reward.pointsRequired;
+              const canAfford = currentPoints >= reward.pointsRequired;
               const isRedeemingThis = redeemingId === reward.id;
+
               return (
-                <div key={reward.id} className={`border rounded-lg p-4 flex flex-col justify-between bg-gray-50 shadow-sm`}>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">{reward.name}</h3>
+                // Refined Reward Card
+                <div
+                  key={reward.id}
+                  className={`bg-white border rounded-lg shadow-md flex flex-col overflow-hidden transition-opacity duration-300 ${isRedeemingThis ? 'opacity-70' : ''}`}
+                >
+                  {/* Optional: Add an image placeholder or actual image later */}
+                  {/* <div className="h-32 bg-gray-200 flex items-center justify-center">
+                    <GiftIcon className="h-12 w-12 text-gray-400"/>
+                  </div> */}
+
+                  <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-1 flex-grow">{reward.name}</h3>
+                    <div className="flex items-center text-indigo-600 font-bold text-xl mt-2">
+                       <StarIcon className="h-5 w-5 mr-1 text-yellow-400"/>
+                       {reward.pointsRequired}
+                       <span className="text-sm font-medium text-gray-500 ml-1">Points</span>
+                    </div>
                   </div>
-                  <div className="mt-4 flex justify-between items-center">
-                    <span className="text-indigo-600 font-semibold">{reward.pointsRequired} Points</span>
+
+                  <div className="p-4 bg-gray-50 border-t border-gray-200">
                     <Button
                       onClick={() => handleRedeem(reward.id, reward.pointsRequired, reward.name)}
                       disabled={!canAfford || isRedeemingThis}
-                      variant="primary"
-                      className="bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                      variant={canAfford ? "primary" : "secondary"} // Use primary if affordable
+                      className={`w-full inline-flex items-center justify-center ${
+                        !canAfford ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                      }`}
                       size="sm"
                     >
-                      {isRedeemingThis ? <Spinner size="sm" color="text-white" /> : 'Redeem'}
+                      {isRedeemingThis ? (
+                        <Spinner size="sm" color="text-white" className="mr-2"/>
+                      ) : (
+                        <CheckCircleIcon className="h-5 w-5 mr-1.5" />
+                      )}
+                      {isRedeemingThis ? 'Redeeming...' : (canAfford ? 'Redeem Now' : 'Not Enough Points')}
                     </Button>
                   </div>
                 </div>
               );
             })
           )}
-          {!loading && rewards.filter(r => r.isActive !== false).length === 0 && rewards.length > 0 && (
-             <p className="text-gray-500 col-span-full">No *active* rewards currently available.</p>
+          {/* Message if all fetched rewards are inactive */}
+          {!isLoading && rewards.length > 0 && rewards.every(r => r.isActive === false) && (
+             <p className="text-gray-500 col-span-full text-center py-10">No active rewards currently available.</p>
           )}
         </div>
       )}
