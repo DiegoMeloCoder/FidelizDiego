@@ -5,11 +5,12 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // Adde
 import { db, firebaseConfig } from '../../firebase/config'; // Import firebaseConfig, keep db for Firestore ops
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
+import Papa from 'papaparse'; // Import papaparse
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Spinner from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
-import { PlusIcon, PencilSquareIcon, UserMinusIcon, UserPlusIcon } from '@heroicons/react/24/outline'; // Icons
+import { PlusIcon, PencilSquareIcon, UserMinusIcon, UserPlusIcon, ArrowUpTrayIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'; // Added Icons
 
 function ManageEmployees() {
   const { userData: adminUserData } = useAuth();
@@ -32,6 +33,17 @@ function ManageEmployees() {
   const [editIsActive, setEditIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState('');
+
+  // Bulk Upload State
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [parsedData, setParsedData] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadResults, setUploadResults] = useState({ success: [], errors: [] });
+  const [uploadError, setUploadError] = useState(''); // Error during parsing/validation
+  const [isProcessingComplete, setIsProcessingComplete] = useState(false);
+
 
   // Function to clear messages after a delay
   const clearMessages = () => {
@@ -217,13 +229,220 @@ function ManageEmployees() {
     setEditIsActive(true);
   };
 
+  const closeBulkModal = () => {
+    setIsBulkModalOpen(false);
+    setUploadFile(null);
+    setParsedData([]);
+    setUploading(false);
+    setUploadProgress(0);
+    setUploadResults({ success: [], errors: [] });
+    setUploadError('');
+    setIsProcessingComplete(false);
+  };
+
+  // --- Bulk Upload Handlers ---
+
+  const handleFileChange = (event) => {
+    setUploadError('');
+    setParsedData([]);
+    setIsProcessingComplete(false);
+    setUploadResults({ success: [], errors: [] });
+    const file = event.target.files[0];
+    if (file && file.type === 'text/csv') { // Basic type check
+      setUploadFile(file);
+      // Optionally parse immediately for preview
+      parseFile(file);
+    } else {
+      setUploadFile(null);
+      setUploadError('Please select a valid CSV file.');
+    }
+  };
+
+  const parseFile = (file) => {
+     if (!file) return;
+     setUploadError('');
+     Papa.parse(file, {
+       header: true,
+       skipEmptyLines: true,
+       complete: (results) => {
+         console.log("Parsed CSV Data:", results.data);
+         // Basic Validation
+         if (!results.data || results.data.length === 0) {
+           setUploadError('CSV file is empty or could not be parsed.');
+           setParsedData([]);
+           return;
+         }
+         const headers = Object.keys(results.data[0]);
+         const requiredHeaders = ['Nombre', 'Email']; // Case-sensitive for now
+         const hasRequiredHeaders = requiredHeaders.every(h => headers.includes(h));
+         const hasPasswordHeader = headers.some(h => h.toLowerCase() === 'password' || h.toLowerCase() === 'contraseña');
+
+         if (!hasRequiredHeaders) {
+           setUploadError(`CSV must contain columns: ${requiredHeaders.join(', ')}.`);
+           setParsedData([]);
+           return;
+         }
+         if (hasPasswordHeader) {
+            setUploadError('CSV file must NOT contain a Password/Contraseña column for security reasons.');
+            setParsedData([]);
+            return;
+         }
+
+         // Further validation per row (e.g., valid email format) can be added here or during processing
+         const validData = results.data.filter(row => row.Email && row.Nombre); // Basic check
+         if (validData.length !== results.data.length) {
+             setUploadError('Some rows are missing required Name or Email values.');
+             // Still set parsedData to allow processing valid rows? Or reject whole file?
+             // Let's allow processing valid rows for now.
+         }
+         setParsedData(validData);
+
+       },
+       error: (error) => {
+         console.error("Error parsing CSV:", error);
+         setUploadError(`Error parsing CSV file: ${error.message}`);
+         setParsedData([]);
+       }
+     });
+  };
+
+  // Simple random password generator (for MVP - consider stronger generation later)
+  const generateTemporaryPassword = (length = 10) => {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+    let password = "";
+    for (let i = 0, n = charset.length; i < length; ++i) {
+        password += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return password;
+  }
+
+  const handleBulkUpload = async () => {
+    if (parsedData.length === 0) {
+      setUploadError('No valid employee data to upload.');
+      return;
+    }
+    setUploading(true);
+    setUploadProgress(0);
+    setUploadResults({ success: [], errors: [] });
+    setIsProcessingComplete(false);
+    const total = parsedData.length;
+    let currentSuccess = [];
+    let currentErrors = [];
+
+    for (let i = 0; i < total; i++) {
+      const row = parsedData[i];
+      const name = row.Nombre?.trim();
+      const email = row.Email?.trim();
+
+      if (!name || !email) {
+        currentErrors.push({ email: email || `Row ${i+1}`, error: 'Missing Name or Email' });
+        setUploadProgress(((i + 1) / total) * 100);
+        continue; // Skip this row
+      }
+
+      // Basic email format check (can be improved)
+      if (!/\S+@\S+\.\S+/.test(email)) {
+          currentErrors.push({ email: email, error: 'Invalid Email Format' });
+          setUploadProgress(((i + 1) / total) * 100);
+          continue;
+      }
+
+
+      const tempPassword = generateTemporaryPassword();
+      let tempApp = null;
+      let newUser = null;
+
+      try {
+        const tempAppName = `secondary-bulk-${Date.now()}-${i}`;
+        tempApp = initializeApp(firebaseConfig, tempAppName);
+        const tempAuth = getAuth(tempApp);
+
+        console.log(`Creating user ${i+1}/${total}: ${email}`);
+        const userCredential = await createUserWithEmailAndPassword(tempAuth, email, tempPassword);
+        newUser = userCredential.user;
+
+        const userDocRef = doc(db, 'users', newUser.uid);
+        const newEmployeeData = {
+          email: email, name: name, role: 'Employee',
+          companyId: adminUserData.companyId, points: 0, isActive: true,
+          createdAt: serverTimestamp()
+        };
+        await setDoc(userDocRef, newEmployeeData);
+
+        currentSuccess.push({ email: email, name: name, tempPassword: tempPassword });
+
+      } catch (err) {
+        console.error(`Error adding employee ${email}:`, err);
+        let errorMessage = 'Failed to create user.';
+        if (err.code === 'auth/email-already-in-use') {
+          errorMessage = 'Email already registered.';
+        } else if (err.code === 'auth/weak-password') {
+           // Should not happen with generated password, but include just in case
+           errorMessage = 'Generated password was too weak (unexpected).';
+        }
+        currentErrors.push({ email: email, error: errorMessage });
+      } finally {
+        if (tempApp) {
+          try { await deleteApp(tempApp); } catch (e) { console.error("Error deleting temp app", e); }
+        }
+        // Update progress after each attempt
+        setUploadProgress(((i + 1) / total) * 100);
+         // Optional delay to mitigate rate limits
+         // await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+
+    setUploadResults({ success: currentSuccess, errors: currentErrors });
+    setUploading(false);
+    setIsProcessingComplete(true);
+    // Fetch updated employee list after bulk add
+     fetchEmployees();
+  };
+
+  const handleDownloadCredentials = () => {
+    if (uploadResults.success.length === 0) return;
+
+    // Generate plain text content
+    let textContent = "Fideliz - Bulk Employee Upload Credentials\n";
+    textContent += "========================================\n\n";
+
+    uploadResults.success.forEach(user => {
+      textContent += `Email: ${user.email}\n`;
+      textContent += `Temporary Password: ${user.tempPassword}\n`;
+      textContent += `----------------------------------------\n`;
+    });
+
+    // Create Blob and download link
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "bulk_upload_credentials.txt"); // Change extension to .txt
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+
+    link.click(); // Trigger download
+
+    document.body.removeChild(link); // Clean up
+    URL.revokeObjectURL(url); // Free up memory
+  };
+
+
   // Define Tailwind classes for table cells - Refined
   const thStyle = "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
   const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
-      <h1 className="text-3xl font-bold text-gray-800">Manage Employees</h1>
+       {/* Header Row */}
+       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+         <h1 className="text-3xl font-bold text-gray-800">Manage Employees</h1>
+         <Button onClick={() => setIsBulkModalOpen(true)} variant="secondary" className="w-full sm:w-auto inline-flex items-center justify-center">
+            <ArrowUpTrayIcon className="h-5 w-5 mr-1.5" />
+            Bulk Upload Employees
+         </Button>
+       </div>
+
 
       {/* Add Employee Form - Improved Layout */}
       <form onSubmit={handleAddEmployee} className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
@@ -247,7 +466,7 @@ function ManageEmployees() {
          <div className="flex justify-end">
            <Button type="submit" disabled={adding} variant="primary" className="inline-flex items-center">
              {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PlusIcon className="h-5 w-5 mr-1.5"/>}
-             {adding ? 'Adding...' : 'Add Employee'}
+             {adding ? 'Adding...' : 'Add Single Employee'}
            </Button>
          </div>
       </form>
@@ -335,18 +554,124 @@ function ManageEmployees() {
                         />
                         <span className="ml-2 text-sm text-gray-700">Active (User can log in)</span>
                     </label>
-                 </div>
-                 {editError && <Alert type="error">{editError}</Alert>}
-                 <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
-                     <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
-                     <Button type="submit" variant="primary" disabled={saving} className="inline-flex items-center">
-                       {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PencilSquareIcon className="h-4 w-4 mr-1.5"/>}
-                       {saving ? 'Saving...' : 'Save Changes'}
-                     </Button>
+                  </div>
+                  {editError && <Alert type="error">{editError}</Alert>}
+                  <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
+                      <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
+                      <Button type="submit" variant="primary" disabled={saving} className="inline-flex items-center">
+                        {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PencilSquareIcon className="h-4 w-4 mr-1.5"/>}
+                        {saving ? 'Saving...' : 'Save Changes'}
+                      </Button>
                  </div>
              </form>
          </Modal>
       )}
+
+       {/* Bulk Upload Modal */}
+       <Modal isOpen={isBulkModalOpen} onClose={closeBulkModal} title="Bulk Upload Employees (CSV)">
+         <div className="space-y-4">
+           {!uploading && !isProcessingComplete && (
+             <>
+               <p className="text-sm text-gray-600">
+                 Select a CSV file with columns: <strong>Nombre</strong>, <strong>Email</strong>.
+                 <br />
+                 Do <strong className="text-red-600">NOT</strong> include a password column. Temporary passwords will be generated.
+               </p>
+               <div>
+                 <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700 mb-1">Select CSV File</label>
+                 <input
+                   id="csv-upload"
+                   type="file"
+                   accept=".csv"
+                   onChange={handleFileChange}
+                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                 />
+               </div>
+               {uploadError && <Alert type="error">{uploadError}</Alert>}
+               {parsedData.length > 0 && (
+                 <div className="mt-4 p-3 bg-gray-100 rounded">
+                   <p className="text-sm font-medium text-gray-700">
+                     Found {parsedData.length} valid employee rows to upload.
+                   </p>
+                   {/* Optional: Show preview of first few rows */}
+                 </div>
+               )}
+               <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
+                 <Button type="button" variant="secondary" onClick={closeBulkModal}>Cancel</Button>
+                 <Button
+                   type="button"
+                   variant="primary"
+                   onClick={handleBulkUpload}
+                   disabled={parsedData.length === 0 || uploading}
+                   className="inline-flex items-center"
+                 >
+                   <ArrowUpTrayIcon className="h-5 w-5 mr-1.5" />
+                   Start Upload
+                 </Button>
+               </div>
+             </>
+           )}
+
+           {uploading && (
+             <div className="text-center py-6">
+               <Spinner size="lg" />
+               <p className="mt-3 text-lg font-medium text-gray-700">Uploading Employees...</p>
+               <p className="text-sm text-gray-500">Progress: {uploadProgress.toFixed(0)}%</p>
+               {/* Progress Bar */}
+               <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                 <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+               </div>
+             </div>
+           )}
+
+           {isProcessingComplete && (
+             <div>
+               <h3 className="text-lg font-medium text-gray-900 mb-3">Upload Complete</h3>
+               {uploadResults.success.length > 0 && (
+                 <div className="mb-4">
+                   <h4 className="text-md font-semibold text-green-700 mb-2">Successfully Created ({uploadResults.success.length}):</h4>
+                   <div className="max-h-40 overflow-y-auto border rounded p-2 bg-green-50 text-xs space-y-1">
+                     {uploadResults.success.map((s, index) => (
+                       <p key={index}>
+                         <strong>{s.name}</strong> ({s.email}) - Temp Password: <code className="bg-gray-200 px-1 rounded">{s.tempPassword}</code>
+                       </p>
+                     ))}
+                   </div>
+                    <p className="text-xs text-orange-600 mt-2"><strong>Important:</strong> Please securely distribute these temporary passwords to the respective employees.</p>
+                 </div>
+               )}
+               {uploadResults.errors.length > 0 && (
+                 <div className="mb-4">
+                   <h4 className="text-md font-semibold text-red-700 mb-2">Errors ({uploadResults.errors.length}):</h4>
+                   <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
+                     {uploadResults.errors.map((e, index) => (
+                       <li key={index}><strong>{e.email}:</strong> {e.error}</li>
+                     ))}
+                    </ul>
+                  </div>
+                )}
+                 {/* Download Button */}
+                 {uploadResults.success.length > 0 && (
+                    <div className="mt-4">
+                       <Button
+                         type="button"
+                         variant="outline"
+                         onClick={handleDownloadCredentials}
+                         className="inline-flex items-center"
+                       >
+                         <ArrowDownTrayIcon className="h-5 w-5 mr-1.5" />
+                         Download Credentials (.csv)
+                          </Button>
+                      </div>
+                   )}
+                  <div className="pt-4 flex justify-end border-t border-gray-200 mt-4">
+                    <Button type="button" variant="secondary" onClick={closeBulkModal}>Close</Button>
+                  </div>
+                </div>
+           )}
+         </div>
+       </Modal>
+
     </div>
   );
 }

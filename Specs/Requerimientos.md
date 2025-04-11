@@ -51,7 +51,13 @@ o	[HECHO - Firestore] Recompensas: (Colección 'rewards')
 	pointsRequired: (number)
 	isActive: (boolean)
 	createdAt: (timestamp)
-o	[PENDIENTE] JustificacionesPuntos:
+o	[HECHO (Adaptado) - MVP Firebase] JustificacionesPuntos: (Colección 'justificacionesPuntos' creada manualmente, gestionada por Admin)
+    *   id: ID de Documento Firestore
+    *   textoJustificacion: (string)
+    *   companyId: (string, ref a `companies`, null para globales)
+    *   estaActiva: (boolean)
+    *   esPredeterminada: (boolean, indica si es global/default)
+    *   createdAt: (timestamp)
 o	[HECHO - Firestore] PuntosAsignados: (Colección 'puntosAsignados')
 	id: ID de Documento Firestore
 	adminId: (string, UID)
@@ -62,6 +68,8 @@ o	[HECHO - Firestore] PuntosAsignados: (Colección 'puntosAsignados')
 	companyId: (string, ref a `companies`)
 	cantidad: (number)
 	fechaAsignacion: (timestamp)
+    *   justificacionId: (string, ref a `justificacionesPuntos`)
+    *   justificacionTexto: (string)
 o	[HECHO - Firestore] Canjes: (Colección 'canjes')
 	id: ID de Documento Firestore
 	empleadoId: (string, UID)
@@ -78,7 +86,7 @@ o	Roles: (Implícito en 'users')
 o	Usuarios: Manager, Admin, Empleado creados manualmente.
 o	Empresas: 'Empresa Demo' creada manualmente.
 o	Empleados: (Info en 'users')
-o	JustificacionesPuntos: [PENDIENTE]
+o	JustificacionesPuntos: [HECHO (Manual) - MVP Firebase] Justificaciones globales creadas manualmente.
 Fase 2: Backend - Autenticación, Autorización y Core API
 1.	[HECHO (Adaptado) - MVP Firebase] Integración Auth0: (Usando Firebase Auth Email/Password)
 2.	[HECHO (Adaptado) - MVP Firebase] Middleware Core Backend: (Lógica implementada en Frontend: `ProtectedRoute`, `AuthContext`)
@@ -92,31 +100,40 @@ o	POST /: [HECHO (Adaptado)] Crear nueva empresa (nombre, estado).
 o	GET /: [HECHO (Adaptado)] Listar todas las empresas.
 o	GET /:empresaId: [PENDIENTE]
 o	PUT /:empresaId: [HECHO (Adaptado)] Actualizar empresa (nombre, estado).
-o	DELETE /:empresaId: [HECHO (Adaptado)] Desactivar empresa (lógico).
-2.	[PENDIENTE] Endpoints API - Gestión de Administradores:
-3.	[PENDIENTE] Endpoints API - Dashboard Manager:
+o	DELETE /:empresaId: [HECHO (Adaptado)] Activar/Desactivar empresa (lógico).
+2.	[HECHO (Adaptado) - MVP Firebase] Endpoints API - Gestión de Administradores: (Implementado en Frontend + Firestore)
+o	POST /: [HECHO (Adaptado)] Crear nuevo admin (email, nombre, password, companyId). (Logout solucionado MVP)
+o	GET /: [HECHO (Adaptado)] Listar todos los admins.
+o	PUT /:adminId: [HECHO (Adaptado)] Actualizar admin (nombre, isActive).
+o	DELETE /:adminId: [HECHO (Adaptado)] Activar/Desactivar admin (lógico).
+3.	[HECHO (Adaptado) - MVP Firebase] Endpoints API - Dashboard Manager: (Implementado en Frontend + Firestore - Stats básicas)
 Fase 4: Backend - Funcionalidades Administrador
 1.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Gestión de Empleados (CRUD): (Implementado en Frontend + Firestore)
-o	POST /: [HECHO (Adaptado)] Crear nuevo empleado (email, nombre, password). (Con limitación de logout)
+o	POST /: [HECHO (Adaptado)] Crear nuevo empleado (email, nombre, password). (Logout solucionado MVP)
 o	POST /bulk-upload: [PENDIENTE]
 o	GET /: [HECHO (Adaptado)] Listar empleados de su empresa.
 o	GET /:empleadoId: [PENDIENTE]
 o	PUT /:empleadoId: [HECHO (Adaptado)] Actualizar empleado (nombre, isActive).
-o	DELETE /:empleadoId: [HECHO (Adaptado)] Desactivar empleado (lógico).
+o	DELETE /:empleadoId: [HECHO (Adaptado)] Activar/Desactivar empleado (lógico).
 2.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Gestión de Recompensas (CRUD): (Implementado en Frontend + Firestore)
 o	POST /: [HECHO (Adaptado)] Crear recompensa (nombre, puntos).
 o	GET /: [HECHO (Adaptado)] Listar recompensas de su empresa.
 o	GET /:recompensaId: [PENDIENTE]
 o	PUT /:recompensaId: [HECHO (Adaptado)] Actualizar recompensa (nombre, puntos, isActive).
-o	DELETE /:recompensaId: [HECHO (Adaptado)] Desactivar/Activar recompensa (lógico).
-3.	[PENDIENTE] Endpoints API - Gestión de Justificaciones (CRUD):
+o	DELETE /:recompensaId: [HECHO (Adaptado)] Activar/Desactivar recompensa (lógico).
+3.	[HECHO (Adaptado) - MVP Firebase] Endpoints API - Gestión de Justificaciones (CRUD): (Implementado en Frontend + Firestore)
+o	POST /: [HECHO (Adaptado)] Crear justificación específica de empresa.
+o	GET /: [HECHO (Adaptado)] Listar justificaciones globales y de empresa.
+o	PUT /:justificacionId: [HECHO (Adaptado)] Actualizar texto/estado de justificación de empresa.
+o	DELETE /:justificacionId: [HECHO (Adaptado)] Activar/Desactivar justificación de empresa (lógico).
 4.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Asignación/Deducción de Puntos: (Implementado en Frontend + Firestore)
 o	POST /api/v1/admin/puntos/asignar: [HECHO (Adaptado)]
-o	Body: { empleadoReceptorId, cantidad }: [HECHO (Adaptado)]
+o	Body: { empleadoReceptorId, cantidad, justificacionId }: [HECHO (Adaptado) - Justificación integrada]
 o	Lógica:
 	Verificar empleadoReceptorId: [HECHO (Adaptado)]
+	Verificar justificacionId: [HECHO (Adaptado)]
 	Verificar límites: [PENDIENTE]
-	Crear registro en PuntosAsignados: [HECHO (Adaptado)]
+	Crear registro en PuntosAsignados: [HECHO (Adaptado) - Incluye justificación]
 	Actualizar PuntosAcumuladosAnual: [HECHO (Adaptado) - Actualiza campo 'points' en 'users']
 o	Validación de entrada: [PENDIENTE]
 5.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Historiales (Admin):
@@ -156,33 +173,33 @@ Fase 6: Frontend - Desarrollo de Interfaces (React + Tailwind)
 o	React Router: [HECHO]
 o	Gestor de Estado: [HECHO] (AuthContext)
 o	API Service: [N/A - MVP Firebase] (Interacción directa con Firebase)
-o	Layouts: [HECHO] (AppLayout)
+o	Layouts: [HECHO] (AppLayout - Refinado)
 2.	[HECHO - MVP Firebase] Flujo de Autenticación UI:
-o	Página Login: [HECHO]
+o	Página Login: [HECHO - Refinado]
 o	Página/Componente Callback: [N/A - MVP Firebase]
 o	Manejo de Logout: [HECHO]
-3.	[HECHO (Parcial) - MVP Firebase] Dashboard Manager UI:
-o	Vista Empresas: [HECHO (Parcial)] (CRUD Básico)
-o	Vista Admins por Empresa: [PENDIENTE]
-o	Dashboard Principal: [PENDIENTE]
-4.	[HECHO (Parcial) - MVP Firebase] Dashboard Administrador UI:
-o	Vistas CRUD para Empleados, Recompensas: [HECHO (Parcial)] (CRUD Básico)
-o	Vistas CRUD para Justificaciones: [PENDIENTE]
-o	Formulario Asignar Puntos: [HECHO (Parcial)] (Sin justificaciones)
-o	Vistas de Historial (Puntos Asignados): [HECHO (Parcial)] (Básico)
+3.	[HECHO - MVP Firebase] Dashboard Manager UI:
+o	Vista Empresas: [HECHO (Adaptado) - Refinado] (CRUD Básico)
+o	Vista Admins por Empresa: [HECHO (Adaptado) - MVP Firebase]
+o	Dashboard Principal: [HECHO (Adaptado) - Refinado] (Stats básicas)
+4.	[HECHO - MVP Firebase] Dashboard Administrador UI:
+o	Vistas CRUD para Empleados, Recompensas: [HECHO (Adaptado) - Refinado] (CRUD Básico)
+o	Vistas CRUD para Justificaciones: [HECHO (Adaptado) - MVP Firebase]
+o	Formulario Asignar Puntos: [HECHO (Adaptado) - Refinado] (Con justificaciones)
+o	Vistas de Historial (Puntos Asignados): [HECHO (Adaptado) - Refinado] (Básico)
 o	Vistas de Historial (Canjes Empresa): [PENDIENTE]
-o	Vista Ranking: [HECHO (Parcial)] (Básico)
+o	Vista Ranking: [HECHO (Adaptado) - Refinado] (Básico)
 o	Banner/Notificación para Estado de Suscripción: [PENDIENTE]
 o	Botón "Generar Reporte IA": [PENDIENTE]
-o	Estilización: [PENDIENTE]
-5.	[HECHO (Parcial) - MVP Firebase] Dashboard Empleado UI:
-o	Vista Principal: [HECHO (Parcial)] (Mostrar saldo)
-o	Vista Catálogo Recompensas: [HECHO (Parcial)] (Listar/Canjear Básico)
-o	Vistas Historial (Mis Puntos, Mis Canjes): [HECHO (Parcial)] (Básico)
-o	Vista Ranking: [HECHO (Parcial)] (Básico)
-o	Estilización: [PENDIENTE]
+o	Estilización: [HECHO (MVP)]
+5.	[HECHO - MVP Firebase] Dashboard Empleado UI:
+o	Vista Principal: [HECHO (Adaptado) - Refinado] (Mostrar saldo, links rápidos)
+o	Vista Catálogo Recompensas: [HECHO (Adaptado) - Refinado] (Listar/Canjear Básico)
+o	Vistas Historial (Mis Puntos, Mis Canjes): [HECHO (Adaptado) - Refinado] (Básico)
+o	Vista Ranking: [HECHO (Adaptado) - Refinado] (Básico)
+o	Estilización: [HECHO (MVP)]
 6.	[PENDIENTE] Diseño Responsivo:
-o	Asegurar que todas las vistas sean usables y estéticas en móviles, tablets y escritorio usando utilidades de Tailwind.
+o	Asegurar que todas las vistas sean usables y estéticas en móviles, tablets y escritorio usando utilidades de Tailwind. (Revisión básica hecha, pendiente revisión dedicada)
 Fase 7: Funcionalidades Avanzadas y Optimizaciones
 1.	[PENDIENTE] Backend - Carga Masiva de Empleados (Admin):
 o	Endpoint POST /api/v1/admin/empleados/bulk-upload que acepte archivo CSV/Excel.
@@ -212,11 +229,11 @@ o	Pruebas unitarias para servicios/lógica compleja (cálculo límites, canje, r
 o	Pruebas de integración para endpoints API críticos (CRUDs, asignación/canje, auth/authz, multi-tenant).
 o	Apuntar a una cobertura razonable (>70-80% para lógica core).
 2.	[PENDIENTE] Pruebas Frontend (Opcional pero recomendado):
-o	Pruebas unitarias para componentes complejos o utils (Jest + React Testing Library).
+o	Pruebas unitarias para componentes complejos o utils (Jest + React Testing Library). (Configuración Jest iniciada pero no usada)
 o	Pruebas E2E (Cypress/Playwright) para flujos críticos (login, asignación, canje).
-3.	[PENDIENTE] Refinamiento UI/UX:
-o	Revisiones de usabilidad.
-o	Ajustes de estilos Tailwind. Performance (lazy loading componentes/rutas).
+3.	[HECHO (MVP)] Refinamiento UI/UX:
+o	Revisiones de usabilidad (implícitas en desarrollo iterativo).
+o	Ajustes de estilos Tailwind (realizados). Performance (lazy loading componentes/rutas) [PENDIENTE].
 4.	[PENDIENTE] Configuración AWS para Producción:
 o	RDS (PostgreSQL): Configurar instancia, backups, security group.
 o	EC2 (Backend): Crear instancia/ASG, configurar Nginx/PM2, security group.
