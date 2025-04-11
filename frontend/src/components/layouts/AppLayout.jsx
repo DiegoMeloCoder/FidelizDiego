@@ -49,12 +49,15 @@ function AppLayout() {
               <Link to="/admin" className={`${linkBaseClasses} ${isActive('/admin') ? activeLinkClasses : ''}`}>Dashboard</Link>
               <Link to="/admin/employees" className={`${linkBaseClasses} ${isActive('/admin/employees') ? activeLinkClasses : ''}`}>Employees</Link>
               <Link to="/admin/rewards" className={`${linkBaseClasses} ${isActive('/admin/rewards') ? activeLinkClasses : ''}`}>Rewards</Link>
+              <Link to="/admin/history/points" className={`${linkBaseClasses} ${isActive('/admin/history/points') ? activeLinkClasses : ''}`}>Points History</Link> {/* Added History Link */}
             </>
           )}
+          {/* Corrected closing brace placement */}
           {userData?.role === 'Employee' && (
             <>
               <Link to="/employee" className={`${linkBaseClasses} ${isActive('/employee') ? activeLinkClasses : ''}`}>Dashboard</Link>
               <Link to="/employee/rewards" className={`${linkBaseClasses} ${isActive('/employee/rewards') ? activeLinkClasses : ''}`}>Rewards Catalog</Link>
+              <Link to="/employee/history" className={`${linkBaseClasses} ${isActive('/employee/history') ? activeLinkClasses : ''}`}>My History</Link> {/* Added History Link */}
             </>
           )}
         </nav>

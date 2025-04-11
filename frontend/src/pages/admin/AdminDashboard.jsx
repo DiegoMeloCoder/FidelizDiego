@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore'; // Added addDoc, serverTimestamp
 import { db } from '../../firebase/config';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -84,12 +84,35 @@ function AdminDashboard() {
     // Basic MVP check - no limits enforced here yet
     setAssigning(true); setAssignError('');
     try {
+      // Find selected employee details for logging
+      const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
+      if (!selectedEmployee) {
+        setAssignError('Selected employee data not found.');
+        setAssigning(false);
+        return;
+      }
+
+      // 1. Update employee points
       const employeeDocRef = doc(db, 'users', selectedEmployeeId);
-      // Use increment for atomic update
       await updateDoc(employeeDocRef, {
         points: increment(points)
       });
-      alert(`Successfully assigned ${points} points!`);
+
+      // 2. Create history record
+      const historyColRef = collection(db, 'puntosAsignados');
+      await addDoc(historyColRef, {
+        adminId: currentUser.uid,
+        adminEmail: currentUser.email,
+        empleadoId: selectedEmployeeId,
+        empleadoEmail: selectedEmployee.email, // Get from fetched employee data
+        empleadoName: selectedEmployee.name || '', // Get from fetched employee data
+        companyId: userData.companyId,
+        cantidad: points,
+        fechaAsignacion: serverTimestamp(),
+        // justificacionTexto: 'MVP Assignment' // Optional: Add justification later
+      });
+
+      alert(`Successfully assigned ${points} points to ${selectedEmployee.name || selectedEmployee.email}!`);
       closeModal();
     } catch (err) {
       console.error("Error assigning points:", err);

@@ -14,10 +14,12 @@ import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import ManageCompanies from './pages/manager/ManageCompanies'; // Import ManageCompanies
 import AdminDashboard from './pages/admin/AdminDashboard';
-import ManageEmployees from './pages/admin/ManageEmployees'; // Import ManageEmployees
-import ManageRewards from './pages/admin/ManageRewards'; // Import ManageRewards
+import ManageEmployees from './pages/admin/ManageEmployees';
+import ManageRewards from './pages/admin/ManageRewards';
+import PointsHistoryAdmin from './pages/admin/history/PointsHistoryAdmin';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
-import AvailableRewards from './pages/employee/AvailableRewards'; // Import AvailableRewards
+import AvailableRewards from './pages/employee/AvailableRewards';
+import HistoryEmployee from './pages/employee/history/HistoryEmployee'; // Import Employee History
 
 function App() {
   const { currentUser, userData, loading } = useAuth();
@@ -89,6 +91,7 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="employees" element={<ManageEmployees />} />
           <Route path="rewards" element={<ManageRewards />} />
+          <Route path="history/points" element={<PointsHistoryAdmin />} /> {/* Add History Route */}
           {/* Add more admin routes here */}
         </Route>
 
@@ -102,6 +105,7 @@ function App() {
         >
           <Route index element={<EmployeeDashboard />} />
           <Route path="rewards" element={<AvailableRewards />} />
+          <Route path="history" element={<HistoryEmployee />} /> {/* Add History Route */}
           {/* Add more employee routes here */}
         </Route>
 

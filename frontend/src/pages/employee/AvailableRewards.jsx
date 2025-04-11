@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore'; // Added addDoc, serverTimestamp
 import { db } from '../../firebase/config';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
@@ -61,10 +61,23 @@ function AvailableRewards() {
     }
 
     try {
+      // 1. Update user points
       const userDocRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userDocRef, { points: increment(-pointsRequired) });
+
+      // 2. Create history record in 'canjes' collection
+      const historyColRef = collection(db, 'canjes');
+      await addDoc(historyColRef, {
+        empleadoId: currentUser.uid,
+        empleadoEmail: currentUser.email,
+        companyId: userData.companyId,
+        recompensaId: rewardId,
+        recompensaNombre: rewardName, // Passed to handleRedeem
+        puntosCosto: pointsRequired,
+        fechaCanje: serverTimestamp(),
+      });
+
       setRedeemSuccess(`Successfully redeemed ${rewardName}! Points will update soon.`);
-      // TODO: Add record to 'Canjes' collection
     } catch (err) {
       console.error("Error redeeming reward:", err);
       setRedeemError(`Failed to redeem ${rewardName}. Please try again.`);
