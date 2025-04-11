@@ -16,6 +16,7 @@ import ManageCompanies from './pages/manager/ManageCompanies'; // Import ManageC
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageEmployees from './pages/admin/ManageEmployees';
 import ManageRewards from './pages/admin/ManageRewards';
+import ManageJustifications from './pages/admin/ManageJustifications'; // Import ManageJustifications
 import PointsHistoryAdmin from './pages/admin/history/PointsHistoryAdmin';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import AvailableRewards from './pages/employee/AvailableRewards';
@@ -92,9 +93,9 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="employees" element={<ManageEmployees />} />
           <Route path="rewards" element={<ManageRewards />} />
+          <Route path="justifications" element={<ManageJustifications />} /> {/* Add Justifications Route */}
           <Route path="history/points" element={<PointsHistoryAdmin />} />
           <Route path="ranking" element={<RankingPage />} /> {/* Add Ranking Route */}
-          {/* Add more admin routes here */}
         </Route>
 
         <Route

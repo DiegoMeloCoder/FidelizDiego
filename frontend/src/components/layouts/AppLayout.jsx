@@ -10,6 +10,7 @@ import {
   BuildingOffice2Icon, // Companies / Company Info
   UsersIcon, // Employees / Users
   GiftIcon, // Rewards
+  DocumentMagnifyingGlassIcon, // Justifications
   ClipboardDocumentListIcon, // History / Lists
   ChartBarIcon, // Ranking
   ArrowLeftOnRectangleIcon, // Logout
@@ -94,6 +95,9 @@ function AppLayout() {
             </Link>
             <Link to="/admin/rewards" className={`${linkBaseClasses} ${isActive('/admin/rewards') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <GiftIcon className={`${iconClasses} ${isActive('/admin/rewards') ? activeIconClasses : ''}`} /> Rewards
+            </Link>
+            <Link to="/admin/justifications" className={`${linkBaseClasses} ${isActive('/admin/justifications') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
+              <DocumentMagnifyingGlassIcon className={`${iconClasses} ${isActive('/admin/justifications') ? activeIconClasses : ''}`} /> Justifications
             </Link>
             <Link to="/admin/history/points" className={`${linkBaseClasses} ${isActive('/admin/history/points') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <ClipboardDocumentListIcon className={`${iconClasses} ${isActive('/admin/history/points') ? activeIconClasses : ''}`} /> Points History
