@@ -76,22 +76,22 @@
         *   [HECHO] Implementados endpoints CRUD para Admins (`/api/v1/admins`).
         *   [PENDIENTE] Implementar endpoint Dashboard Manager (`GET /api/v1/manager/dashboard`).
         *   **[HECHO] Refactor Frontend:** Actualizados `ManageCompanies.jsx` y `ManageAdmins.jsx`.
-    3.  **[HECHO - Parcial] Endpoints Administrador:**
+    3.  **[HECHO] Endpoints Administrador:**
         *   [HECHO] Implementados endpoints CRUD para Empleados (`/api/v1/employees`).
-        *   [PENDIENTE] Implementar endpoint optimizado para carga masiva (`POST /api/v1/employees/bulk-upload`).
+        *   [HECHO] Implementado endpoint para carga masiva (`POST /api/v1/employees/bulk-upload`).
         *   [HECHO] Implementados endpoints CRUD para Recompensas (`/api/v1/rewards`).
         *   [HECHO] Implementados endpoints CRUD para Justificaciones (`/api/v1/justifications`).
         *   [HECHO] Implementado endpoint para Asignar Puntos (`POST /api/v1/points/assign`).
-        *   [PENDIENTE] Implementar endpoints de Historial Admin (`GET /api/v1/admin/history/points`, `GET /api/v1/admin/history/redemptions`).
-        *   [PENDIENTE] Implementar endpoint de Ranking Admin (`GET /api/v1/admin/ranking`).
-        *   **[HECHO - Parcial] Refactor Frontend:** Actualizados `ManageEmployees.jsx`, `ManageRewards.jsx`, `ManageJustifications.jsx`, `AdminDashboard.jsx` (para asignar puntos). Pendiente carga masiva, historiales, ranking.
-    4.  **[HECHO - Parcial] Endpoints Empleado:**
+        *   [HECHO] Implementados endpoints de Historial Admin (`GET /api/v1/history/admin/points`). [PENDIENTE] `GET /api/v1/admin/history/redemptions`.
+        *   [HECHO] Implementado endpoint de Ranking (`GET /api/v1/history/ranking`).
+        *   **[HECHO] Refactor Frontend:** Actualizados `ManageEmployees.jsx` (incluye bulk upload), `ManageRewards.jsx`, `ManageJustifications.jsx`, `AdminDashboard.jsx` (asignar puntos), `PointsHistoryAdmin.jsx`, `RankingPage.jsx`. Pendiente historial canjes admin.
+    4.  **[HECHO] Endpoints Empleado:**
         *   [PENDIENTE] Implementar endpoint Dashboard Empleado (`GET /api/v1/employee/dashboard`).
-        *   [HECHO] Endpoint para listar Recompensas Disponibles (`GET /api/v1/rewards` ya lo cubre, filtrado por rol en controlador).
+        *   [HECHO] Endpoint para listar Recompensas Disponibles (`GET /api/v1/rewards`).
         *   [HECHO] Implementado endpoint para Canjear Recompensa (`POST /api/v1/redemptions/rewards/:rewardId/redeem`).
-        *   [PENDIENTE] Implementar endpoints de Historial Empleado (`GET /api/v1/employee/history/points`, `GET /api/v1/employee/history/redemptions`).
-        *   [PENDIENTE] Implementar endpoint de Ranking Empleado (`GET /api/v1/employee/ranking`).
-        *   **[PENDIENTE] Refactor Frontend:** Actualizar `src/pages/employee/*`.
+        *   [HECHO] Implementados endpoints de Historial Empleado (`GET /api/v1/history/employee/points`, `GET /api/v1/history/employee/redemptions`).
+        *   [HECHO] Implementado endpoint de Ranking (`GET /api/v1/history/ranking`).
+        *   **[HECHO] Refactor Frontend:** Actualizados `EmployeeDashboard.jsx` (usa AuthContext), `AvailableRewards.jsx`, `HistoryEmployee.jsx`, `RankingPage.jsx`.
     5.  **Limpieza Firebase:** Una vez migrada toda la funcionalidad, eliminar gradualmente las llamadas directas a Firestore y las reglas de seguridad asociadas que ya no sean necesarias. Mantener Firebase Auth.
 
 ---

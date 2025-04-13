@@ -55,7 +55,14 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: true,
       },
-      // Considerar añadir campos como 'description', 'imageUrl', 'stock', etc. si es necesario
+      stock: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // null = infinito
+        validate: {
+          min: 0 // El stock no puede ser negativo
+        }
+      },
+      // Considerar añadir campos como 'description', 'imageUrl', etc. si es necesario
       // createdAt y updatedAt son añadidos automáticamente
     },
     {

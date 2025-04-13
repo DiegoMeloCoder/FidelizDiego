@@ -12,7 +12,12 @@ router.get(
     statsController.getAdminDashboardStats
 );
 
-// TODO: Añadir ruta para stats del Manager si es necesario
-// router.get('/manager', authenticate, authorize('Manager'), statsController.getManagerDashboardStats);
+// Ruta para obtener estadísticas del dashboard del Manager
+router.get(
+    '/manager',
+    authenticate,
+    authorize('Manager'), // Solo Manager puede acceder
+    statsController.getManagerDashboardStats
+);
 
 module.exports = router;

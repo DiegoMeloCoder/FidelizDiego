@@ -22,6 +22,17 @@ const assignPoints = async (req, res) => {
      return res.status(400).send({ message: 'El ID de justificación debe ser un número.' });
   }
 
+  // --- Validación de Límites por Transacción ---
+  const MAX_POINTS_ASSIGN = 1000; // Límite superior
+  const MIN_POINTS_ASSIGN = -500; // Límite inferior (para quitar puntos)
+
+  if (pointsAmount > MAX_POINTS_ASSIGN) {
+      return res.status(400).send({ message: `No se pueden asignar más de ${MAX_POINTS_ASSIGN} puntos en una sola transacción.` });
+  }
+  if (pointsAmount < MIN_POINTS_ASSIGN) {
+      return res.status(400).send({ message: `No se pueden quitar más de ${Math.abs(MIN_POINTS_ASSIGN)} puntos en una sola transacción.` });
+  }
+
   let transaction; // Variable para la transacción
 
   try {

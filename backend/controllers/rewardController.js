@@ -3,7 +3,8 @@ const { Reward } = require('../models');
 // Crear una nueva recompensa (solo Admin)
 const createReward = async (req, res) => {
   const adminCompanyId = req.dbUser.companyId;
-  const { nombre, pointsRequired } = req.body;
+  // Incluir stock (opcional)
+  const { nombre, pointsRequired, stock } = req.body;
 
   if (!nombre || pointsRequired === undefined) {
     return res.status(400).send({ message: 'Nombre y puntos requeridos son obligatorios.' });
@@ -11,16 +12,26 @@ const createReward = async (req, res) => {
   if (!adminCompanyId) {
      return res.status(403).send({ message: 'El administrador no tiene una compañía asignada.' });
   }
-  if (isNaN(parseInt(pointsRequired)) || parseInt(pointsRequired) <= 0) {
+  const points = parseInt(pointsRequired);
+  if (isNaN(points) || points <= 0) {
     return res.status(400).send({ message: 'Los puntos requeridos deben ser un número positivo.' });
+  }
+  // Validar stock si se proporciona
+  let stockValue = null; // Default a infinito
+  if (stock !== undefined && stock !== null && stock !== '') {
+      stockValue = parseInt(stock);
+      if (isNaN(stockValue) || stockValue < 0) {
+          return res.status(400).send({ message: 'El stock debe ser un número entero no negativo (o dejar vacío para infinito).' });
+      }
   }
 
   try {
     const newReward = await Reward.create({
       nombre,
-      pointsRequired: parseInt(pointsRequired),
-      companyId: adminCompanyId, // Asociar a la compañía del Admin
-      isActive: true, // Por defecto activa
+      pointsRequired: points,
+      companyId: adminCompanyId,
+      isActive: true,
+      stock: stockValue, // Guardar valor de stock (puede ser null)
     });
     res.status(201).json(newReward);
   } catch (error) {
@@ -83,13 +94,31 @@ const getRewardById = async (req, res) => {
 // Se usa checkTenant en la ruta
 const updateReward = async (req, res) => {
   const { rewardId } = req.params;
-  const { nombre, pointsRequired, isActive } = req.body;
+  // Incluir stock en los campos a actualizar
+  const { nombre, pointsRequired, isActive, stock } = req.body;
 
-  if (nombre === undefined && pointsRequired === undefined && isActive === undefined) {
-     return res.status(400).send({ message: 'Se requiere al menos un campo (nombre, pointsRequired o isActive) para actualizar.' });
+  if (nombre === undefined && pointsRequired === undefined && isActive === undefined && stock === undefined) {
+     return res.status(400).send({ message: 'Se requiere al menos un campo (nombre, pointsRequired, isActive o stock) para actualizar.' });
   }
-  if (pointsRequired !== undefined && (isNaN(parseInt(pointsRequired)) || parseInt(pointsRequired) <= 0)) {
-    return res.status(400).send({ message: 'Los puntos requeridos deben ser un número positivo.' });
+
+  let pointsValue;
+  if (pointsRequired !== undefined) {
+      pointsValue = parseInt(pointsRequired);
+      if (isNaN(pointsValue) || pointsValue <= 0) {
+          return res.status(400).send({ message: 'Los puntos requeridos deben ser un número positivo.' });
+      }
+  }
+
+  let stockValue;
+  if (stock !== undefined) {
+      if (stock === null || stock === '') {
+          stockValue = null; // Establecer a infinito
+      } else {
+          stockValue = parseInt(stock);
+          if (isNaN(stockValue) || stockValue < 0) {
+              return res.status(400).send({ message: 'El stock debe ser un número entero no negativo (o dejar vacío/null para infinito).' });
+          }
+      }
   }
 
   try {
@@ -101,8 +130,9 @@ const updateReward = async (req, res) => {
 
     // Actualizar campos
     if (nombre !== undefined) reward.nombre = nombre;
-    if (pointsRequired !== undefined) reward.pointsRequired = parseInt(pointsRequired);
+    if (pointsValue !== undefined) reward.pointsRequired = pointsValue;
     if (isActive !== undefined) reward.isActive = isActive;
+    if (stock !== undefined) reward.stock = stockValue; // Actualizar stock (puede ser null)
 
     await reward.save();
     res.status(200).json(reward);

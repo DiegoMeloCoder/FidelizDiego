@@ -17,6 +17,7 @@ import {
   ArrowLeftOnRectangleIcon, // Logout
   Bars3Icon, // Menu Open
   XMarkIcon, // Menu Close
+  ArchiveBoxIcon, // Icon for Redemption History <--- Añadido
 } from '@heroicons/react/24/outline'; // Using outline style
 
 function AppLayout() {
@@ -105,6 +106,10 @@ function AppLayout() {
             </Link>
             <Link to="/admin/history/points" className={`${linkBaseClasses} ${isActive('/admin/history/points') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <ClipboardDocumentListIcon className={`${iconClasses} ${isActive('/admin/history/points') ? activeIconClasses : ''}`} /> Points History
+            </Link>
+            {/* Añadir enlace para Historial de Canjes Admin */}
+            <Link to="/admin/history/redemptions" className={`${linkBaseClasses} ${isActive('/admin/history/redemptions') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
+              <ArchiveBoxIcon className={`${iconClasses} ${isActive('/admin/history/redemptions') ? activeIconClasses : ''}`} /> Redemption History
             </Link>
             <Link to="/admin/ranking" className={`${linkBaseClasses} ${isActive('/admin/ranking') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <ChartBarIcon className={`${iconClasses} ${isActive('/admin/ranking') ? activeIconClasses : ''}`} /> Ranking

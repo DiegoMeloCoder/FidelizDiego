@@ -29,9 +29,10 @@ const redeemReward = async (req, res) => {
     });
 
     const reward = await Reward.findByPk(parseInt(rewardId), {
-      attributes: ['id', 'pointsRequired', 'companyId', 'isActive', 'nombre'],
+      // Incluir stock en los atributos a traer
+      attributes: ['id', 'pointsRequired', 'companyId', 'isActive', 'nombre', 'stock'],
       transaction,
-      lock: transaction.LOCK.UPDATE // Bloquear fila de la recompensa (por si cambia estado/puntos)
+      lock: transaction.LOCK.UPDATE // Bloquear fila de la recompensa
     });
 
     // 2. Validar existencia, pertenencia a compañía y estado activo
@@ -52,7 +53,13 @@ const redeemReward = async (req, res) => {
        return res.status(400).send({ message: 'Esta recompensa no está activa actualmente.' });
     }
 
-    // 3. Validar si el empleado tiene suficientes puntos
+    // 3. Validar stock (si no es null)
+    if (reward.stock !== null && reward.stock <= 0) {
+        await transaction.rollback();
+        return res.status(400).send({ message: `Recompensa "${reward.nombre}" agotada.` });
+    }
+
+    // 4. Validar si el empleado tiene suficientes puntos
     if (employee.points < reward.pointsRequired) {
       await transaction.rollback();
       return res.status(400).send({ message: `Puntos insuficientes. Necesitas ${reward.pointsRequired} puntos y tienes ${employee.points}.` });
@@ -67,14 +74,22 @@ const redeemReward = async (req, res) => {
       fechaCanje: new Date(),
     }, { transaction });
 
-    // 5. Decrementar los puntos del empleado
+    // 5. Decrementar stock si es finito
+    if (reward.stock !== null) {
+        await Reward.decrement(
+            { stock: 1 },
+            { where: { id: reward.id }, transaction }
+        );
+    }
+
+    // 6. Decrementar los puntos del empleado
     // Usamos decrement para seguridad
     await User.decrement(
         { points: reward.pointsRequired },
         { where: { id: employee.id }, transaction }
     );
 
-    // 6. Confirmar la transacción
+    // 7. Confirmar la transacción
     await transaction.commit();
 
     // Devolver el registro del canje y el nuevo saldo

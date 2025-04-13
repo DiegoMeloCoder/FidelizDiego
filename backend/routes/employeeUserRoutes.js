@@ -12,6 +12,7 @@ router.use(authenticate, authorize('Admin'));
 
 // Rutas CRUD para Employees (operando dentro de la compañía del Admin)
 router.get('/', employeeUserController.getAllEmployeesByCompany);
+router.get('/:employeeId', employeeUserController.getEmployeeById); // Ruta para obtener uno específico
 router.post('/', employeeUserController.createEmployee);
 router.put('/:employeeId', employeeUserController.updateEmployee); // employeeId es el UID de Firebase
 router.patch('/:employeeId/toggle-status', employeeUserController.toggleEmployeeStatus); // employeeId es el UID de Firebase

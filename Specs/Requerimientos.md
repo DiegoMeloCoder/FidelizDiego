@@ -25,6 +25,8 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
     *   [HECHO] ESLint y Prettier configurados para backend.
     *   [HECHO - Existente] ESLint configurado para frontend.
 
+    
+
 **Fase 1: Diseño Detallado de la Base de Datos y Modelos Core [HECHO]**
 *   Objetivo: Definir una estructura de BD robusta en PostgreSQL.
 *   Tecnología: **PostgreSQL + Sequelize ORM**.
@@ -62,10 +64,10 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 3.  [PENDIENTE] Endpoints API - Dashboard Manager:
     *   [PENDIENTE] Endpoint `GET /api/v1/manager/dashboard`.
 
-**Fase 4: Backend - Funcionalidades Administrador [HECHO - Parcial]**
+**Fase 4: Backend - Funcionalidades Administrador [HECHO]**
 1.  [HECHO] Endpoints API - Gestión de Empleados (CRUD):
     *   [HECHO] Endpoints `GET /`, `POST /`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/employees`.
-    *   [PENDIENTE] Endpoint optimizado `POST /api/v1/employees/bulk-upload`. (Frontend usa POST individual por ahora).
+    *   [HECHO] Endpoint `POST /api/v1/employees/bulk-upload` implementado.
     *   [PENDIENTE] Endpoint `GET /:empleadoId`.
 2.  [HECHO] Endpoints API - Gestión de Recompensas (CRUD):
     *   [HECHO] Endpoints `GET /`, `POST /`, `GET /:id`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/rewards`.
@@ -74,16 +76,18 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 4.  [HECHO] Endpoint API - Asignación/Deducción de Puntos:
     *   [HECHO] Endpoint `POST /api/v1/points/assign` implementado con lógica transaccional.
     *   [PENDIENTE] Validación de límites.
-5.  [HECHO - Parcial] Endpoints API - Historiales (Admin):
+5.  [HECHO] Endpoints API - Historiales (Admin):
     *   [HECHO] Endpoint `GET /api/v1/history/admin/points` implementado.
-    *   [PENDIENTE] Endpoint `GET /api/v1/admin/history/redemptions`.
-6.  [HECHO - Parcial] Endpoint API - Ranking (Admin):
+    *   [HECHO] Endpoint `GET /api/v1/history/admin/redemptions` implementado.
+6.  [HECHO] Endpoint API - Ranking (Admin):
     *   [HECHO] Endpoint `GET /api/v1/history/ranking` implementado (cubre Admin y Employee).
+7.  [HECHO] Endpoint API - Estadísticas Dashboard (Admin):
+    *   [HECHO] Endpoint `GET /api/v1/stats/admin` implementado.
 
 **Fase 5: Backend - Funcionalidades Empleado [HECHO - Parcial]**
 1.  [PENDIENTE] Endpoint API - Dashboard Empleado:
     *   [PENDIENTE] `GET /api/v1/employee/dashboard`.
-2.  [HECHO - Parcial] Endpoint API - Historial de Puntos (Empleado):
+2.  [HECHO] Endpoint API - Historial de Puntos (Empleado):
     *   [HECHO] Endpoint `GET /api/v1/history/employee/points` implementado.
 3.  [HECHO] Endpoint API - Catálogo de Recompensas:
     *   [HECHO] Cubierto por `GET /api/v1/rewards` (filtrado por rol/estado en controlador).
@@ -91,12 +95,12 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 4.  [HECHO] Endpoint API - Canje de Recompensas:
     *   [HECHO] Endpoint `POST /api/v1/redemptions/rewards/:rewardId/redeem` implementado con lógica transaccional.
     *   [PENDIENTE] Validación de stock.
-5.  [HECHO - Parcial] Endpoint API - Historial de Canjes (Empleado):
+5.  [HECHO] Endpoint API - Historial de Canjes (Empleado):
     *   [HECHO] Endpoint `GET /api/v1/history/employee/redemptions` implementado.
-6.  [HECHO - Parcial] Endpoint API - Ranking (Empleado):
+6.  [HECHO] Endpoint API - Ranking (Empleado):
     *   [HECHO] Endpoint `GET /api/v1/history/ranking` implementado (cubre Admin y Employee).
 
-**Fase 6: Frontend - Desarrollo de Interfaces (React + Tailwind) [EN PROGRESO]**
+**Fase 6: Frontend - Desarrollo de Interfaces (React + Tailwind) [HECHO - Parcial]**
 *   Nota: Usar Context API (`AuthContext`) y Axios (`apiClient`).
 1.  [HECHO] Configuración Base Frontend:
     *   [HECHO] React Router.
@@ -112,13 +116,14 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
     *   [HECHO] Vista Admins (`ManageAdmins.jsx` refactorizada para API).
     *   [HECHO] Dashboard Principal (`ManagerDashboard.jsx` refactorizado para API).
 4.  [HECHO] Dashboard Administrador UI:
-    *   [HECHO] Vistas CRUD Empleados (`ManageEmployees.jsx` refactorizada para API, excepto bulk optimizado).
+    *   [HECHO] Vistas CRUD Empleados (`ManageEmployees.jsx` refactorizada para API, incluyendo bulk upload).
     *   [HECHO] Vistas CRUD Recompensas (`ManageRewards.jsx` refactorizada para API).
     *   [HECHO] Vistas CRUD Justificaciones (`ManageJustifications.jsx` refactorizada para API).
     *   [HECHO] Formulario Asignar Puntos (`AdminDashboard.jsx` modal refactorizado para API).
     *   [HECHO] Vistas de Historial (Puntos Asignados) (`PointsHistoryAdmin.jsx` refactorizada para API).
-    *   [PENDIENTE] Vistas de Historial (Canjes Empresa).
+    *   [HECHO] Vistas de Historial (Canjes Empresa) (`RedemptionHistoryAdmin.jsx` creada y usa API).
     *   [HECHO] Vista Ranking (`RankingPage.jsx` refactorizada para API).
+    *   [HECHO] Estadísticas Dashboard (`AdminDashboard.jsx` refactorizado para API).
     *   [PENDIENTE] Banner/Notificación para Estado de Suscripción.
     *   [PENDIENTE] Botón "Generar Reporte IA".
 5.  [HECHO] Dashboard Empleado UI:
@@ -129,9 +134,7 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 6.  [PENDIENTE] Diseño Responsivo: Revisión dedicada pendiente.
 
 **Fase 7: Funcionalidades Avanzadas y Optimizaciones [PENDIENTE]**
-1.  [PENDIENTE] Backend - Carga Masiva de Empleados Optimizada (Admin):
-    *   [PENDIENTE] Endpoint `POST /api/v1/employees/bulk-upload`.
-    *   [PENDIENTE] Refactorizar frontend para usar nuevo endpoint.
+1.  [PENDIENTE] Backend - Carga Masiva de Empleados Optimizada (Admin): (Endpoint actual funciona, pero se puede optimizar).
 2.  [PENDIENTE] Backend - Integración OpenAI para Reportes (Admin).
 3.  [PENDIENTE] Implementación Redis Cache.
 4.  [PENDIENTE] Backend - Job Programado (Reseteo Anual / Estado Suscripción).
