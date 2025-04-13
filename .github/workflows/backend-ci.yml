@@ -1,0 +1,46 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, develop ] # Ajusta las ramas según tu flujo
+    paths:
+      - 'backend/**' # Ejecutar solo si hay cambios en el backend
+  pull_request:
+    branches: [ main, develop ] # Ajusta las ramas según tu flujo
+    paths:
+      - 'backend/**' # Ejecutar solo si hay cambios en el backend
+
+jobs:
+  lint-and-test: # Puedes separar lint y test en jobs diferentes si prefieres
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x] # Usa la misma versión de Node que en tu Dockerfile
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json # Especifica la ruta del lockfile
+
+    - name: Install dependencies
+      working-directory: ./backend # Especifica el directorio de trabajo
+      run: npm ci
+
+    - name: Run linters
+      working-directory: ./backend
+      run: npm run lint
+
+    # - name: Run tests # Descomentar cuando tengas tests configurados
+    #   working-directory: ./backend
+    #   run: npm test
+
+    # - name: Build (Opcional, si tuvieras un paso de build)
+    #   working-directory: ./backend
+    #   run: npm run build --if-present

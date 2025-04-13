@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase/config'; // Ensure db is exported from config
+// Firestore imports removed
+import apiClient from '../../services/api'; // Import API client
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import Spinner from '../../components/ui/Spinner'; // Import Spinner
+import Spinner from '../../components/ui/Spinner';
 import { BuildingOffice2Icon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'; // Icons for stats
 
 function ManagerDashboard() {
@@ -16,13 +16,12 @@ function ManagerDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const companiesCol = collection(db, 'companies');
-        const companySnapshot = await getDocs(companiesCol);
-        const companyList = companySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setCompanies(companyList);
+        // Fetch companies using API
+        const response = await apiClient.get('/companies');
+        setCompanies(response.data); // API returns the list directly
       } catch (err) {
         console.error("Error fetching companies:", err);
-        setError('Failed to load company data.');
+        setError(err.message || 'Failed to load company data.');
       } finally {
         setLoading(false);
       }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '../../../firebase/config';
+// Firestore imports removed
+import apiClient from '../../../services/api'; // Import API client
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Spinner from '../../../components/ui/Spinner';
 import Alert from '../../../components/ui/Alert';
@@ -14,7 +14,8 @@ function PointsHistoryAdmin() {
 
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!userData?.companyId) {
+      // Use nested company ID check
+      if (!userData?.company?.id) {
         setError("Admin company information not available.");
         setLoading(false);
         return;
@@ -22,22 +23,18 @@ function PointsHistoryAdmin() {
       setLoading(true);
       setError('');
       try {
-        const historyCol = collection(db, 'puntosAsignados');
-        const q = query(
-          historyCol,
-          where('companyId', '==', userData.companyId),
-          orderBy('fechaAsignacion', 'desc')
-        );
-        const snapshot = await getDocs(q);
-        const list = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          fechaAsignacion: doc.data().fechaAsignacion?.toDate()
+        // Fetch history using API
+        const response = await apiClient.get('/history/admin/points');
+        // Convert date string from API to Date object for formatting
+        const list = response.data.map(entry => ({
+          ...entry,
+          // Assuming fechaAsignacion comes as an ISO string from backend
+          fechaAsignacion: entry.fechaAsignacion ? new Date(entry.fechaAsignacion) : null
         }));
         setHistory(list);
       } catch (err) {
         console.error("Error fetching points history:", err);
-        setError('Failed to load points assignment history.');
+        setError(err.message || 'Failed to load points assignment history.');
       } finally {
         setLoading(false);
       }
@@ -87,12 +84,14 @@ function PointsHistoryAdmin() {
                 history.map((entry) => (
                   <tr key={entry.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className={`${tdStyle} text-gray-500`}>{formatDate(entry.fechaAsignacion)}</td>
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{entry.empleadoName || <span className="text-gray-400 italic">{entry.empleadoEmail}</span>}</td>
+                    {/* Use data included from backend (employee.nombre, employee.email) */}
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{entry.employee?.nombre || <span className="text-gray-400 italic">{entry.employee?.email || 'N/A'}</span>}</td>
                     <td className={`${tdStyle} font-semibold ${entry.cantidad >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {entry.cantidad > 0 ? '+' : ''}{entry.cantidad}
                     </td>
                     <td className={`${tdStyle} text-gray-700`}>{entry.justificacionTexto || <span className="text-gray-400 italic">N/A</span>}</td>
-                    <td className={`${tdStyle} text-gray-500`}>{entry.adminEmail}</td>
+                    {/* Use data included from backend (admin.nombre, admin.email) */}
+                    <td className={`${tdStyle} text-gray-500`}>{entry.admin?.nombre || entry.admin?.email || 'N/A'}</td>
                   </tr>
                 ))
               )}

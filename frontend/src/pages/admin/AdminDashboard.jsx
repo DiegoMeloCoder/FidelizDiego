@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, increment, addDoc, serverTimestamp,getCountFromServer } from 'firebase/firestore'; // Added getCountFromServer
-import { db } from '../../firebase/config';
+// Firestore imports removed
+import apiClient from '../../services/api'; // Import API client
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -10,11 +10,11 @@ import Alert from '../../components/ui/Alert';
 import { UsersIcon, GiftIcon, PlusCircleIcon } from '@heroicons/react/24/outline'; // Icons
 
 function AdminDashboard() {
-  const { currentUser, userData } = useAuth();
-  const [companyName, setCompanyName] = useState('');
-  const [loadingCompany, setLoadingCompany] = useState(true);
-  const [stats, setStats] = useState({ employeeCount: 0, rewardCount: 0 });
-  const [loadingStats, setLoadingStats] = useState(true);
+  const { currentUser, userData, loading: authLoading } = useAuth(); // userData now contains company info { id, nombre, status }
+  // const [companyName, setCompanyName] = useState(''); // No longer needed, use userData.company.nombre
+  // const [loadingCompany, setLoadingCompany] = useState(true); // No longer needed
+  const [stats, setStats] = useState({ employeeCount: 0, rewardCount: 0 }); // Initialize with 0 or null
+  const [loadingStats, setLoadingStats] = useState(true); // Start loading stats
   const [statsError, setStatsError] = useState('');
 
   // State for Assign Points Modal
@@ -28,132 +28,77 @@ function AdminDashboard() {
   const [assignError, setAssignError] = useState('');
   const [loadingModalData, setLoadingModalData] = useState(false);
 
-  // Fetch company name
+  // Fetch company name - Removed, now comes from userData.company.nombre
+
+  // Fetch stats - Ahora usa la API
   useEffect(() => {
-    const fetchCompanyName = async () => {
-      if (userData?.companyId) {
-        setLoadingCompany(true);
-        const companyDocRef = doc(db, 'companies', userData.companyId);
-        try {
-          const companyDocSnap = await getDoc(companyDocRef);
-          setCompanyName(companyDocSnap.exists() ? companyDocSnap.data().name : 'Unknown Company');
-        } catch (error) {
-          console.error("Error fetching company name:", error);
-          setCompanyName('Error loading name');
-        } finally {
-          setLoadingCompany(false);
-        }
-      } else {
-        setLoadingCompany(false);
-        setCompanyName('No Company Assigned');
-      }
-    };
-
     const fetchStats = async () => {
-      if (userData?.companyId) {
-        setLoadingStats(true);
-        setStatsError('');
+      // Depend on userData being loaded and having a company ID
+      if (userData?.company?.id) {
+          setLoadingStats(true); // Set loading true before fetch
+          setStatsError('');
         try {
-          // Use getCountFromServer for efficiency
-          const usersCol = collection(db, 'users');
-          const empQuery = query(
-            usersCol,
-            where('role', '==', 'Employee'),
-            where('companyId', '==', userData.companyId),
-            where('isActive', '!=', false) // Count active or undefined/null isActive
-          );
-          const empCountSnapshot = await getCountFromServer(empQuery);
-          const employeeCount = empCountSnapshot.data().count;
-
-          const rewardsCol = collection(db, 'rewards');
-            const rewardQuery = query(
-              rewardsCol,
-              where('companyId', '==', userData.companyId),
-              where('isActive', '==', true) // Revert back to counting only explicitly true isActive
-            );
-            const rewardCountSnapshot = await getCountFromServer(rewardQuery);
-          const rewardCount = rewardCountSnapshot.data().count;
-
-          setStats({ employeeCount, rewardCount });
-
+          // Llamar al nuevo endpoint de estadísticas del admin
+          const response = await apiClient.get('/stats/admin');
+          setStats(response.data); // Guardar los datos recibidos (employeeCount, rewardCount)
         } catch (error) {
            console.error("Error fetching dashboard stats:", error);
-           setStatsError('Failed to load dashboard statistics.');
+           setStatsError(error.message || 'Failed to load dashboard statistics.');
+           setStats({ employeeCount: 'Err', rewardCount: 'Err' }); // Indicate error in stats
         } finally {
            setLoadingStats(false);
         }
       } else {
-        setLoadingStats(false); // No company ID, no stats to load
+        // Handle case where user data might not have company info yet or failed load
+        setLoadingStats(false);
+        if (!authLoading) { // Only set error if auth has finished loading
+             setStatsError("User company data not available to fetch stats.");
+        }
       }
     };
-
-    fetchCompanyName();
-    fetchStats();
-  }, [userData?.companyId]);
+    // Fetch stats only if userData is available and not authLoading
+    if (userData && !authLoading) {
+        fetchStats();
+    } else if (!authLoading && !userData) {
+        // Handle case where user data failed to load in AuthContext
+        setLoadingStats(false);
+        setStatsError("User data not available to fetch stats.");
+    }
+    // If authLoading is true, we wait for userData
+  }, [userData, authLoading]); // Depender de userData y authLoading
 
 
   // Fetch employees and justifications when modal is opened
   useEffect(() => {
     const fetchModalData = async () => {
-      if (isModalOpen && userData?.companyId) {
+      // Use nested company ID
+      if (isModalOpen && userData?.company?.id) {
         setLoadingModalData(true); setAssignError(''); setEmployees([]); setJustifications([]);
         try {
-          // Fetch Employees (only active)
-          const usersCol = collection(db, 'users');
-          const empQuery = query(
-            usersCol,
-            where('role', '==', 'Employee'),
-            where('companyId', '==', userData.companyId)
-            // where('isActive', '==', true) // Remove this strict filter
-          );
-          const empSnapshot = await getDocs(empQuery);
-          // Filter client-side: show if isActive is true or undefined/null
-          const empList = empSnapshot.docs
-                .map(doc => ({ id: doc.id, ...doc.data() }))
-                .filter(emp => emp.isActive !== false);
-          setEmployees(empList);
-          if (empList.length > 0) setSelectedEmployeeId(empList[0].id);
+          // Fetch Employees using API (already filters by company and role)
+          const empResponse = await apiClient.get('/employees');
+          // Filter only active employees for selection
+          const activeEmpList = empResponse.data.filter(emp => emp.isActive !== false);
+          setEmployees(activeEmpList);
+          if (activeEmpList.length > 0) setSelectedEmployeeId(activeEmpList[0].id);
 
-          // Fetch Justifications using two separate queries and combining
-          const justCol = collection(db, 'justificacionesPuntos');
-          const globalJustQuery = query(
-            justCol,
-            where('companyId', '==', null),
-            where('estaActiva', '==', true)
-          );
-          const companyJustQuery = query(
-            justCol,
-            where('companyId', '==', userData.companyId),
-            where('estaActiva', '==', true)
-          );
-
-          const [globalSnapshot, companySnapshot] = await Promise.all([
-             getDocs(globalJustQuery),
-             getDocs(companyJustQuery)
-          ]);
-
-          const globalList = globalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          const companyList = companySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-          // Combine lists (add company-specific ones first for potential preference)
-          const combinedList = [...companyList, ...globalList];
-          // Optional: Remove duplicates if needed, though unlikely with this structure
-          // const uniqueList = Array.from(new Map(combinedList.map(item => [item.id, item])).values());
-
-          setJustifications(combinedList);
-           if (combinedList.length > 0) setSelectedJustificationId(combinedList[0].id);
+          // Fetch Justifications using API (backend returns globals + company specific)
+          const justResponse = await apiClient.get('/justifications');
+          // Filter only active justifications for selection
+          const activeJustList = justResponse.data.filter(jus => jus.estaActiva !== false);
+          setJustifications(activeJustList);
+           if (activeJustList.length > 0) setSelectedJustificationId(activeJustList[0].id);
 
         } catch (err) {
           console.error("Error fetching modal data:", err);
-          // Firestore might require indexes for the justification queries now
-          setAssignError('Failed to load data for modal. Check console for index errors.');
+          setAssignError(err.message || 'Failed to load data for modal.');
         } finally {
           setLoadingModalData(false);
         }
       }
     };
     fetchModalData();
-  }, [isModalOpen, userData?.companyId]);
+  }, [isModalOpen, userData?.company?.id]); // Depend on companyId as well
 
   // Handle Assign Points Submission
   const handleAssignPoints = async (e) => {
@@ -165,31 +110,21 @@ function AdminDashboard() {
     }
     setAssigning(true); setAssignError('');
     try {
-      const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
-      const selectedJustification = justifications.find(jus => jus.id === selectedJustificationId);
-
-      if (!selectedEmployee || !selectedJustification) {
-        setAssignError('Selected employee or justification data not found.'); setAssigning(false); return;
-      }
-
-      const employeeDocRef = doc(db, 'users', selectedEmployeeId);
-      await updateDoc(employeeDocRef, { points: increment(points) });
-
-      const historyColRef = collection(db, 'puntosAsignados');
-      await addDoc(historyColRef, {
-        adminId: currentUser.uid, adminEmail: currentUser.email,
-        empleadoId: selectedEmployeeId, empleadoEmail: selectedEmployee.email,
-        empleadoName: selectedEmployee.name || '', companyId: userData.companyId,
-        cantidad: points, fechaAsignacion: serverTimestamp(),
-        justificacionId: selectedJustificationId,
-        justificacionTexto: selectedJustification.textoJustificacion
+      // Call backend API to assign points
+      const response = await apiClient.post('/points/assign', {
+        empleadoId: selectedEmployeeId,
+        cantidad: points,
+        justificacionId: parseInt(selectedJustificationId), // Ensure ID is integer
       });
 
-      alert(`Successfully assigned ${points} points to ${selectedEmployee.name || selectedEmployee.email}!`);
+      // Optionally update local state or show success based on response
+      const assignedData = response.data;
+      const employeeName = employees.find(e => e.id === selectedEmployeeId)?.nombre || 'employee';
+      alert(`Successfully assigned ${assignedData.assignment.cantidad} points to ${employeeName}! New balance: ${assignedData.employeeNewBalance}`);
       closeModal();
     } catch (err) {
       console.error("Error assigning points:", err);
-      setAssignError('Failed to assign points.');
+      setAssignError(err.message || 'Failed to assign points.');
     } finally {
       setAssigning(false);
     }
@@ -213,7 +148,8 @@ function AdminDashboard() {
             Admin Dashboard
           </h1>
           <p className="text-gray-600 mt-1">
-            {loadingCompany ? <Spinner size="xs" /> : companyName}
+            {/* Display company name from userData */}
+            {userData?.company?.nombre || (userData ? 'No Company Assigned' : <Spinner size="xs" />)}
           </p>
         </div>
         <Button onClick={openModal} variant="primary" className="w-full sm:w-auto inline-flex items-center justify-center">
@@ -225,7 +161,7 @@ function AdminDashboard() {
        {/* Stats Section */}
        {loadingStats && <div className="flex justify-center p-10"><Spinner /></div>}
        {statsError && <Alert type="error">{statsError}</Alert>}
-       {!loadingStats && !statsError && userData?.companyId && (
+       {!loadingStats && !statsError && userData?.company?.id && (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
            {/* Active Employees Card */}
            <div className="bg-white p-5 rounded-lg shadow border border-gray-200 flex items-center space-x-4">
@@ -250,6 +186,12 @@ function AdminDashboard() {
            </div>
          </div>
        )}
+       {/* No longer need the placeholder message, loading state handles it */}
+       {/* {!loadingStats && !statsError && userData?.company?.id && stats.employeeCount === 'N/A' && (
+          <div className="bg-gray-50 p-4 rounded-md border border-gray-200 text-center text-gray-500">
+            Statistics will be available soon.
+          </div>
+       )} */}
 
       {/* Welcome Message (Optional) */}
       {/* <p className="text-gray-600 text-lg">
@@ -280,7 +222,8 @@ function AdminDashboard() {
                 >
                   {/* Optional: Add a default disabled option */}
                   {/* <option value="" disabled>-- Select an employee --</option> */}
-                  {employees.map(emp => (<option key={emp.id} value={emp.id}>{emp.name || emp.email}</option>))}
+                  {/* Mostrar nombre si existe, si no, email */}
+                  {employees.map(emp => (<option key={emp.id} value={emp.id}>{emp.nombre || emp.email}</option>))}
                 </select>
               </div>
               {/* Justification Select */}

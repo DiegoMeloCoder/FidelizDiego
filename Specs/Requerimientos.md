@@ -2,262 +2,147 @@ Plan de Desarrollo Extenso y Detallado por Fases (Para IA y Desarrollador Humano
 Este plan sirve como la fuente de verdad para el desarrollo completo, asegurando contexto, estructura y atención al detalle, especialmente en la base de datos.
 Proyecto: Fideliz - Plataforma SaaS de Fidelización (Versión Completa)
 Principios: Calidad, Escalabilidad, Seguridad, Pruebas, UX/UI Moderna, Documentación.
-Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, Auth0/JWT, Redis, OpenAI, AWS, Docker, GitHub Actions, Jest, Joi/Express-validator.
+Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Redis, OpenAI, AWS, Docker, GitHub Actions, Jest
 
-Fase 0: Configuración Inicial y Fundamentos
-1.	[HECHO (Parcial) - MVP Firebase] Repositorio y Estructura del Proyecto:
-o	[HECHO] Crear repositorio monorepo o multi-repo (backend/frontend) en GitHub. (Repositorio Creado y Conectado)
-o	Definir estructura de carpetas clara y escalable:
-	Backend: [N/A - MVP Firebase] config, controllers, middleware, models, routes, services, utils, tests.
-	Frontend: [HECHO - MVP Firebase] src/components, src/pages, src/contexts (o store), src/hooks, src/services, src/assets, src/utils. (Estructura básica creada)
-o	Inicializar orden_de_desarrollo.txt (este documento).
-2.	[PENDIENTE] Configuración Docker:
-o	Dockerfile para backend (Node.js multi-stage build).
-o	Dockerfile para frontend (servir build estático con Nginx o similar).
-o	docker-compose.yml para desarrollo (backend, frontend, postgres, redis).
-3.	[HECHO (Parcial) - MVP Firebase] Inicialización de Proyectos:
-o	Backend: [N/A - MVP Firebase] npm init, instalar dependencias core (Express, Sequelize, pg, dotenv, cors, bcrypt, jsonwebtoken, etc.). Configurar base con Express.
-o	Frontend: [HECHO - MVP Firebase] Crear proyecto React (Vite/CRA), instalar dependencias (React Router, Axios/Fetch, TailwindCSS). Configurar Tailwind. (Usando Vite, React Router, Firebase, Tailwind v3)
-4.	[PENDIENTE] Configuración CI/CD Básica (GitHub Actions):
-o	Workflow para linting y formateo (ESLint, Prettier) en cada push/PR.
-o	Workflow para construir (sin desplegar aún) en cada push/PR a main/develop.
-5.	[PENDIENTE] Configuración Linters y Formateadores:
-o	Configurar ESLint y Prettier para backend (Node/JS o TS) y frontend (React/JS o TS) con reglas estándar (ej. Airbnb) pero ajustables.
-Fase 1: Diseño Detallado de la Base de Datos y Modelos Core
-•	Objetivo: Definir una estructura de BD robusta, normalizada y optimizada para multi-tenancy y consultas futuras, minimizando bugs de datos.
-•	Tecnología: [CAMBIADO A FIRESTORE - MVP Firebase] PostgreSQL + Sequelize ORM.
-1.	[HECHO (Adaptado) - MVP Firebase] Definición de Modelos y Relaciones (Firestore):
-o	[HECHO - Firestore] Roles: (Implementado como campo 'role' en colección 'users')
-	id: INTEGER, PRIMARY KEY, AUTO_INCREMENT
-	nombre: VARCHAR(50), UNIQUE, NOT NULL (Valores: 'Manager', 'Administrador', 'Empleado')
-o	[HECHO - Firestore] Usuarios: (Colección 'users', ID = UID de Auth)
-	id: UID de Auth
-	email: (string)
-	nombre: (string, opcional)
-	role: (string: 'Manager', 'Admin', 'Employee')
-	companyId: (string, ref a `companies`, solo para Admin/Employee)
-	points: (number, solo para Employee)
-	isActive: (boolean, solo para Employee/Admin)
-o	[HECHO - Firestore] Empresas: (Colección 'companies')
-	id: ID de Documento Firestore
-	nombre: (string)
-	status: (string: 'active', 'inactive', 'pending_payment')
-	createdAt: (timestamp)
-o	[N/A - MVP Firebase] Empleados: (Info integrada en 'users')
-o	[HECHO - Firestore] Recompensas: (Colección 'rewards')
-	id: ID de Documento Firestore
-	companyId: (string, ref a `companies`)
-	nombre: (string)
-	pointsRequired: (number)
-	isActive: (boolean)
-	createdAt: (timestamp)
-o	[HECHO (Adaptado) - MVP Firebase] JustificacionesPuntos: (Colección 'justificacionesPuntos' creada manualmente, gestionada por Admin)
-    *   id: ID de Documento Firestore
-    *   textoJustificacion: (string)
-    *   companyId: (string, ref a `companies`, null para globales)
-    *   estaActiva: (boolean)
-    *   esPredeterminada: (boolean, indica si es global/default)
-    *   createdAt: (timestamp)
-o	[HECHO - Firestore] PuntosAsignados: (Colección 'puntosAsignados')
-	id: ID de Documento Firestore
-	adminId: (string, UID)
-	adminEmail: (string)
-	empleadoId: (string, UID)
-	empleadoEmail: (string)
-	empleadoName: (string)
-	companyId: (string, ref a `companies`)
-	cantidad: (number)
-	fechaAsignacion: (timestamp)
-    *   justificacionId: (string, ref a `justificacionesPuntos`)
-    *   justificacionTexto: (string)
-o	[HECHO - Firestore] Canjes: (Colección 'canjes')
-	id: ID de Documento Firestore
-	empleadoId: (string, UID)
-	empleadoEmail: (string)
-	companyId: (string, ref a `companies`)
-	recompensaId: (string, ref a `rewards`)
-	recompensaNombre: (string)
-	puntosCosto: (number)
-	fechaCanje: (timestamp)
-o	[PENDIENTE] PuntosAcumuladosAnual: (Se maneja con campo 'points' en 'users' por ahora)
-2.	[N/A - MVP Firebase] Implementar Migraciones Sequelize:
-3.	[HECHO (Manual) - MVP Firebase] Implementar Seeds Iniciales:
-o	Roles: (Implícito en 'users')
-o	Usuarios: Manager, Admin, Empleado creados manualmente.
-o	Empresas: 'Empresa Demo' creada manualmente.
-o	Empleados: (Info en 'users')
-o	JustificacionesPuntos: [HECHO (Manual) - MVP Firebase] Justificaciones globales creadas manualmente.
-Fase 2: Backend - Autenticación, Autorización y Core API
-1.	[HECHO (Adaptado) - MVP Firebase] Integración Auth0: (Usando Firebase Auth Email/Password)
-2.	[HECHO (Adaptado) - MVP Firebase] Middleware Core Backend: (Lógica implementada en Frontend: `ProtectedRoute`, `AuthContext`)
-o	checkRole: [HECHO (Adaptado)]
-o	checkTenant: [HECHO (Adaptado) - Implícito al usar `userData.companyId` en queries]
-o	checkSubscription: [PENDIENTE]
-3.	[PENDIENTE] Endpoints API - Perfil de Usuario: (Se podría implementar en Frontend leyendo/escribiendo doc 'users')
-Fase 3: Backend - Funcionalidades Manager
-1.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Gestión de Empresas (CRUD): (Implementado en Frontend + Firestore)
-o	POST /: [HECHO (Adaptado)] Crear nueva empresa (nombre, estado).
-o	GET /: [HECHO (Adaptado)] Listar todas las empresas.
-o	GET /:empresaId: [PENDIENTE]
-o	PUT /:empresaId: [HECHO (Adaptado)] Actualizar empresa (nombre, estado).
-o	DELETE /:empresaId: [HECHO (Adaptado)] Activar/Desactivar empresa (lógico).
-2.	[HECHO (Adaptado) - MVP Firebase] Endpoints API - Gestión de Administradores: (Implementado en Frontend + Firestore)
-o	POST /: [HECHO (Adaptado)] Crear nuevo admin (email, nombre, password, companyId). (Logout solucionado MVP)
-o	GET /: [HECHO (Adaptado)] Listar todos los admins.
-o	PUT /:adminId: [HECHO (Adaptado)] Actualizar admin (nombre, isActive).
-o	DELETE /:adminId: [HECHO (Adaptado)] Activar/Desactivar admin (lógico).
-3.	[HECHO (Adaptado) - MVP Firebase] Endpoints API - Dashboard Manager: (Implementado en Frontend + Firestore - Stats básicas)
-Fase 4: Backend - Funcionalidades Administrador
-1.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Gestión de Empleados (CRUD): (Implementado en Frontend + Firestore)
-o	POST /: [HECHO (Adaptado)] Crear nuevo empleado (email, nombre, password). (Logout solucionado MVP)
-o	POST /bulk-upload: [PENDIENTE]
-o	GET /: [HECHO (Adaptado)] Listar empleados de su empresa.
-o	GET /:empleadoId: [PENDIENTE]
-o	PUT /:empleadoId: [HECHO (Adaptado)] Actualizar empleado (nombre, isActive).
-o	DELETE /:empleadoId: [HECHO (Adaptado)] Activar/Desactivar empleado (lógico).
-2.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Gestión de Recompensas (CRUD): (Implementado en Frontend + Firestore)
-o	POST /: [HECHO (Adaptado)] Crear recompensa (nombre, puntos).
-o	GET /: [HECHO (Adaptado)] Listar recompensas de su empresa.
-o	GET /:recompensaId: [PENDIENTE]
-o	PUT /:recompensaId: [HECHO (Adaptado)] Actualizar recompensa (nombre, puntos, isActive).
-o	DELETE /:recompensaId: [HECHO (Adaptado)] Activar/Desactivar recompensa (lógico).
-3.	[HECHO (Adaptado) - MVP Firebase] Endpoints API - Gestión de Justificaciones (CRUD): (Implementado en Frontend + Firestore)
-o	POST /: [HECHO (Adaptado)] Crear justificación específica de empresa.
-o	GET /: [HECHO (Adaptado)] Listar justificaciones globales y de empresa.
-o	PUT /:justificacionId: [HECHO (Adaptado)] Actualizar texto/estado de justificación de empresa.
-o	DELETE /:justificacionId: [HECHO (Adaptado)] Activar/Desactivar justificación de empresa (lógico).
-4.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Asignación/Deducción de Puntos: (Implementado en Frontend + Firestore)
-o	POST /api/v1/admin/puntos/asignar: [HECHO (Adaptado)]
-o	Body: { empleadoReceptorId, cantidad, justificacionId }: [HECHO (Adaptado) - Justificación integrada]
-o	Lógica:
-	Verificar empleadoReceptorId: [HECHO (Adaptado)]
-	Verificar justificacionId: [HECHO (Adaptado)]
-	Verificar límites: [PENDIENTE]
-	Crear registro en PuntosAsignados: [HECHO (Adaptado) - Incluye justificación]
-	Actualizar PuntosAcumuladosAnual: [HECHO (Adaptado) - Actualiza campo 'points' en 'users']
-o	Validación de entrada: [PENDIENTE]
-5.	[HECHO (Parcial) - MVP Firebase] Endpoints API - Historiales (Admin):
-o	GET /api/v1/admin/historial/puntos: [HECHO (Adaptado) - Vista Frontend implementada]
-o	GET /api/v1/admin/historial/canjes: [PENDIENTE]
-6.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Ranking (Admin):
-o	GET /api/v1/admin/ranking: [HECHO (Adaptado) - Vista Frontend implementada]
-o	Lógica: [HECHO (Adaptado) - Consulta Firestore 'users']
-o	Optimización: [PENDIENTE]
-Fase 5: Backend - Funcionalidades Empleado
-1.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Dashboard Empleado:
-o	GET /api/v1/empleado/dashboard: [HECHO (Adaptado) - Muestra saldo de puntos desde 'users']
-2.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Historial de Puntos (Empleado):
-o	GET /api/v1/empleado/historial/puntos: [HECHO (Adaptado) - Vista Frontend implementada]
-3.	[HECHO - MVP Firebase] Endpoint API - Catálogo de Recompensas:
-o	GET /api/v1/empleado/recompensas: [HECHO (Adaptado) - Vista Frontend implementada]
-o	Optimización: [PENDIENTE]
-4.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Canje de Recompensas:
-o	POST /api/v1/empleado/canjear/:recompensaId: [HECHO (Adaptado) - Lógica Frontend + Firestore]
-o	Lógica:
-	Verificar recompensa: [HECHO (Adaptado)]
-	Verificar saldo: [HECHO (Adaptado)]
-	Verificar stock: [PENDIENTE]
-	Transacción:
-	Decrementar Puntos: [HECHO (Adaptado) - Actualiza campo 'points' en 'users']
-	Decrementar Stock: [PENDIENTE]
-	Crear registro en Canjes: [HECHO (Adaptado)]
-o	Validación: [PENDIENTE]
-5.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Historial de Canjes (Empleado):
-o	GET /api/v1/empleado/historial/canjes: [HECHO (Adaptado) - Vista Frontend implementada]
-6.	[HECHO (Parcial) - MVP Firebase] Endpoint API - Ranking (Empleado):
-o	GET /api/v1/empleado/ranking: [HECHO (Adaptado) - Vista Frontend implementada]
-o	Optimización: [PENDIENTE]
-Fase 6: Frontend - Desarrollo de Interfaces (React + Tailwind)
-•	Nota: Desarrollar componentes reutilizables (botones, inputs, tablas, modales, etc.). Usar Context API o Redux/Zustand para estado global (usuario, rol, tenantId, theme/colores empresa). Usar Axios/Fetch wrapper para API calls (manejo de JWT, errores).
-1.	[HECHO - MVP Firebase] Configuración Base Frontend:
-o	React Router: [HECHO]
-o	Gestor de Estado: [HECHO] (AuthContext)
-o	API Service: [N/A - MVP Firebase] (Interacción directa con Firebase)
-o	Layouts: [HECHO] (AppLayout - Refinado)
-2.	[HECHO - MVP Firebase] Flujo de Autenticación UI:
-o	Página Login: [HECHO - Refinado]
-o	Página/Componente Callback: [N/A - MVP Firebase]
-o	Manejo de Logout: [HECHO]
-3.	[HECHO - MVP Firebase] Dashboard Manager UI:
-o	Vista Empresas: [HECHO (Adaptado) - Refinado] (CRUD Básico)
-o	Vista Admins por Empresa: [HECHO (Adaptado) - MVP Firebase]
-o	Dashboard Principal: [HECHO (Adaptado) - Refinado] (Stats básicas)
-4.	[HECHO - MVP Firebase] Dashboard Administrador UI:
-o	Vistas CRUD para Empleados, Recompensas: [HECHO (Adaptado) - Refinado] (CRUD Básico)
-o	Vistas CRUD para Justificaciones: [HECHO (Adaptado) - MVP Firebase]
-o	Formulario Asignar Puntos: [HECHO (Adaptado) - Refinado] (Con justificaciones)
-o	Vistas de Historial (Puntos Asignados): [HECHO (Adaptado) - Refinado] (Básico)
-o	Vistas de Historial (Canjes Empresa): [PENDIENTE]
-o	Vista Ranking: [HECHO (Adaptado) - Refinado] (Básico)
-o	Banner/Notificación para Estado de Suscripción: [PENDIENTE]
-o	Botón "Generar Reporte IA": [PENDIENTE]
-o	Estilización: [HECHO (MVP)]
-5.	[HECHO - MVP Firebase] Dashboard Empleado UI:
-o	Vista Principal: [HECHO (Adaptado) - Refinado] (Mostrar saldo, links rápidos)
-o	Vista Catálogo Recompensas: [HECHO (Adaptado) - Refinado] (Listar/Canjear Básico)
-o	Vistas Historial (Mis Puntos, Mis Canjes): [HECHO (Adaptado) - Refinado] (Básico)
-o	Vista Ranking: [HECHO (Adaptado) - Refinado] (Básico)
-o	Estilización: [HECHO (MVP)]
-6.	[PENDIENTE] Diseño Responsivo:
-o	Asegurar que todas las vistas sean usables y estéticas en móviles, tablets y escritorio usando utilidades de Tailwind. (Revisión básica hecha, pendiente revisión dedicada)
-Fase 7: Funcionalidades Avanzadas y Optimizaciones
-1.	[PENDIENTE] Backend - Carga Masiva de Empleados (Admin):
-o	Endpoint POST /api/v1/admin/empleados/bulk-upload que acepte archivo CSV/Excel.
-o	Usar librería para parsear (ej. papaparse, xlsx).
-o	Validar cada fila (email, nombre, cargo, celular requeridos).
-o	Lógica para crear/invitar Usuarios y crear Empleados en batch. Devolver resumen (éxitos, errores).
-o	Frontend: Componente <FileUpload> y vista para mostrar progreso/resultados.
-2.	[PENDIENTE] Backend - Integración OpenAI para Reportes (Admin):
-o	Endpoint POST /api/v1/admin/reportes/generar.
-o	Lógica:
-	Obtener datos del último semestre para la empresa (agregados de PuntosAsignados, Canjes, ranking).
-	Construir prompt detallado para OpenAI (GPT-3.5/4) pidiendo análisis y insights en formato JSON estructurado (ej. { "resumenGeneral": "...", "tendenciasPuntos": [...], "tendenciasCanjes": [...], "topEmpleados": [...], "sugerencias": [...] }).
-	Llamar a OpenAI API (usar SDK oficial). Manejar errores.
-	Guardar/Devolver el JSON. Considerar operaciones asíncronas si la generación tarda.
-o	Frontend: Mostrar estado de generación, permitir ver/descargar JSON resultante.
-3.	[PENDIENTE] Implementación Redis Cache:
-o	Configurar cliente Redis en backend.
-o	Aplicar caché a endpoints de lectura frecuente: Rankings (Admin/Empleado), Catálogo Recompensas (Empleado), quizás Dashboard Manager stats.
-o	Implementar lógica de invalidación de caché (ej. al asignar puntos -> invalidar ranking; al editar recompensa -> invalidar catálogo).
-4.	[PENDIENTE] Backend - Job Programado (Reseteo Anual / Estado Suscripción):
-o	Usar node-cron o similar.
-o	Job 1 (Diario): Verificar empresas con fecha_vencimiento_pago pasada. Actualizar estado_suscripcion ('pendiente_pago', 'inactiva') según reglas de gracia (5 días hábiles).
-o	Job 2 (Anual - 1 Enero): ¿Archivar PuntosAcumuladosAnual del año anterior? ¿Resetear a 0 para el nuevo año? Definir e implementar lógica de reseteo/archivado.
-Fase 8: Pruebas, Refinamiento y Despliegue
-1.	[PENDIENTE] Pruebas Backend (Jest):
-o	Pruebas unitarias para servicios/lógica compleja (cálculo límites, canje, ranking).
-o	Pruebas de integración para endpoints API críticos (CRUDs, asignación/canje, auth/authz, multi-tenant).
-o	Apuntar a una cobertura razonable (>70-80% para lógica core).
-2.	[PENDIENTE] Pruebas Frontend (Opcional pero recomendado):
-o	Pruebas unitarias para componentes complejos o utils (Jest + React Testing Library). (Configuración Jest iniciada pero no usada)
-o	Pruebas E2E (Cypress/Playwright) para flujos críticos (login, asignación, canje).
-3.	[HECHO (MVP)] Refinamiento UI/UX:
-o	Revisiones de usabilidad (implícitas en desarrollo iterativo).
-o	Ajustes de estilos Tailwind (realizados). Performance (lazy loading componentes/rutas) [PENDIENTE].
-4.	[PENDIENTE] Configuración AWS para Producción:
-o	RDS (PostgreSQL): Configurar instancia, backups, security group.
-o	EC2 (Backend): Crear instancia/ASG, configurar Nginx/PM2, security group.
-o	S3 (Frontend): Crear bucket, configurar para hosting estático.
-o	CloudFront (Opcional): CDN para S3, manejo de HTTPS.
-o	ElastiCache (Redis): Configurar instancia Redis.
-o	IAM: Roles y políticas de seguridad.
-o	Variables de Entorno: Gestionar secretos (AWS Secrets Manager o .env seguro).
-5.	[PENDIENTE] Pipeline CI/CD Completo (GitHub Actions):
-o	Workflow para main branch:
-	Run tests (backend/frontend).
-	Build backend Docker image, push a ECR/Docker Hub.
-	Build frontend static files.
-	Deploy backend a EC2 (ej. vía SSH, CodeDeploy).
-	Deploy frontend a S3 (sync).
-	(Opcional) Ejecutar migraciones de BD.
-Fase 9: Documentación y Entrega Final
-1.	[PENDIENTE] Documentación:
-o	README.md: Instrucciones detalladas de instalación, configuración local, variables de entorno, scripts npm, flujo de despliegue.
-o	Documentación API: Generar/mantener documentación OpenAPI/Swagger para el backend.
-o	Documentación de Arquitectura: Diagramas básicos (componentes, flujo de datos).
-o	Limpiar y finalizar Requerimientos.md.
-2.	[PENDIENTE] Revisión Final y Handover:
-o	Demo completa.
-o	Revisión de código final.
-o	Entrega de accesos y documentación.
-Este plan detallado proporciona una guía exhaustiva. Debería actualizarse (Requerimientos.md) a medida que se completan las tareas o surgen cambios. La comunicación constante será clave para asegurar el éxito del proyecto.
+**Fase 0: Configuración Inicial y Fundamentos [HECHO]**
+1.  [HECHO] Repositorio y Estructura del Proyecto:
+    *   [HECHO] Repositorio GitHub.
+    *   [HECHO] Estructura de carpetas Backend (config, controllers, middleware, models, routes, etc.).
+    *   [HECHO] Estructura de carpetas Frontend (src/components, src/pages, src/contexts, src/services, etc.).
+    *   [HECHO] Este documento (`Requerimientos.md`) y `planbackend.md` inicializados.
+2.  [HECHO - Parcial] Configuración Docker:
+    *   [HECHO] Dockerfile para backend.
+    *   [PENDIENTE] Dockerfile para frontend.
+    *   [HECHO] `docker-compose.yml` para desarrollo (backend, postgres, redis).
+3.  [HECHO] Inicialización de Proyectos:
+    *   [HECHO] Backend: `npm init`, dependencias core instaladas, base Express configurada (`server.js`).
+    *   [HECHO] Frontend: Proyecto Vite/React existente con dependencias (React Router, Axios, TailwindCSS).
+4.  [HECHO - Parcial] Configuración CI/CD Básica (GitHub Actions):
+    *   [HECHO] Workflow `backend-ci.yml` para linting de backend.
+    *   [PENDIENTE] Añadir build/test al workflow.
+    *   [PENDIENTE] Workflow para frontend.
+5.  [HECHO] Configuración Linters y Formateadores:
+    *   [HECHO] ESLint y Prettier configurados para backend.
+    *   [HECHO - Existente] ESLint configurado para frontend.
+
+**Fase 1: Diseño Detallado de la Base de Datos y Modelos Core [HECHO]**
+*   Objetivo: Definir una estructura de BD robusta en PostgreSQL.
+*   Tecnología: **PostgreSQL + Sequelize ORM**.
+1.  [HECHO] Definición de Modelos Sequelize:
+    *   [HECHO] Modelo `User` (ID = UID Firebase, email, nombre, role, companyId, points, isActive).
+    *   [HECHO] Modelo `Company` (id, nombre, status).
+    *   [HECHO] Modelo `Reward` (id, companyId, nombre, pointsRequired, isActive).
+    *   [HECHO] Modelo `Justification` (id, textoJustificacion, companyId, estaActiva, esPredeterminada).
+    *   [HECHO] Modelo `PointAssignment` (id, adminId, empleadoId, companyId, cantidad, fechaAsignacion, justificacionId, justificacionTexto).
+    *   [HECHO] Modelo `Redemption` (id, empleadoId, companyId, recompensaId, puntosCosto, fechaCanje).
+    *   [HECHO] Asociaciones definidas en modelos.
+2.  [HECHO] Implementar Migraciones Sequelize:
+    *   [HECHO] Migraciones generadas y ejecutadas para todas las tablas.
+3.  [HECHO] Implementar Seeds Iniciales:
+    *   [HECHO] Seeder para Justificaciones globales/predeterminadas.
+    *   [HECHO] Seeder para Compañía "Empresa Demo".
+    *   [HECHO] Seeder para Usuario Manager inicial.
+
+**Fase 2: Backend - Autenticación, Autorización y Core API [HECHO]**
+1.  [HECHO] Integración Firebase Auth:
+    *   [HECHO] Configurado Firebase Admin SDK en backend.
+    *   [HECHO] Middleware `authenticate` para verificar Token ID.
+2.  [HECHO] Middleware Core Backend:
+    *   [HECHO] Middleware `authorize` para verificar roles desde BD.
+    *   [HECHO] Middleware `checkTenant` para verificar pertenencia a compañía.
+    *   [PENDIENTE] Middleware `checkSubscription`.
+3.  [HECHO] Endpoints API - Perfil de Usuario:
+    *   [HECHO] Endpoint `GET /api/v1/auth/me` implementado.
+
+**Fase 3: Backend - Funcionalidades Manager [HECHO]**
+1.  [HECHO] Endpoints API - Gestión de Empresas (CRUD):
+    *   [HECHO] Endpoints `GET /`, `POST /`, `GET /:id`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/companies`.
+2.  [HECHO] Endpoints API - Gestión de Administradores:
+    *   [HECHO] Endpoints `GET /`, `POST /`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/admins`.
+3.  [PENDIENTE] Endpoints API - Dashboard Manager:
+    *   [PENDIENTE] Endpoint `GET /api/v1/manager/dashboard`.
+
+**Fase 4: Backend - Funcionalidades Administrador [HECHO - Parcial]**
+1.  [HECHO] Endpoints API - Gestión de Empleados (CRUD):
+    *   [HECHO] Endpoints `GET /`, `POST /`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/employees`.
+    *   [PENDIENTE] Endpoint optimizado `POST /api/v1/employees/bulk-upload`. (Frontend usa POST individual por ahora).
+    *   [PENDIENTE] Endpoint `GET /:empleadoId`.
+2.  [HECHO] Endpoints API - Gestión de Recompensas (CRUD):
+    *   [HECHO] Endpoints `GET /`, `POST /`, `GET /:id`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/rewards`.
+3.  [HECHO] Endpoints API - Gestión de Justificaciones (CRUD):
+    *   [HECHO] Endpoints `GET /`, `POST /`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/justifications`.
+4.  [HECHO] Endpoint API - Asignación/Deducción de Puntos:
+    *   [HECHO] Endpoint `POST /api/v1/points/assign` implementado con lógica transaccional.
+    *   [PENDIENTE] Validación de límites.
+5.  [HECHO - Parcial] Endpoints API - Historiales (Admin):
+    *   [HECHO] Endpoint `GET /api/v1/history/admin/points` implementado.
+    *   [PENDIENTE] Endpoint `GET /api/v1/admin/history/redemptions`.
+6.  [HECHO - Parcial] Endpoint API - Ranking (Admin):
+    *   [HECHO] Endpoint `GET /api/v1/history/ranking` implementado (cubre Admin y Employee).
+
+**Fase 5: Backend - Funcionalidades Empleado [HECHO - Parcial]**
+1.  [PENDIENTE] Endpoint API - Dashboard Empleado:
+    *   [PENDIENTE] `GET /api/v1/employee/dashboard`.
+2.  [HECHO - Parcial] Endpoint API - Historial de Puntos (Empleado):
+    *   [HECHO] Endpoint `GET /api/v1/history/employee/points` implementado.
+3.  [HECHO] Endpoint API - Catálogo de Recompensas:
+    *   [HECHO] Cubierto por `GET /api/v1/rewards` (filtrado por rol/estado en controlador).
+    *   [PENDIENTE] Optimización con caché.
+4.  [HECHO] Endpoint API - Canje de Recompensas:
+    *   [HECHO] Endpoint `POST /api/v1/redemptions/rewards/:rewardId/redeem` implementado con lógica transaccional.
+    *   [PENDIENTE] Validación de stock.
+5.  [HECHO - Parcial] Endpoint API - Historial de Canjes (Empleado):
+    *   [HECHO] Endpoint `GET /api/v1/history/employee/redemptions` implementado.
+6.  [HECHO - Parcial] Endpoint API - Ranking (Empleado):
+    *   [HECHO] Endpoint `GET /api/v1/history/ranking` implementado (cubre Admin y Employee).
+
+**Fase 6: Frontend - Desarrollo de Interfaces (React + Tailwind) [EN PROGRESO]**
+*   Nota: Usar Context API (`AuthContext`) y Axios (`apiClient`).
+1.  [HECHO] Configuración Base Frontend:
+    *   [HECHO] React Router.
+    *   [HECHO] Gestor de Estado (`AuthContext` refactorizado para API).
+    *   [HECHO] API Service (`src/services/api.js` creado).
+    *   [HECHO] Layouts (`AppLayout` existente).
+2.  [HECHO] Flujo de Autenticación UI:
+    *   [HECHO] Página Login.
+    *   [HECHO] Manejo de Logout.
+    *   [HECHO] `AuthContext` obtiene perfil desde API.
+3.  [HECHO] Dashboard Manager UI:
+    *   [HECHO] Vista Empresas (`ManageCompanies.jsx` refactorizada para API).
+    *   [HECHO] Vista Admins (`ManageAdmins.jsx` refactorizada para API).
+    *   [HECHO] Dashboard Principal (`ManagerDashboard.jsx` refactorizado para API).
+4.  [HECHO] Dashboard Administrador UI:
+    *   [HECHO] Vistas CRUD Empleados (`ManageEmployees.jsx` refactorizada para API, excepto bulk optimizado).
+    *   [HECHO] Vistas CRUD Recompensas (`ManageRewards.jsx` refactorizada para API).
+    *   [HECHO] Vistas CRUD Justificaciones (`ManageJustifications.jsx` refactorizada para API).
+    *   [HECHO] Formulario Asignar Puntos (`AdminDashboard.jsx` modal refactorizado para API).
+    *   [HECHO] Vistas de Historial (Puntos Asignados) (`PointsHistoryAdmin.jsx` refactorizada para API).
+    *   [PENDIENTE] Vistas de Historial (Canjes Empresa).
+    *   [HECHO] Vista Ranking (`RankingPage.jsx` refactorizada para API).
+    *   [PENDIENTE] Banner/Notificación para Estado de Suscripción.
+    *   [PENDIENTE] Botón "Generar Reporte IA".
+5.  [HECHO] Dashboard Empleado UI:
+    *   [HECHO] Vista Principal (`EmployeeDashboard.jsx` - Usa datos de AuthContext).
+    *   [HECHO] Vista Catálogo Recompensas (`AvailableRewards.jsx` refactorizada para API y canje).
+    *   [HECHO] Vistas Historial (`HistoryEmployee.jsx` refactorizada para API).
+    *   [HECHO] Vista Ranking (`RankingPage.jsx` refactorizada para API).
+6.  [PENDIENTE] Diseño Responsivo: Revisión dedicada pendiente.
+
+**Fase 7: Funcionalidades Avanzadas y Optimizaciones [PENDIENTE]**
+1.  [PENDIENTE] Backend - Carga Masiva de Empleados Optimizada (Admin):
+    *   [PENDIENTE] Endpoint `POST /api/v1/employees/bulk-upload`.
+    *   [PENDIENTE] Refactorizar frontend para usar nuevo endpoint.
+2.  [PENDIENTE] Backend - Integración OpenAI para Reportes (Admin).
+3.  [PENDIENTE] Implementación Redis Cache.
+4.  [PENDIENTE] Backend - Job Programado (Reseteo Anual / Estado Suscripción).
+
+**Fase 8: Pruebas, Refinamiento y Despliegue [PENDIENTE]**
+1.  [PENDIENTE] Pruebas Backend (Jest).
+2.  [PENDIENTE] Pruebas Frontend (Jest + RTL / E2E).
+3.  [PENDIENTE] Refinamiento UI/UX (Performance, revisión dedicada responsiva).
+4.  [PENDIENTE] Configuración AWS para Producción.
+5.  [PENDIENTE] Pipeline CI/CD Completo (GitHub Actions).
+
+**Fase 9: Documentación y Entrega Final [PENDIENTE]**
+1.  [PENDIENTE] Documentación (README, API, Arquitectura).
+2.  [PENDIENTE] Revisión Final y Handover.

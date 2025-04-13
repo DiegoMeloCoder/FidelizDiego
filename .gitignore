@@ -1,10 +1,12 @@
 # Dependencies
 /node_modules
 /frontend/node_modules
+/backend/node_modules
 
 # Build output
 /dist
 /frontend/dist
+
 
 # Logs
 logs
@@ -142,3 +144,6 @@ public/build/
 *.swp
 *~
 .DS_Store
+
+# Secrets files (e.g., Firebase service account key)
+/secrets/

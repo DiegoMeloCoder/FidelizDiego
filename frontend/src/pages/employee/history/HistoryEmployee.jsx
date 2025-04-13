@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '../../../firebase/config';
+// Firestore imports removed
+import apiClient from '../../../services/api'; // Import API client
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import Spinner from '../../../components/ui/Spinner';
 import Alert from '../../../components/ui/Alert';
@@ -14,6 +14,7 @@ function HistoryEmployee() {
 
   useEffect(() => {
     const fetchHistory = async () => {
+      // currentUser is needed for API calls which rely on the token
       if (!currentUser) {
         setError("User not logged in.");
         setLoading(false);
@@ -22,53 +23,39 @@ function HistoryEmployee() {
       setLoading(true);
       setError('');
       try {
-        // 1. Fetch Assigned Points
-        const assignedCol = collection(db, 'puntosAsignados');
-        const assignedQuery = query(
-          assignedCol,
-          where('empleadoId', '==', currentUser.uid),
-          orderBy('fechaAsignacion', 'desc')
-        );
-        const assignedSnapshot = await getDocs(assignedQuery);
-        const assignedList = assignedSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            type: 'assignment',
-            date: data.fechaAsignacion?.toDate(),
-            amount: data.cantidad,
-            description: `Points assigned by ${data.adminEmail}`,
-          };
-        });
+        // Fetch both histories concurrently using API client
+        const [assignedResponse, redeemedResponse] = await Promise.all([
+          apiClient.get('/history/employee/points'),
+          apiClient.get('/history/employee/redemptions')
+        ]);
 
-        // 2. Fetch Redemptions
-        const redeemedCol = collection(db, 'canjes');
-        const redeemedQuery = query(
-          redeemedCol,
-          where('empleadoId', '==', currentUser.uid),
-          orderBy('fechaCanje', 'desc')
-        );
-        const redeemedSnapshot = await getDocs(redeemedQuery);
-        const redeemedList = redeemedSnapshot.docs.map(doc => {
-           const data = doc.data();
-           return {
-             id: doc.id,
-             type: 'redemption',
-             date: data.fechaCanje?.toDate(),
-             amount: -data.puntosCosto,
-             description: `Redeemed: ${data.recompensaNombre}`,
-           };
-        });
+        // Process assigned points history
+        const assignedList = assignedResponse.data.map(entry => ({
+          id: `assign-${entry.id}`, // Create unique key prefix
+          type: 'assignment',
+          date: entry.fechaAsignacion ? new Date(entry.fechaAsignacion) : null,
+          amount: entry.cantidad,
+          description: `Points assigned by ${entry.admin?.nombre || entry.admin?.email || 'Admin'} (${entry.justificacionTexto})`,
+        }));
 
-        // 3. Combine and Sort
+        // Process redemption history
+        const redeemedList = redeemedResponse.data.map(entry => ({
+           id: `redeem-${entry.id}`, // Create unique key prefix
+           type: 'redemption',
+           date: entry.fechaCanje ? new Date(entry.fechaCanje) : null,
+           amount: -entry.puntosCosto, // Amount is negative for redemption
+           description: `Redeemed: ${entry.reward?.nombre || 'Unknown Reward'}`,
+        }));
+
+        // Combine and Sort
         const combinedList = [...assignedList, ...redeemedList];
-        combinedList.sort((a, b) => (b.date || 0) - (a.date || 0));
+        combinedList.sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0)); // Sort by date timestamp
 
         setHistory(combinedList);
 
       } catch (err) {
         console.error("Error fetching history:", err);
-        setError('Failed to load history. Firestore might require indexes. Check browser console for links to create them.');
+        setError(err.message || 'Failed to load history.');
       } finally {
         setLoading(false);
       }

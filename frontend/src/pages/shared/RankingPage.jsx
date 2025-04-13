@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+// Firestore imports removed
+import apiClient from '../../services/api'; // Import API client
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Spinner from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
@@ -15,7 +15,8 @@ function RankingPage() {
 
   useEffect(() => {
     const fetchRanking = async () => {
-      if (!userData?.companyId) {
+      // Use nested company ID check
+      if (!userData?.company?.id) {
         setError("User company information not available.");
         setLoading(false);
         return;
@@ -23,26 +24,18 @@ function RankingPage() {
       setLoading(true);
       setError('');
       try {
-        const usersCol = collection(db, 'users');
-        const q = query(
-          usersCol,
-          where('companyId', '==', userData.companyId),
-          where('role', '==', 'Employee'), // Only rank employees
-          // where('isActive', '==', true), // Consider adding later if needed
-          orderBy('points', 'desc'), // Order by points descending
-          limit(limitCount) // Limit the results
-        );
-        const snapshot = await getDocs(q);
-        const list = snapshot.docs.map((doc, index) => ({
-          id: doc.id,
-          rank: index + 1, // Calculate rank based on order
-          ...doc.data(),
+        // Fetch ranking using API
+        const response = await apiClient.get('/history/ranking'); // Use the new endpoint
+        // Add rank based on the order returned by the API
+        const list = response.data.map((employee, index) => ({
+          ...employee,
+          rank: index + 1,
         }));
-        setRanking(list);
+        // Limit client-side if needed, although backend could also limit
+        setRanking(list.slice(0, limitCount));
       } catch (err) {
-        // Firestore might require an index for this query
         console.error("Error fetching ranking:", err);
-        setError('Failed to load ranking. Firestore might require an index (companyId == ?, role == ?, points DESC). Check browser console.');
+        setError(err.message || 'Failed to load ranking.');
       } finally {
         setLoading(false);
       }
@@ -95,7 +88,7 @@ function RankingPage() {
                       {employee.rank}
                     </td>
                     <td className={`${tdStyle} ${currentUser?.uid === employee.id ? 'text-indigo-900' : 'text-gray-900'}`}>
-                      {employee.name || <span className="text-gray-400 italic">{employee.email}</span>}
+                      {employee.nombre || <span className="text-gray-400 italic">{employee.email}</span>} {/* Use nombre */}
                       {currentUser?.uid === employee.id && <span className="ml-2 text-xs text-indigo-500">(You)</span>}
                     </td>
                     <td className={`${tdStyle} text-right font-bold pr-6 ${currentUser?.uid === employee.id ? 'text-indigo-700' : 'text-indigo-600'} flex items-center justify-end`}>

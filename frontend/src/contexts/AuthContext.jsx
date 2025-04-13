@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/config';
+// import { doc, getDoc } from 'firebase/firestore'; // Ya no se usa getDoc
+import { auth } from '../firebase/config'; // db ya no se necesita aquí
+import apiClient from '../services/api'; // Importar nuestro cliente API
 
 const AuthContext = createContext();
 
@@ -18,23 +19,36 @@ export function AuthProvider({ children }) {
     console.log("AuthProvider: useEffect triggered");
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       console.log("AuthProvider: onAuthStateChanged triggered. User:", user?.uid || 'null');
-      setCurrentUser(user);
+      setCurrentUser(user); // Mantener el usuario de Firebase Auth
       if (user) {
-        console.log("AuthProvider: User found, fetching Firestore data for UID:", user.uid);
-        const userDocRef = doc(db, 'users', user.uid);
+        console.log("AuthProvider: User found, fetching profile data from API for UID:", user.uid);
         try {
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            const fetchedData = userDocSnap.data();
-            console.log("AuthProvider: Firestore data fetched:", fetchedData); // Log fetched data
-            setUserData(fetchedData);
-          } else {
-            console.error("AuthProvider: User document not found in Firestore for UID:", user.uid);
-            setUserData(null); // Reset user data if doc not found
-          }
+          // Forzar la obtención de un token nuevo ANTES de la llamada API
+          console.log("AuthProvider: Forzando refresco de token ID...");
+          await user.getIdToken(true); // El 'true' fuerza el refresco
+          console.log("AuthProvider: Token refrescado. Realizando llamada a /auth/me...");
+
+          // Llamar a nuestro endpoint /api/v1/auth/me
+          // El interceptor de apiClient debería usar el token recién refrescado
+          const response = await apiClient.get('/auth/me');
+          const fetchedData = response.data; // Los datos del perfil vienen de la API
+          console.log("AuthProvider: API profile data fetched:", fetchedData);
+          setUserData(fetchedData); // Guardar los datos del perfil (rol, companyId, etc.)
         } catch (error) {
-          console.error("AuthProvider: Error fetching user data:", error);
-          setUserData(null); // Reset user data on error
+          console.error("AuthProvider: Error fetching user profile from API:", error);
+          setUserData(null); // Resetear userData en cualquier error de API
+
+          // Si el error es 401 (No autorizado/Expirado) o 403 (Prohibido/No encontrado en DB),
+          // forzar cierre de sesión en Firebase para limpiar estado inválido.
+          if (error?.status === 401 || error?.status === 403) {
+            console.warn(`AuthProvider: Error ${error.status} fetching profile. Forcing Firebase sign out.`);
+            try {
+              await auth.signOut(); // Forzar cierre de sesión
+              // No necesitamos setCurrentUser(null) aquí, onAuthStateChanged lo hará.
+            } catch (signOutError) {
+              console.error("AuthProvider: Error during forced sign out:", signOutError);
+            }
+          }
         }
       } else {
         console.log("AuthProvider: No user logged in.");

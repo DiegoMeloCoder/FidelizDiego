@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { PlusIcon, PencilSquareIcon, ArchiveBoxXMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline'; // Import icons
+// import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore'; // Firestore no longer used directly
+// import { db } from '../../firebase/config'; // Firestore db no longer needed
+import apiClient from '../../services/api'; // Import API client
+import { PlusIcon, PencilSquareIcon, ArchiveBoxXMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -44,15 +45,14 @@ function ManageCompanies() {
 
   const fetchCompanies = async () => {
     setLoading(true);
-    setListError(''); setSuccessMessage(''); // Clear messages on fetch
+      setListError(''); setSuccessMessage('');
     try {
-      const companiesCol = collection(db, 'companies');
-      const companySnapshot = await getDocs(companiesCol);
-      const companyList = companySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCompanies(companyList);
+      // Use API client to fetch companies
+      const response = await apiClient.get('/companies');
+      setCompanies(response.data); // API returns the list directly
     } catch (err) {
       console.error("Error fetching companies:", err);
-      setListError('Failed to load companies.');
+      setListError(err.message || 'Failed to load companies.'); // Use error message from API if available
       clearMessages();
     } finally {
       setLoading(false);
@@ -65,15 +65,16 @@ function ManageCompanies() {
     if (!newCompanyName.trim()) { setAddError('Company name cannot be empty.'); clearMessages(); return; }
     setAdding(true); setAddError(''); setDeleteError(''); setSuccessMessage('');
     try {
-      const companiesCol = collection(db, 'companies');
-      const newCompanyData = { name: newCompanyName.trim(), status: 'active', createdAt: serverTimestamp() };
-      const docRef = await addDoc(companiesCol, newCompanyData);
-      setCompanies(prev => [...prev, { id: docRef.id, ...newCompanyData }]);
+      // Use API client to add company
+      const response = await apiClient.post('/companies', { nombre: newCompanyName.trim() });
+      const addedCompany = response.data; // API returns the newly created company object
+      setCompanies(prev => [...prev, addedCompany]); // Add the new company to state
       setNewCompanyName('');
-      setSuccessMessage(`Company "${newCompanyData.name}" added successfully.`);
+      setSuccessMessage(`Company "${addedCompany.name}" added successfully.`);
       clearMessages();
     } catch (err) {
-      console.error("Error adding company:", err); setAddError('Failed to add company.');
+      console.error("Error adding company:", err);
+      setAddError(err.message || 'Failed to add company.');
       clearMessages();
     } finally {
       setAdding(false);
@@ -83,7 +84,7 @@ function ManageCompanies() {
   // Edit Company - Open Modal
   const handleEditClick = (company) => {
     setEditingCompany(company);
-    setEditName(company.name);
+    setEditName(company.nombre); // <--- Corregido
     setEditStatus(company.status || 'active');
     setEditError(''); setSuccessMessage(''); // Clear messages when opening modal
     setIsModalOpen(true);
@@ -95,14 +96,19 @@ function ManageCompanies() {
     if (!editName.trim() || !editingCompany) { setEditError('Company name cannot be empty.'); clearMessages(); return; }
     setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
-      const companyDocRef = doc(db, 'companies', editingCompany.id);
-      await updateDoc(companyDocRef, { name: editName.trim(), status: editStatus });
-      setCompanies(prev => prev.map(c => c.id === editingCompany.id ? { ...c, name: editName.trim(), status: editStatus } : c));
+      // Use API client to update company
+      const response = await apiClient.put(`/companies/${editingCompany.id}`, {
+        nombre: editName.trim(),
+        status: editStatus
+      });
+      const updatedCompany = response.data; // API returns the updated company object
+      setCompanies(prev => prev.map(c => c.id === updatedCompany.id ? updatedCompany : c)); // Update state
       closeModal();
-      setSuccessMessage(`Company "${editName.trim()}" updated successfully.`);
+      setSuccessMessage(`Company "${updatedCompany.nombre}" updated successfully.`); // <--- Corregido
       clearMessages();
     } catch (err) {
-      console.error("Error updating company:", err); setEditError('Failed to update company.');
+      console.error("Error updating company:", err);
+      setEditError(err.message || 'Failed to update company.');
       clearMessages();
     } finally {
       setSaving(false);
@@ -115,14 +121,15 @@ function ManageCompanies() {
       setDeleteError(''); setListError(''); setSuccessMessage('');
       // TODO: Add button loading state
       try {
-        const companyDocRef = doc(db, 'companies', companyId);
-        await updateDoc(companyDocRef, { status: 'inactive' });
-        setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, status: 'inactive' } : c));
-        setSuccessMessage(`Company "${companyName}" set to inactive.`);
+        // Use API client to toggle status (backend handles the logic)
+        const response = await apiClient.patch(`/companies/${companyId}/toggle-status`);
+        const updatedCompany = response.data.company; // API returns the updated company
+        setCompanies(prev => prev.map(c => c.id === updatedCompany.id ? updatedCompany : c)); // Update state
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
-        console.error("Error deleting company (logically):", err);
-        setDeleteError(`Failed to set company "${companyName}" to inactive.`);
+        console.error("Error setting company inactive:", err);
+        setDeleteError(err.message || `Failed to set company "${companyName}" to inactive.`);
         clearMessages();
       }
     }
@@ -142,15 +149,15 @@ function ManageCompanies() {
       setDeleteError(''); setListError(''); setSuccessMessage(''); // Reuse existing state vars or add new ones
       // TODO: Add button loading state if desired
       try {
-        const companyDocRef = doc(db, 'companies', companyId);
-        await updateDoc(companyDocRef, { status: 'active' });
-        // Use functional update for setCompanies to ensure correct state
-        setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, status: 'active' } : c));
-        setSuccessMessage(`Company "${companyName}" set back to active.`);
+         // Use API client to toggle status (backend handles the logic)
+        const response = await apiClient.patch(`/companies/${companyId}/toggle-status`);
+        const updatedCompany = response.data.company; // API returns the updated company
+        setCompanies(prev => prev.map(c => c.id === updatedCompany.id ? updatedCompany : c)); // Update state
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
-        console.error("Error activating company:", err);
-        setDeleteError(`Failed to set company "${companyName}" to active.`); // Reuse deleteError or add activateError
+        console.error("Error setting company active:", err);
+        setDeleteError(err.message || `Failed to set company "${companyName}" to active.`); // Reuse deleteError or add activateError
         clearMessages();
       }
     }
@@ -212,7 +219,7 @@ function ManageCompanies() {
               ) : (
                 companies.map((company) => (
                   <tr key={company.id} className="hover:bg-gray-50 transition-colors duration-150"> {/* Added hover effect */}
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{company.name}</td>
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{company.nombre}</td> {/* <--- Corregido */}
                     <td className={tdStyle}>
                       {/* Improved Status Badge */}
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
@@ -230,12 +237,12 @@ function ManageCompanies() {
                         <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
                       </Button>
                       {company.status === 'active' && (
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(company.id, company.name)} className="inline-flex items-center">
+                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(company.id, company.nombre)} className="inline-flex items-center"> {/* <--- Corregido */}
                            <ArchiveBoxXMarkIcon className="h-4 w-4 mr-1" /> Set Inactive
                          </Button>
                       )}
                       {company.status === 'inactive' && (
-                         <Button variant="success" size="sm" onClick={() => handleActivateClick(company.id, company.name)} className="inline-flex items-center"> {/* Dedicated Activate Button */}
+                         <Button variant="success" size="sm" onClick={() => handleActivateClick(company.id, company.nombre)} className="inline-flex items-center"> {/* <--- Corregido */}
                            <ArrowPathIcon className="h-4 w-4 mr-1" /> Set Active
                          </Button>
                       )}
@@ -256,7 +263,7 @@ function ManageCompanies() {
 
       {/* Edit Modal - Styling assumed consistent via Modal component */}
       {isModalOpen && editingCompany && (
-         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Company: ${editingCompany.name}`}>
+         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Company: ${editingCompany.nombre}`}> {/* <--- Corregido */}
              <form onSubmit={handleSaveEdit} className="space-y-4"> {/* Added space-y */}
                  <div>
                      <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>

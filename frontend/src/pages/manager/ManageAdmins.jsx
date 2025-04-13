@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore'; // Added serverTimestamp
-import { initializeApp, deleteApp } from 'firebase/app'; // Added for secondary app
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // Added getAuth
-import { db, firebaseConfig } from '../../firebase/config'; // Import firebaseConfig, keep db for Firestore ops
-import { useAuth } from '../../contexts/AuthContext.jsx';
+// Firestore and secondary Firebase app imports removed
+import apiClient from '../../services/api'; // Import API client
+// useAuth might not be needed if manager role is confirmed by backend middleware
+// import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -12,8 +11,7 @@ import Alert from '../../components/ui/Alert';
 import { PlusIcon, PencilSquareIcon, UserMinusIcon, UserPlusIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'; // Icons
 
 function ManageAdmins() {
-  // Note: Manager doesn't have a companyId in userData, they manage multiple companies.
-  const { currentUser } = useAuth(); // Manager's own user info (might not be needed directly)
+  // const { currentUser } = useAuth(); // Might not be needed
   const [admins, setAdmins] = useState([]);
   const [companies, setCompanies] = useState([]); // Need companies to assign admins
   const [companyMap, setCompanyMap] = useState({}); // For easy lookup of company names
@@ -54,36 +52,31 @@ function ManageAdmins() {
       setListError('');
       setSuccessMessage('');
       try {
-        // Fetch Companies first to create a map
-        const companiesCol = collection(db, 'companies');
-        const companySnapshot = await getDocs(companiesCol);
-        const companyList = companySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Fetch Companies using API
+        const companyResponse = await apiClient.get('/companies');
+        const companyList = companyResponse.data;
         setCompanies(companyList);
         const cMap = companyList.reduce((map, company) => {
-          map[company.id] = company.name;
+          map[company.id] = company.nombre; // Use 'nombre' from backend model
           return map;
         }, {});
         setCompanyMap(cMap);
         if (companyList.length > 0) {
-            setSelectedCompanyId(companyList[0].id); // Default selection for add form
+            setSelectedCompanyId(companyList[0].id);
         }
 
-
-        // Fetch Admins
-        const usersCol = collection(db, 'users');
-        const q = query(usersCol, where('role', '==', 'Admin'));
-        const adminSnapshot = await getDocs(q);
-        const adminList = adminSnapshot.docs.map(doc => ({
-          id: doc.id,
-          // Default isActive to true if undefined
-          isActive: doc.data().isActive !== undefined ? doc.data().isActive : true,
-          ...doc.data()
+        // Fetch Admins using API
+        const adminResponse = await apiClient.get('/admins');
+        // Ensure isActive defaults to true if missing (though backend should provide it)
+        const adminList = adminResponse.data.map(admin => ({
+            ...admin,
+            isActive: admin.isActive !== undefined ? admin.isActive : true,
         }));
         setAdmins(adminList);
 
       } catch (err) {
         console.error("Error fetching data:", err);
-        setListError('Failed to load admins or companies.');
+        setListError(err.message || 'Failed to load admins or companies.');
         clearMessages();
       } finally {
         setLoading(false);
@@ -101,74 +94,39 @@ function ManageAdmins() {
       setAddError('Please fill in all fields and select a company.'); clearMessages(); return;
     }
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
-    let tempApp = null; // Variable to hold the temporary app instance
-    let newUser = null; // Variable to hold the created user
 
     try {
-      // 1. Initialize temporary Firebase app
-      // Use a unique name to avoid conflicts if the modal is opened multiple times quickly
-      const tempAppName = `secondary-auth-${Date.now()}`;
-      tempApp = initializeApp(firebaseConfig, tempAppName);
-      const tempAuth = getAuth(tempApp);
-
-      // 2. Create Firebase Auth user using the temporary instance
-      console.log("Creating user with temporary auth instance...");
-      const userCredential = await createUserWithEmailAndPassword(tempAuth, newAdminEmail, newAdminPassword);
-      newUser = userCredential.user;
-      console.log("User created successfully in temporary auth instance:", newUser.uid);
-
-      // 3. Create Firestore user document (using the main 'db' instance)
-      const userDocRef = doc(db, 'users', newUser.uid); // Use main db instance
-      const newAdminData = {
+      // Call backend API to create admin (handles both Auth and DB)
+      const response = await apiClient.post('/admins', {
         email: newAdminEmail,
-        name: newAdminName.trim(),
-        role: 'Admin',
+        password: newAdminPassword,
+        nombre: newAdminName.trim(),
         companyId: selectedCompanyId,
-        isActive: true,
-        createdAt: serverTimestamp() // Add createdAt timestamp
-      };
-      await setDoc(userDocRef, newAdminData); // Use main db instance
+      });
+      const addedAdmin = response.data; // API returns the created admin profile
 
-      // 4. Update local state
-      // Add the new admin to the local state for immediate UI update
-      setAdmins(prev => [...prev, { id: newUser.uid, ...newAdminData, isActive: true }]); // Ensure isActive is set locally
+      // Update local state
+      setAdmins(prev => [...prev, addedAdmin]);
       setNewAdminName(''); setNewAdminEmail(''); setNewAdminPassword('');
-      setSelectedCompanyId(companies.length > 0 ? companies[0].id : ''); // Reset dropdown
+      setSelectedCompanyId(companies.length > 0 ? companies[0].id : '');
       closeAddModal();
-      setSuccessMessage(`Admin ${newAdminData.name} added successfully and assigned to ${companyMap[selectedCompanyId]}.`);
+      setSuccessMessage(`Admin ${addedAdmin.nombre || addedAdmin.email} added successfully and assigned to ${companyMap[selectedCompanyId]}.`);
       clearMessages();
 
     } catch (err) {
       console.error("Error adding admin:", err);
-      // No need to delete Auth user here as it was created in a separate instance
-      // Handle specific auth errors from the temporary instance
-      if (err.code === 'auth/email-already-in-use') {
-        setAddError('This email address is already registered.');
-      } else if (err.code === 'auth/weak-password') {
-        setAddError('Password is too weak (min. 6 characters).');
-      } else {
-        // General error (could be auth or Firestore)
-        setAddError('Failed to add admin. Check console for details.');
-      }
+      // Use error message from API response if available
+      setAddError(err.message || 'Failed to add admin. Check console for details.');
       clearMessages();
     } finally {
       setAdding(false);
-      // 5. Clean up the temporary Firebase app instance regardless of success/failure
-      if (tempApp) {
-        try {
-          await deleteApp(tempApp);
-          console.log("Temporary Firebase app instance deleted.");
-        } catch (deleteError) {
-          console.error("Error deleting temporary Firebase app instance:", deleteError);
-        }
-      }
     }
   };
 
   // Edit Admin - Open Modal
   const handleEditClick = (admin) => {
     setEditingAdmin(admin);
-    setEditName(admin.name || '');
+    setEditName(admin.nombre || ''); // <--- Corregido
     setEditIsActive(admin.isActive);
     // setEditCompanyId(admin.companyId); // For company change later
     setEditError(''); setSuccessMessage('');
@@ -183,16 +141,23 @@ function ManageAdmins() {
     }
     setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
-      const adminDocRef = doc(db, 'users', editingAdmin.id);
-      // Only update name and isActive for now
-      const updatedData = { name: editName.trim(), isActive: editIsActive };
-      await updateDoc(adminDocRef, updatedData);
-      setAdmins(prev => prev.map(adm => adm.id === editingAdmin.id ? { ...adm, ...updatedData } : adm));
+      // Call backend API to update admin (handles both Auth and DB)
+      const response = await apiClient.put(`/admins/${editingAdmin.id}`, {
+        nombre: editName.trim(),
+        isActive: editIsActive,
+      });
+      const updatedAdmin = response.data; // API returns the updated admin profile
+
+      // Update local state
+      // Asegurarse de que el objeto actualizado tenga 'nombre'
+      const finalUpdatedAdmin = { ...updatedAdmin, nombre: updatedAdmin.nombre || '' };
+      setAdmins(prev => prev.map(adm => adm.id === finalUpdatedAdmin.id ? finalUpdatedAdmin : adm));
       closeEditModal();
-      setSuccessMessage(`Admin "${editName.trim()}" updated successfully.`);
+      setSuccessMessage(`Admin "${finalUpdatedAdmin.nombre || finalUpdatedAdmin.email}" updated successfully.`);
       clearMessages();
     } catch (err) {
-      console.error("Error updating admin:", err); setEditError('Failed to update admin.');
+      console.error("Error updating admin:", err);
+      setEditError(err.message || 'Failed to update admin.');
       clearMessages();
     } finally {
       setSaving(false);
@@ -203,17 +168,20 @@ function ManageAdmins() {
    const handleToggleActive = async (admin) => {
     const newState = !admin.isActive;
     const action = newState ? 'activate' : 'deactivate';
-    if (window.confirm(`Are you sure you want to ${action} admin "${admin.name || admin.email}"?`)) {
+    if (window.confirm(`Are you sure you want to ${action} admin "${admin.nombre || admin.email}"?`)) { // <--- Corregido
       setListError(''); setSuccessMessage('');
       try {
-        const adminDocRef = doc(db, 'users', admin.id);
-        await updateDoc(adminDocRef, { isActive: newState });
-        setAdmins(prev => prev.map(adm => adm.id === admin.id ? { ...adm, isActive: newState } : adm));
-        setSuccessMessage(`Admin ${action}d successfully.`);
+        // Call backend API to toggle status (handles both Auth and DB)
+        const response = await apiClient.patch(`/admins/${admin.id}/toggle-status`);
+        const updatedAdmin = response.data.admin; // API returns the updated admin
+
+        // Update local state
+        setAdmins(prev => prev.map(adm => adm.id === updatedAdmin.id ? updatedAdmin : adm));
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error(`Error ${action}ing admin:`, err);
-        setListError(`Failed to ${action} admin.`);
+        setListError(err.message || `Failed to ${action} admin.`);
         clearMessages();
       }
     }
@@ -269,7 +237,7 @@ function ManageAdmins() {
               ) : (
                 admins.map((admin) => (
                   <tr key={admin.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{admin.name || <span className="text-gray-400 italic">No Name</span>}</td>
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{admin.nombre || <span className="text-gray-400 italic">No Name</span>}</td> {/* <--- Corregido */}
                     <td className={`${tdStyle} text-gray-500`}>{admin.email}</td>
                     <td className={`${tdStyle} text-gray-500`}>
                       {companyMap[admin.companyId] || <span className="text-gray-400 italic">Unassigned</span>}
@@ -329,7 +297,7 @@ function ManageAdmins() {
             >
               {companies.length === 0 && <option value="" disabled>No companies available</option>}
               {companies.map(comp => (
-                <option key={comp.id} value={comp.id}>{comp.name}</option>
+                <option key={comp.id} value={comp.id}>{comp.nombre}</option> // <--- Corregido
               ))}
             </select>
           </div>
@@ -346,7 +314,7 @@ function ManageAdmins() {
 
       {/* Edit Admin Modal */}
       {isEditModalOpen && editingAdmin && (
-         <Modal isOpen={isEditModalOpen} onClose={closeEditModal} title={`Edit Admin: ${editingAdmin.name || editingAdmin.email}`}>
+         <Modal isOpen={isEditModalOpen} onClose={closeEditModal} title={`Edit Admin: ${editingAdmin.nombre || editingAdmin.email}`}> {/* <--- Corregido */}
              <form onSubmit={handleSaveEdit} className="space-y-4">
                  <div>
                      <label htmlFor="edit-admin-name" className="block text-sm font-medium text-gray-700 mb-1">Admin Name</label>

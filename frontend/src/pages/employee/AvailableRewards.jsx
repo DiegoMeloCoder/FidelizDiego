@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, updateDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+// Firestore imports removed
+import apiClient from '../../services/api'; // Import API client
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
@@ -31,31 +31,32 @@ function AvailableRewards() {
     if (authLoading) return;
 
     const fetchRewards = async () => {
-      if (!userData?.companyId) {
+      // Use nested company ID check
+      if (!userData?.company?.id) {
         setListError("Employee company information not available."); setLoading(false); return;
       }
-      console.log(`AvailableRewards: Fetching rewards for companyId: ${userData.companyId}`);
+      console.log(`AvailableRewards: Fetching rewards for companyId: ${userData.company.id}`);
       setLoading(true); setListError(''); setRedeemSuccess(''); setRedeemError('');
       try {
-        const rewardsCol = collection(db, 'rewards');
-        const q = query(
-            rewardsCol,
-            where('companyId', '==', userData.companyId)
-            // where('isActive', '==', true) // Keep removed for now
-        );
-        const snapshot = await getDocs(q);
-        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Fetch rewards using API (backend filters by company, frontend filters active)
+        const response = await apiClient.get('/rewards');
+        // Ensure isActive defaults to true if missing
+        const list = response.data.map(reward => ({
+            ...reward,
+            isActive: reward.isActive !== undefined ? reward.isActive : true,
+        }));
         console.log("AvailableRewards: Fetched rewards list:", list);
         setRewards(list);
       } catch (err) {
-        console.error("Error fetching rewards:", err); setListError('Failed to load rewards.');
+        console.error("Error fetching rewards:", err);
+        setListError(err.message || 'Failed to load rewards.');
         clearMessages();
       } finally {
         setLoading(false);
       }
     };
     fetchRewards();
-  }, [userData?.companyId, authLoading]);
+  }, [userData?.company?.id, authLoading]); // Depend on companyId and authLoading
 
   // Handle Redeem Reward
   const handleRedeem = async (rewardId, pointsRequired, rewardName) => {
@@ -72,22 +73,17 @@ function AvailableRewards() {
     }
 
     try {
-      const userDocRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userDocRef, { points: increment(-pointsRequired) });
+      // Call backend API to redeem reward (handles DB transaction)
+      const response = await apiClient.post(`/redemptions/rewards/${rewardId}/redeem`);
 
-      const historyColRef = collection(db, 'canjes');
-      await addDoc(historyColRef, {
-        empleadoId: currentUser.uid, empleadoEmail: currentUser.email,
-        companyId: userData.companyId, recompensaId: rewardId,
-        recompensaNombre: rewardName, puntosCosto: pointsRequired,
-        fechaCanje: serverTimestamp(),
-      });
-
-      setRedeemSuccess(`Successfully redeemed ${rewardName}! Points will update soon.`);
-      clearMessages(); // Clear success message after delay
+      const redeemedData = response.data;
+      setRedeemSuccess(`Successfully redeemed ${rewardName}! New balance: ${redeemedData.employeeNewBalance}`);
+      // Optionally, update userData context immediately or rely on next profile fetch
+      // For now, just show success message. User might need to refresh/navigate to see updated points.
+      clearMessages();
     } catch (err) {
       console.error("Error redeeming reward:", err);
-      setRedeemError(`Failed to redeem ${rewardName}. Please try again.`);
+      setRedeemError(err.message || `Failed to redeem ${rewardName}. Please try again.`);
       clearMessages(); // Clear error message after delay
     } finally {
       setRedeemingId(null);
@@ -150,7 +146,7 @@ function AvailableRewards() {
                   </div> */}
 
                   <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-1 flex-grow">{reward.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-1 flex-grow">{reward.nombre}</h3> {/* Use nombre */}
                     <div className="flex items-center text-indigo-600 font-bold text-xl mt-2">
                        <StarIcon className="h-5 w-5 mr-1 text-yellow-400"/>
                        {reward.pointsRequired}
@@ -160,12 +156,10 @@ function AvailableRewards() {
 
                   <div className="p-4 bg-gray-50 border-t border-gray-200">
                     <Button
-                      onClick={() => handleRedeem(reward.id, reward.pointsRequired, reward.name)}
+                      onClick={() => handleRedeem(reward.id, reward.pointsRequired, reward.nombre)}                       
                       disabled={!canAfford || isRedeemingThis}
-                      variant={canAfford ? "primary" : "secondary"} // Use primary if affordable
-                      className={`w-full inline-flex items-center justify-center ${
-                        !canAfford ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                      }`}
+                      variant={canAfford ? "primary" : "secondary"}
+                      className="w-full inline-flex items-center justify-center"
                       size="sm"
                     >
                       {isRedeemingThis ? (

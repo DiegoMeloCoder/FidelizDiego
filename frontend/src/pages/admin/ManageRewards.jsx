@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { useAuth } from '../../contexts/AuthContext.jsx';
+// Firestore imports removed
+import apiClient from '../../services/api'; // Import API client
+import { useAuth } from '../../contexts/AuthContext.jsx'; // Keep useAuth for companyId
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -43,31 +43,34 @@ function ManageRewards() {
 
   // Fetch rewards
   useEffect(() => {
-    fetchRewards();
-  }, [userData?.companyId]);
+    // Depend on the nested company ID from the API response
+    if (userData?.company?.id) { // Fetch only if ID is available
+        fetchRewards();
+    } else if (userData !== null) { // If userData is loaded but no companyId
+        setListError("Admin company information not available.");
+        setLoading(false);
+    }
+    // If userData is null (still loading initial profile), loading remains true
+  }, [userData?.company?.id]); // <-- Use nested ID
 
   const fetchRewards = async () => {
-    if (!userData?.companyId) {
-      setListError("Admin company information not available."); setLoading(false); return;
-    }
+    // Check nested company ID (redundant check removed, handled by useEffect dependency)
+    // if (!userData?.company?.id) { // <-- Use nested ID
+    //   setListError("Admin company information not available."); setLoading(false); return;
+    // }
     setLoading(true); setListError(''); setSuccessMessage('');
     try {
-      const rewardsCol = collection(db, 'rewards');
-      const q = query(rewardsCol, where('companyId', '==', userData.companyId));
-      const snapshot = await getDocs(q);
-      // Correctly map isActive status from Firestore, defaulting to true if undefined
-      const list = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          // Reflect actual status from DB, default to true only if undefined
-          isActive: data.isActive !== undefined ? data.isActive : true,
-        };
-      });
+      // Fetch rewards using API (backend filters by company)
+      const response = await apiClient.get('/rewards');
+      // Ensure isActive defaults to true if missing
+      const list = response.data.map(reward => ({
+        ...reward,
+        isActive: reward.isActive !== undefined ? reward.isActive : true,
+      }));
       setRewards(list);
     } catch (err) {
-      console.error("Error fetching rewards:", err); setListError('Failed to load rewards.');
+      console.error("Error fetching rewards:", err);
+      setListError(err.message || 'Failed to load rewards.');
       clearMessages();
     } finally {
       setLoading(false);
@@ -81,24 +84,28 @@ function ManageRewards() {
     if (!newRewardName.trim() || isNaN(points) || points <= 0) {
       setAddError('Please enter a valid name and positive points value.'); clearMessages(); return;
     }
-    if (!userData?.companyId) {
-      setAddError("Cannot add reward: Admin's company ID is missing."); clearMessages(); return;
-    }
+    // Backend uses the authenticated admin's company ID
+    // if (!userData?.company?.id) {
+    //   setAddError("Cannot add reward: Admin's company ID is missing."); clearMessages(); return;
+    // }
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
     try {
-      const rewardsCol = collection(db, 'rewards');
-      const newRewardData = {
-        name: newRewardName.trim(), pointsRequired: points,
-        companyId: userData.companyId, isActive: true,
-        createdAt: serverTimestamp()
-      };
-      const docRef = await addDoc(rewardsCol, newRewardData);
-      setRewards(prev => [...prev, { id: docRef.id, ...newRewardData }]);
+      // Add reward using API
+      const response = await apiClient.post('/rewards', {
+        nombre: newRewardName.trim(),
+        pointsRequired: points,
+        // companyId is handled by the backend based on the authenticated Admin
+      });
+      const addedReward = response.data; // API returns the created reward
+
+      // Update local state
+      setRewards(prev => [...prev, addedReward]);
       setNewRewardName(''); setNewRewardPoints('');
-      setSuccessMessage(`Reward "${newRewardData.name}" added successfully.`);
+      setSuccessMessage(`Reward "${addedReward.nombre}" added successfully.`); // <-- Use nombre
       clearMessages();
     } catch (err) {
-      console.error("Error adding reward:", err); setAddError('Failed to add reward.');
+      console.error("Error adding reward:", err);
+      setAddError(err.message || 'Failed to add reward.');
       clearMessages();
     } finally {
       setAdding(false);
@@ -108,7 +115,7 @@ function ManageRewards() {
   // Edit Reward - Open Modal
   const handleEditClick = (reward) => {
     setEditingReward(reward);
-    setEditName(reward.name);
+    setEditName(reward.nombre); // <-- Use nombre
     setEditPoints(reward.pointsRequired.toString());
     setEditIsActive(reward.isActive !== undefined ? reward.isActive : true);
     setEditError(''); setSuccessMessage('');
@@ -124,15 +131,22 @@ function ManageRewards() {
     }
     setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
-      const rewardDocRef = doc(db, 'rewards', editingReward.id);
-      const updatedData = { name: editName.trim(), pointsRequired: points, isActive: editIsActive };
-      await updateDoc(rewardDocRef, updatedData);
-      setRewards(prev => prev.map(r => r.id === editingReward.id ? { ...r, ...updatedData } : r));
+      // Update reward using API
+      const response = await apiClient.put(`/rewards/${editingReward.id}`, {
+        nombre: editName.trim(),
+        pointsRequired: points,
+        isActive: editIsActive,
+      });
+      const updatedReward = response.data; // API returns the updated reward
+
+      // Update local state
+      setRewards(prev => prev.map(r => r.id === updatedReward.id ? updatedReward : r));
       closeModal();
-      setSuccessMessage(`Reward "${editName.trim()}" updated successfully.`);
+      setSuccessMessage(`Reward "${updatedReward.nombre}" updated successfully.`); // <-- Use nombre
       clearMessages();
     } catch (err) {
-      console.error("Error updating reward:", err); setEditError('Failed to update reward.');
+      console.error("Error updating reward:", err);
+      setEditError(err.message || 'Failed to update reward.');
       clearMessages();
     } finally {
       setSaving(false);
@@ -141,18 +155,22 @@ function ManageRewards() {
 
   // Delete Reward (Logical Delete)
   const handleDeleteClick = async (rewardId, rewardName) => {
+    // Use nombre for confirmation
     if (window.confirm(`Are you sure you want to set reward "${rewardName}" to inactive?`)) {
       setListError(''); setSuccessMessage('');
       // TODO: Add button loading state
       try {
-        const rewardDocRef = doc(db, 'rewards', rewardId);
-        await updateDoc(rewardDocRef, { isActive: false });
-        setRewards(prev => prev.map(r => r.id === rewardId ? { ...r, isActive: false } : r));
-        setSuccessMessage(`Reward "${rewardName}" set to inactive.`);
+        // Toggle status using API
+        const response = await apiClient.patch(`/rewards/${rewardId}/toggle-status`);
+        const updatedReward = response.data.reward; // API returns updated reward
+
+        // Update local state
+        setRewards(prev => prev.map(r => r.id === updatedReward.id ? updatedReward : r));
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error("Error setting reward inactive:", err);
-        setListError(`Failed to set reward "${rewardName}" to inactive.`);
+        setListError(err.message || `Failed to set reward "${rewardName}" to inactive.`);
         clearMessages();
       }
     }
@@ -160,18 +178,22 @@ function ManageRewards() {
 
    // Activate Reward
    const handleActivateClick = async (rewardId, rewardName) => {
+    // Use nombre for confirmation
     if (window.confirm(`Are you sure you want to set reward "${rewardName}" to active?`)) {
        setListError(''); setSuccessMessage('');
        // TODO: Add button loading state
       try {
-        const rewardDocRef = doc(db, 'rewards', rewardId);
-        await updateDoc(rewardDocRef, { isActive: true });
-        setRewards(prev => prev.map(r => r.id === rewardId ? { ...r, isActive: true } : r));
-        setSuccessMessage(`Reward "${rewardName}" set to active.`);
+        // Toggle status using API
+        const response = await apiClient.patch(`/rewards/${rewardId}/toggle-status`);
+        const updatedReward = response.data.reward; // API returns updated reward
+
+        // Update local state
+        setRewards(prev => prev.map(r => r.id === updatedReward.id ? updatedReward : r));
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error("Error setting reward active:", err);
-        setListError(`Failed to set reward "${rewardName}" to active.`);
+        setListError(err.message || `Failed to set reward "${rewardName}" to active.`);
         clearMessages();
       }
     }
@@ -241,7 +263,7 @@ function ManageRewards() {
               ) : (
                 rewards.map((reward) => (
                   <tr key={reward.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{reward.name}</td>
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{reward.nombre}</td> {/* <-- Use nombre */}
                     <td className={`${tdStyle} text-gray-700 font-medium`}>{reward.pointsRequired}</td>
                     <td className={tdStyle}>
                        {/* Improved Status Badge */}
@@ -256,11 +278,11 @@ function ManageRewards() {
                         <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
                       </Button>
                       {reward.isActive ? (
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.name)} className="inline-flex items-center">
+                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.nombre)} className="inline-flex items-center"> {/* <-- Use nombre */}
                            <ArchiveBoxXMarkIcon className="h-4 w-4 mr-1" /> Set Inactive
                          </Button>
                       ) : (
-                         <Button variant="success" size="sm" onClick={() => handleActivateClick(reward.id, reward.name)} className="inline-flex items-center">
+                         <Button variant="success" size="sm" onClick={() => handleActivateClick(reward.id, reward.nombre)} className="inline-flex items-center"> {/* <-- Use nombre */}
                            <ArrowPathIcon className="h-4 w-4 mr-1" /> Set Active
                          </Button>
                       )}
@@ -275,7 +297,7 @@ function ManageRewards() {
 
       {/* Edit Modal - Refined */}
       {isModalOpen && editingReward && (
-         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Reward: ${editingReward.name}`}>
+         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Reward: ${editingReward.nombre}`}> {/* <-- Use nombre */}
              <form onSubmit={handleSaveEdit} className="space-y-4">
                  <div>
                      <label htmlFor="edit-reward-name" className="block text-sm font-medium text-gray-700 mb-1">Reward Name</label>
