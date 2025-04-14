@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
-// Firestore imports removed
+import { Link } from 'react-router-dom'; // Import Link for navigation
 import apiClient from '../../services/api'; // Import API client
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
@@ -156,12 +156,16 @@ function AvailableRewards() {
                   key={reward.id}
                   className={`bg-white border rounded-lg shadow-md flex flex-col overflow-hidden transition-opacity duration-300 ${isRedeemingThis ? 'opacity-70' : ''}`}
                 >
-                  {/* Display Reward Image */}
-                  <div className="h-40 bg-gray-100 flex items-center justify-center overflow-hidden"> {/* Fixed height container */}
+                  {/* Display Reward Image - Use aspect-ratio for container */}
+                  <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
                     {reward.imageUrl ? (
-                      <img src={reward.imageUrl} alt={reward.nombre} className="w-full h-full object-cover" /> // Cover the container
+                      <img 
+                        src={reward.imageUrl} 
+                        alt={reward.nombre} 
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
-                      <GiftIcon className="h-16 w-16 text-gray-400" /> // Placeholder icon
+                      <GiftIcon className="h-16 w-16 text-gray-400" />
                     )}
                   </div>
 
@@ -187,7 +191,7 @@ function AvailableRewards() {
                       disabled={!canAfford || isRedeemingThis || isOutOfStock}
                       variant={(canAfford && !isOutOfStock) ? "primary" : "secondary"} // Primary only if affordable and in stock
                       className={`w-full inline-flex items-center justify-center ${
-                        (!canAfford || isOutOfStock) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                        (!canAfford || isOutOfStock) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500' // TODO: Apply brand colors here too?
                       }`}
                       size="sm"
                     >

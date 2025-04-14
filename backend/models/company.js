@@ -50,6 +50,39 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: 'active',
       },
+      // Branding fields
+      logoUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+          isUrl: true, // Optional: Validate if it's a URL format
+        }
+      },
+      motto: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      primaryColor: {
+        type: DataTypes.STRING, // Store as HEX string e.g., #RRGGBB
+        allowNull: true,
+        validate: {
+          is: /^#[0-9A-F]{6}$/i, // Optional: Validate HEX format
+        }
+      },
+      secondaryColor: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+          is: /^#[0-9A-F]{6}$/i, // Optional: Validate HEX format
+        }
+      },
+      tertiaryColor: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+          is: /^#[0-9A-F]{6}$/i, // Optional: Validate HEX format
+        }
+      },
       // createdAt y updatedAt son añadidos automáticamente por Sequelize
     },
     {

@@ -42,15 +42,40 @@ const s3Storage = multerS3({
   },
 });
 
-// Create the multer upload instance (remains the same)
+// --- Configuration for COMPANY LOGO uploads ---
+const logoStorage = multerS3({
+  s3: s3Client,
+  bucket: process.env.S3_BUCKET_NAME,
+  metadata: function (req, file, cb) {
+    cb(null, { fieldName: file.fieldname });
+  },
+  key: function (req, file, cb) {
+    // Generate a unique key for the file within a 'logos' folder
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const extension = path.extname(file.originalname);
+    cb(null, `logos/${uniqueSuffix}${extension}`); // Use 'logos/' subfolder
+  },
+});
+
+// Create the multer upload instance for REWARD images
 const uploadRewardImage = multer({
-  storage: s3Storage,
+  storage: s3Storage, // Use the original storage config for rewards
   fileFilter: fileFilter,
   limits: {
     fileSize: 1024 * 1024 * 5, // 5 MB file size limit
   },
 });
 
+// Create the multer upload instance for COMPANY LOGOS
+const uploadCompanyLogo = multer({
+  storage: logoStorage, // Use the new storage config for logos
+  fileFilter: fileFilter, // Reuse the same image filter
+  limits: {
+    fileSize: 1024 * 1024 * 2, // Limit logos to 2 MB (adjust as needed)
+  },
+});
+
 module.exports = {
-  uploadRewardImage, // Export the configured middleware
+  uploadRewardImage, // Export middleware for rewards
+  uploadCompanyLogo, // Export the new middleware for company logos
 };

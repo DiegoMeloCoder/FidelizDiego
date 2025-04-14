@@ -144,7 +144,8 @@ function AdminDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          {/* Apply brand-secondary to page title */}
+          <h1 className="text-3xl font-bold text-brand-secondary">
             Admin Dashboard
           </h1>
           <p className="text-gray-600 mt-1">
@@ -163,10 +164,10 @@ function AdminDashboard() {
        {statsError && <Alert type="error">{statsError}</Alert>}
        {!loadingStats && !statsError && userData?.company?.id && (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-           {/* Active Employees Card */}
-           <div className="bg-white p-5 rounded-lg shadow border border-gray-200 flex items-center space-x-4">
-             <div className="bg-teal-100 p-3 rounded-full">
-               <UsersIcon className="h-6 w-6 text-teal-600" />
+           {/* Active Employees Card - Apply brand colors */}
+           <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary flex items-center space-x-4"> {/* Use brand-tertiary for border */}
+             <div className="bg-brand-tertiary p-3 rounded-full"> {/* Use brand-tertiary for icon bg */}
+               <UsersIcon className="h-6 w-6 text-brand-primary" /> {/* Use brand-primary for icon color */}
              </div>
              <div>
                <p className="text-sm font-medium text-gray-500">Active Employees</p>
@@ -174,10 +175,10 @@ function AdminDashboard() {
              </div>
            </div>
 
-           {/* Active Rewards Card */}
-           <div className="bg-white p-5 rounded-lg shadow border border-gray-200 flex items-center space-x-4">
-             <div className="bg-purple-100 p-3 rounded-full">
-               <GiftIcon className="h-6 w-6 text-purple-600" />
+           {/* Active Rewards Card - Apply brand colors */}
+           <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary flex items-center space-x-4"> {/* Use brand-tertiary for border */}
+             <div className="bg-brand-tertiary p-3 rounded-full"> {/* Use brand-tertiary for icon bg */}
+               <GiftIcon className="h-6 w-6 text-brand-primary" /> {/* Use brand-primary for icon color */}
              </div>
              <div>
                <p className="text-sm font-medium text-gray-500">Active Rewards</p>

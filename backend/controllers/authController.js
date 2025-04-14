@@ -16,7 +16,17 @@ const getMyProfile = async (req, res) => {
         {
           model: Company,
           as: 'company', // Usar el alias definido en la asociación User.belongsTo(Company)
-          attributes: ['id', 'nombre', 'status'], // Solo traer campos necesarios de la compañía
+          // Include branding fields from the company
+          attributes: [
+            'id',
+            'nombre',
+            'status',
+            'logoUrl',
+            'motto',
+            'primaryColor',
+            'secondaryColor',
+            'tertiaryColor'
+          ],
         },
       ],
     });

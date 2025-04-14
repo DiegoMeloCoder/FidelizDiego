@@ -3,7 +3,8 @@
 const express = require('express');
 const multer = require('multer'); // Import multer itself for error handling
 const uploadController = require('../controllers/uploadController');
-const { uploadRewardImage } = require('../config/s3Config'); // Import the multer middleware
+// Import BOTH upload middlewares
+const { uploadRewardImage, uploadCompanyLogo } = require('../config/s3Config');
 const { authenticate, authorize } = require('../middleware/auth'); // Import auth middleware
 
 const router = express.Router();
@@ -17,6 +18,18 @@ router.post(
   uploadRewardImage.single('rewardImage'), // 3. Handle the file upload using multer-s3. Expects field name 'rewardImage'
   uploadController.handleRewardImageUpload // 4. If upload successful, controller sends back the URL
 );
+
+// Route for uploading company logos
+// POST /api/v1/uploads/images/logos
+router.post(
+  '/images/logos',
+  authenticate,       // 1. Check login
+  authorize(['Manager']), // 2. Check role is 'Manager'
+  uploadCompanyLogo.single('companyLogo'), // 3. Handle upload using logo middleware. Expects field 'companyLogo'
+  // Reuse the same controller function as it just returns the URL
+  uploadController.handleRewardImageUpload // 4. Controller sends back the URL
+);
+
 
 // Add a basic error handler for multer errors (like file size limit or type)
 router.use((error, req, res, next) => {

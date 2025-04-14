@@ -12,43 +12,50 @@ function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <h1 className="text-3xl font-bold text-gray-800">
+      {/* Header - Apply brand-secondary */}
+      <h1 className="text-3xl font-bold text-brand-secondary">
         Welcome, {displayName}!
       </h1>
 
-      {/* Points Balance Card */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-lg shadow-lg flex items-center justify-between">
+      {/* Points Balance Card - Use brand-primary */}
+      <div className="bg-brand-primary text-white p-6 rounded-lg shadow-lg flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-indigo-100 uppercase tracking-wider">Your Points Balance</p>
-          <p className="text-4xl font-bold mt-1">
+          {/* Adjust text color for contrast if primary is light */}
+          <p className="text-sm font-medium text-white/80 uppercase tracking-wider">Your Points Balance</p>
+          <p className="text-4xl font-bold mt-1 text-white">
             {userData?.points !== undefined ? userData.points : <span className="text-2xl animate-pulse">...</span>}
           </p>
         </div>
         <StarIcon className="h-12 w-12 text-yellow-300 opacity-80" />
       </div>
 
-      {/* Quick Actions/Navigation */}
+      {/* Quick Actions/Navigation - Apply brand colors */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link to="/employee/rewards" className="block group">
-          <div className="bg-white p-5 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
-            <div className="bg-rose-100 p-3 rounded-full">
-              <GiftIcon className="h-6 w-6 text-rose-600" />
+          {/* Use brand-tertiary for border */}
+          <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
+            {/* Use brand-tertiary for icon bg, brand-primary for icon color */}
+            <div className="bg-brand-tertiary p-3 rounded-full">
+              <GiftIcon className="h-6 w-6 text-brand-primary" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors duration-200">View Rewards Catalog</p>
+              {/* Use brand-primary for hover text */}
+              <p className="text-lg font-semibold text-gray-800 group-hover:text-brand-primary transition-colors duration-200">View Rewards Catalog</p>
               <p className="text-sm text-gray-500">Browse and redeem available rewards.</p>
             </div>
           </div>
         </Link>
 
         <Link to="/employee/history" className="block group">
-          <div className="bg-white p-5 rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
-            <div className="bg-sky-100 p-3 rounded-full">
-              <ClipboardDocumentListIcon className="h-6 w-6 text-sky-600" />
+          {/* Use brand-tertiary for border */}
+          <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
+             {/* Use brand-tertiary for icon bg, brand-primary for icon color */}
+            <div className="bg-brand-tertiary p-3 rounded-full">
+              <ClipboardDocumentListIcon className="h-6 w-6 text-brand-primary" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors duration-200">View My History</p>
+               {/* Use brand-primary for hover text */}
+              <p className="text-lg font-semibold text-gray-800 group-hover:text-brand-primary transition-colors duration-200">View My History</p>
               <p className="text-sm text-gray-500">Check your points and redemption history.</p>
             </div>
           </div>

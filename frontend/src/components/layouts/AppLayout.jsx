@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../firebase/config';
+import React, { useState, useEffect } from 'react'; // Keep this one with useEffect
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'; // Keep the first import
+import { signOut } from 'firebase/auth'; // Keep the first import
+import { auth } from '../../firebase/config'; // Keep the first import
 import { useAuth } from '../../contexts/AuthContext.jsx';
+// Removed the duplicate imports below this line
 import Button from '../ui/Button';
 // Import Heroicons (assuming you'll install @heroicons/react)
 import {
@@ -51,24 +52,83 @@ function AppLayout() {
     return location.pathname === path || (path !== '/' && location.pathname.startsWith(path) && path.length > 1);
   }
 
-  // Refined styles
-  const linkBaseClasses = "group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors duration-150";
-  const activeLinkClasses = "bg-indigo-700 text-white shadow-inner"; // Clearer active state
-  const iconClasses = "mr-3 flex-shrink-0 h-5 w-5 text-gray-400 group-hover:text-gray-300 transition-colors duration-150";
-  const activeIconClasses = "text-white"; // Ensure icon color matches text on active
+  // Refined styles using brand colors - Improved contrast for dark sidebar
+  const linkBaseClasses = "group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-100 hover:bg-brand-primary hover:text-white transition-colors duration-150"; // Base text lighter (e.g., gray-100)
+  const activeLinkClasses = "bg-brand-primary text-white shadow-inner"; // Active link uses primary color
+  const iconClasses = "mr-3 flex-shrink-0 h-5 w-5 text-gray-300 group-hover:text-gray-100 transition-colors duration-150"; // Lighter base icon color (e.g., gray-300)
+  const activeIconClasses = "text-white"; // Active icon remains white
+
+  // Extract company details for easier access
+  const companyLogoUrl = userData?.company?.logoUrl;
+  const companyMotto = userData?.company?.motto;
+  const companyDisplayName = userData?.company?.nombre || 'Company'; // Use fetched name or default
+  const companyColors = userData?.company; // Get the whole company object for colors
+
+  // --- Apply Dynamic Theme Colors ---
+  useEffect(() => {
+    const root = document.documentElement;
+    const primary = companyColors?.primaryColor;
+    const secondary = companyColors?.secondaryColor;
+    const tertiary = companyColors?.tertiaryColor;
+
+    // Function to remove existing theme properties
+    const clearTheme = () => {
+      root.style.removeProperty('--color-primary');
+      root.style.removeProperty('--color-secondary');
+      root.style.removeProperty('--color-tertiary');
+      // Optional: remove a class if you prefer class-based theming
+      // document.body.classList.remove('custom-theme');
+    };
+
+    if (primary || secondary || tertiary) {
+      console.log("Applying theme colors:", { primary, secondary, tertiary });
+      // Apply colors if they exist
+      if (primary) root.style.setProperty('--color-primary', primary);
+      if (secondary) root.style.setProperty('--color-secondary', secondary);
+      if (tertiary) root.style.setProperty('--color-tertiary', tertiary);
+      // Optional: add a class to body for broader CSS rules
+      // document.body.classList.add('custom-theme');
+    } else {
+      // Clear theme if no colors are defined for the company
+      clearTheme();
+    }
+
+    // Cleanup function to remove styles when component unmounts or user changes
+    return () => {
+      clearTheme();
+    };
+    // Re-run effect if any company color changes
+  }, [companyColors?.primaryColor, companyColors?.secondaryColor, companyColors?.tertiaryColor]);
+  // --- End Apply Dynamic Theme Colors ---
+
 
   const sidebarContent = (
     <div className="flex flex-col h-full"> {/* Ensure flex column takes full height */}
-      {/* Header Section */}
-      <div className="px-4 py-5 border-b border-gray-700/50">
-        <h1 className="text-2xl font-semibold text-white text-center tracking-tight">Fideliz</h1>
+      {/* Header Section - Updated with Logo and Motto */}
+      <div className="px-4 py-5 border-b border-gray-700/50 flex flex-col items-center">
+        {/* Logo */}
+        <div className="h-16 w-auto mb-3 flex items-center justify-center">
+          {companyLogoUrl ? (
+            <img src={companyLogoUrl} alt={`${companyDisplayName} Logo`} className="max-h-16 max-w-full object-contain" />
+          ) : (
+            // Placeholder if no logo - maybe just the app name?
+             <h1 className="text-2xl font-semibold text-white tracking-tight">Fideliz</h1>
+          )}
+        </div>
+        {/* Motto - Use a lighter, non-italic text */}
+        {companyMotto && (
+          <p className="text-xs text-center text-gray-300 mb-4 px-2">"{companyMotto}"</p> // Increased bottom margin, removed italic, lighter text
+        )}
+        {/* User Info */}
         {userData && (
-          <div className="mt-2 text-center">
-            <span className="block text-xs font-medium text-indigo-300 uppercase tracking-wider">{userData.role}</span>
-            { (userData.role === 'Admin' || userData.role === 'Employee') && companyName &&
-              <span className="block text-xs text-gray-400 mt-0.5 truncate" title={companyName}>
-                <BuildingOffice2Icon className="inline-block h-3 w-3 mr-1 align-text-bottom text-gray-500"/>
-                {companyName}
+          <div className="text-center w-full">
+             {/* Use white or light tertiary for Role? Let's try white for emphasis */}
+            <span className="block text-sm font-semibold text-white uppercase tracking-wider mb-1">{userData.role}</span> {/* Slightly larger, white, more margin */}
+            {/* Display Company Name for Admin/Employee - Lighter text */}
+            { (userData.role === 'Admin' || userData.role === 'Employee') &&
+              <span className="block text-xs text-gray-300 mt-0.5 truncate" title={companyDisplayName}> {/* Lighter text */}
+                <BuildingOffice2Icon className="inline-block h-3 w-3 mr-1 align-text-bottom text-gray-400"/> {/* Lighter icon */}
+                {companyDisplayName}
               </span>
             }
           </div>
@@ -150,9 +210,9 @@ function AppLayout() {
   );
 
   return (
-    <div className="flex h-screen bg-gray-100 font-sans antialiased"> {/* Added antialiased */}
-      {/* Static Sidebar for larger screens */}
-      <div className="hidden md:flex md:flex-col md:w-64 bg-gray-800 text-gray-200 flex-shrink-0 shadow-lg"> {/* Adjusted bg, added shadow */}
+    <div className="flex h-screen bg-gray-100 font-sans antialiased"> {/* Main background remains light gray */}
+      {/* Static Sidebar for larger screens - Apply brand-secondary background */}
+      <div className="hidden md:flex md:flex-col md:w-64 bg-brand-secondary text-gray-200 flex-shrink-0 shadow-lg"> {/* Use brand-secondary for sidebar bg */}
         {sidebarContent}
       </div>
 
@@ -166,10 +226,10 @@ function AppLayout() {
                 <h1 className="text-xl font-semibold text-white tracking-tight">Fideliz</h1>
               </div>
               <div className="flex items-center">
-                 {/* Optional: Show company name or role on mobile header */}
+                 {/* Optional: Show company name or role on mobile header - Use brand color here too? */}
                  {userData && (
-                    <span className="text-xs text-indigo-300 mr-3 hidden sm:block">
-                        {userData.role} { (userData.role === 'Admin' || userData.role === 'Employee') && companyName ? `(${companyName})` : ''}
+                    <span className="text-xs text-brand-primary mr-3 hidden sm:block">
+                        {userData.role} { (userData.role === 'Admin' || userData.role === 'Employee') && companyDisplayName ? `(${companyDisplayName})` : ''}
                     </span>
                  )}
                 <button
@@ -190,8 +250,8 @@ function AppLayout() {
 
         {/* Mobile Sidebar (Slide-over with transition) */}
         <div className={`fixed inset-0 flex z-40 md:hidden ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transform transition-transform duration-300 ease-in-out`} role="dialog" aria-modal="true">
-           {/* Off-canvas menu */}
-           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-gray-800 text-gray-200 shadow-xl">
+           {/* Off-canvas menu - Apply brand-secondary background */}
+           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-brand-secondary text-gray-200 shadow-xl"> {/* Use brand-secondary for mobile sidebar bg */}
                 {/* Close button inside */}
                 <div className="absolute top-0 right-0 -mr-12 pt-2">
                     <button
@@ -211,8 +271,8 @@ function AppLayout() {
         </div>
 
 
-        {/* Main content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6 md:p-8"> {/* Lighter bg, more padding */}
+        {/* Main content - Add a top border with brand-tertiary */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6 md:p-8 border-t-4 border-brand-tertiary"> {/* Added top border with brand-tertiary */}
           <Outlet />
         </main>
       </div>

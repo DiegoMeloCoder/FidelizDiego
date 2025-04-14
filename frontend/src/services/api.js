@@ -113,4 +113,30 @@ export const uploadRewardImage = async (file) => {
   }
 };
 
+// Function to upload company logo
+export const uploadCompanyLogo = async (file) => {
+  if (!file) {
+    throw new Error('No file provided for logo upload.');
+  }
+
+  const formData = new FormData();
+  // Ensure the key matches the one expected by multer middleware on the backend (.single('companyLogo'))
+  formData.append('companyLogo', file);
+
+  try {
+    // Make the POST request to the logo upload endpoint
+    const response = await apiClient.post('/uploads/images/logos', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    // Return the image URL from the response
+    return response.data.imageUrl;
+  } catch (error) {
+    console.error('Error uploading company logo:', error);
+    throw new Error(error.message || 'Failed to upload logo.');
+  }
+};
+
+
 export default apiClient;
