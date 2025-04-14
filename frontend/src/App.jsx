@@ -17,8 +17,9 @@ import ManageAdmins from './pages/manager/ManageAdmins'; // Import ManageAdmins
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageEmployees from './pages/admin/ManageEmployees';
 import ManageRewards from './pages/admin/ManageRewards';
-import ManageJustifications from './pages/admin/ManageJustifications'; // Import ManageJustifications
+import ManageJustifications from './pages/admin/ManageJustifications';
 import PointsHistoryAdmin from './pages/admin/history/PointsHistoryAdmin';
+import RedemptionHistoryAdmin from './pages/admin/history/RedemptionHistoryAdmin'; // Importar historial de canjes Admin
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import AvailableRewards from './pages/employee/AvailableRewards';
 import HistoryEmployee from './pages/employee/history/HistoryEmployee';
@@ -94,9 +95,10 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="employees" element={<ManageEmployees />} />
           <Route path="rewards" element={<ManageRewards />} />
-          <Route path="justifications" element={<ManageJustifications />} /> {/* Add Justifications Route */}
+          <Route path="justifications" element={<ManageJustifications />} />
           <Route path="history/points" element={<PointsHistoryAdmin />} />
-          <Route path="ranking" element={<RankingPage />} /> {/* Add Ranking Route */}
+          <Route path="history/redemptions" element={<RedemptionHistoryAdmin />} /> {/* Añadir ruta historial canjes Admin */}
+          <Route path="ranking" element={<RankingPage />} />
         </Route>
 
         <Route

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp, or } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { useAuth } from '../../contexts/AuthContext.jsx';
+// Firestore imports removed
+import apiClient from '../../services/api'; // Import API client
+import { useAuth } from '../../contexts/AuthContext.jsx'; // Keep useAuth for companyId check
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -41,67 +41,37 @@ function ManageJustifications() {
 
   // Fetch justifications
   useEffect(() => {
-    fetchJustifications();
-  }, [userData?.companyId]);
+    // Depend on the nested company ID from the API response
+    if (userData?.company?.id) { // Fetch only if ID is available
+        fetchJustifications();
+    } else if (userData !== null) { // If userData is loaded but no companyId
+        setListError("Admin company information not available.");
+        setLoading(false);
+    }
+    // If userData is null (still loading initial profile), loading remains true
+  }, [userData?.company?.id]); // <-- Use nested ID
 
   const fetchJustifications = async () => {
-    if (!userData?.companyId) {
-      setListError("Admin company information not available.");
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    // Check nested company ID (redundant check removed, handled by useEffect dependency)
+    // if (!userData?.company?.id) { // <-- Use nested ID
+    //   setListError("Admin company information not available."); setLoading(false); return;
+    // }
+      setLoading(true);
     setListError('');
     setSuccessMessage('');
     try {
-      const justCol = collection(db, 'justificacionesPuntos');
-      // Query for global (companyId == null OR esPredeterminada == true) AND company-specific justifications
-      // Firestore limitation: Cannot have inequality filters on different fields in the same query directly with OR.
-      // Option 1: Two separate queries and merge client-side (more flexible)
-      // Option 2: Structure data differently (e.g., add companyId to globals during setup - not ideal)
-      // Option 3: Use 'in' query if possible (not for null)
-
-      // Using Option 1: Two queries
-      const globalQuery = query(
-        justCol,
-        // Assuming global ones might have companyId == null OR esPredeterminada == true
-        // Let's simplify for now: query for companyId == null AND companyId == adminCompanyId
-        // We need an OR condition here which Firestore doesn't support well across fields like this.
-        // Fetching ALL and filtering client-side might be easier for MVP if index creation is complex.
-        // Let's try fetching company-specific and global (null companyId) separately.
-
-        // Query 1: Company Specific
-        where('companyId', '==', userData.companyId)
-      );
-       // Query 2: Global (companyId is null) - Requires composite index usually
-       // Firestore might struggle with querying for 'null' efficiently without specific indexes.
-       // Let's fetch all for now and filter, simpler for MVP start.
-       // TODO: Optimize this fetch later if performance becomes an issue.
-
-      // Fetch ALL justifications and filter client-side for simplicity now
-      const allSnapshot = await getDocs(justCol);
-      const allList = allSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(j => j.companyId === userData.companyId || j.companyId === null || j.esPredeterminada === true); // Filter relevant
-
-      // Sort: Company specific first, then global, then by text?
-      allList.sort((a, b) => {
-         // Prioritize company-specific
-         if (a.companyId === userData.companyId && b.companyId !== userData.companyId) return -1;
-         if (a.companyId !== userData.companyId && b.companyId === userData.companyId) return 1;
-         // Prioritize global predeterminada over null companyId if both not company specific
-         if (a.esPredeterminada && !b.esPredeterminada) return -1;
-         if (!a.esPredeterminada && b.esPredeterminada) return 1;
-         // Then sort by text
-         return (a.textoJustificacion || '').localeCompare(b.textoJustificacion || '');
-      });
-
-
-      setJustifications(allList);
+      // Fetch justifications using API (backend handles filtering and sorting)
+      const response = await apiClient.get('/justifications');
+      // Ensure isActive defaults to true if missing
+      const list = response.data.map(j => ({
+          ...j,
+          estaActiva: j.estaActiva !== undefined ? j.estaActiva : true,
+      }));
+      setJustifications(list);
 
     } catch (err) {
       console.error("Error fetching justifications:", err);
-      setListError('Failed to load justifications. Check console for potential index issues.');
+      setListError(err.message || 'Failed to load justifications.');
       clearMessages();
     } finally {
       setLoading(false);
@@ -114,33 +84,29 @@ function ManageJustifications() {
     if (!newJustificationText.trim()) {
       setAddError('Justification text cannot be empty.'); clearMessages(); return;
     }
-    if (!userData?.companyId) {
-      setAddError("Cannot add justification: Admin's company ID is missing."); clearMessages(); return;
-    }
+    // Backend uses the authenticated admin's company ID
+    // if (!userData?.company?.id) { // <-- Use nested ID
+    //   setAddError("Cannot add justification: Admin's company ID is missing."); clearMessages(); return;
+    // }
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
     try {
-      const justCol = collection(db, 'justificacionesPuntos');
-      const newJustificationData = {
+      // Add justification using API
+      const response = await apiClient.post('/justifications', {
         textoJustificacion: newJustificationText.trim(),
-        companyId: userData.companyId, // Link to admin's company
-        estaActiva: true,
-        esPredeterminada: false, // Company specific are not default
-        createdAt: serverTimestamp()
-      };
-      const docRef = await addDoc(justCol, newJustificationData);
-      // Add to local state optimistically
-      setJustifications(prev => [...prev, { id: docRef.id, ...newJustificationData }].sort((a, b) => { /* Re-apply sort */
-         if (a.companyId === userData.companyId && b.companyId !== userData.companyId) return -1;
-         if (a.companyId !== userData.companyId && b.companyId === userData.companyId) return 1;
-         if (a.esPredeterminada && !b.esPredeterminada) return -1;
-         if (!a.esPredeterminada && b.esPredeterminada) return 1;
-         return (a.textoJustificacion || '').localeCompare(b.textoJustificacion || '');
-      }));
+        // companyId is handled by the backend
+      });
+      const addedJustification = response.data; // API returns the created justification
+
+      // Add to local state and re-fetch to get the sorted list from backend
+      // Or insert and sort client-side if preferred (less accurate if backend sort changes)
+      // Let's re-fetch for simplicity and accuracy
       setNewJustificationText('');
       setSuccessMessage(`Justification added successfully.`);
+      fetchJustifications(); // Re-fetch the list
       clearMessages();
     } catch (err) {
-      console.error("Error adding justification:", err); setAddError('Failed to add justification.');
+      console.error("Error adding justification:", err);
+      setAddError(err.message || 'Failed to add justification.');
       clearMessages();
     } finally {
       setAdding(false);
@@ -149,9 +115,11 @@ function ManageJustifications() {
 
   // Edit Justification - Open Modal
   const handleEditClick = (justification) => {
-    // Only allow editing company-specific justifications
-    if (justification.companyId !== userData.companyId || justification.esPredeterminada) {
-        alert("Default or global justifications cannot be edited here.");
+    // Backend handles preventing edit of global/default, but we can keep the UI check
+    // Use nested ID for comparison
+    if (justification.companyId !== userData?.company?.id || justification.esPredeterminada) { // <-- Use nested ID
+        setEditError("Default or global justifications cannot be edited.");
+        clearMessages();
         return;
     }
     setEditingJustification(justification);
@@ -167,23 +135,31 @@ function ManageJustifications() {
     if (!editText.trim() || !editingJustification) {
       setEditError('Justification text cannot be empty.'); clearMessages(); return;
     }
-     // Double check it's a company-specific one before saving
-     if (editingJustification.companyId !== userData.companyId || editingJustification.esPredeterminada) {
+    // Backend handles preventing edit of global/default
+    // We can remove the redundant client-side check here if desired,
+    // but keeping it provides slightly faster feedback.
+    if (editingJustification.companyId !== userData?.company?.id || editingJustification.esPredeterminada) { // <-- Use nested ID
         setEditError('Cannot save changes to a default or global justification.');
         clearMessages();
         return;
     }
     setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
-      const justDocRef = doc(db, 'justificacionesPuntos', editingJustification.id);
-      const updatedData = { textoJustificacion: editText.trim(), estaActiva: editIsActive };
-      await updateDoc(justDocRef, updatedData);
-      setJustifications(prev => prev.map(j => j.id === editingJustification.id ? { ...j, ...updatedData } : j));
+      // Update justification using API
+      const response = await apiClient.put(`/justifications/${editingJustification.id}`, {
+        textoJustificacion: editText.trim(),
+        estaActiva: editIsActive,
+      });
+      const updatedJustification = response.data; // API returns updated justification
+
+      // Update local state
+      setJustifications(prev => prev.map(j => j.id === updatedJustification.id ? updatedJustification : j));
       closeModal();
       setSuccessMessage(`Justification updated successfully.`);
       clearMessages();
     } catch (err) {
-      console.error("Error updating justification:", err); setEditError('Failed to update justification.');
+      console.error("Error updating justification:", err);
+      setEditError(err.message || 'Failed to update justification.');
       clearMessages();
     } finally {
       setSaving(false);
@@ -192,25 +168,29 @@ function ManageJustifications() {
 
   // Toggle Active Status (Activate/Deactivate)
   const handleToggleActive = async (justification) => {
-     // Only allow toggling company-specific justifications
-     if (justification.companyId !== userData.companyId || justification.esPredeterminada) {
-        alert("Default or global justifications cannot be activated/deactivated here.");
+     // Backend handles preventing toggle of global/default, but keep UI check
+     if (justification.companyId !== userData?.company?.id || justification.esPredeterminada) { // <-- Use nested ID
+        setListError("Default or global justifications cannot be activated/deactivated here.");
+        clearMessages();
         return;
     }
-    const newState = !justification.estaActiva;
-    const action = newState ? 'activate' : 'deactivate';
-    if (window.confirm(`Are you sure you want to ${action} the justification: "${justification.textoJustificacion}"?`)) {
+     const newState = !(justification.estaActiva !== false); // Handle potential undefined
+     const action = newState ? 'activate' : 'deactivate';
+     if (window.confirm(`Are you sure you want to ${action} the justification: "${justification.textoJustificacion}"?`)) {
       setListError(''); setSuccessMessage('');
       // Consider adding a temporary loading state on the specific row/button
       try {
-        const justDocRef = doc(db, 'justificacionesPuntos', justification.id);
-        await updateDoc(justDocRef, { estaActiva: newState });
-        setJustifications(prev => prev.map(j => j.id === justification.id ? { ...j, estaActiva: newState } : j));
-        setSuccessMessage(`Justification ${action}d successfully.`);
+        // Toggle status using API
+        const response = await apiClient.patch(`/justifications/${justification.id}/toggle-status`);
+        const updatedJustification = response.data.justification; // API returns updated justification
+
+        // Update local state
+        setJustifications(prev => prev.map(j => j.id === updatedJustification.id ? updatedJustification : j));
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error(`Error ${action}ing justification:`, err);
-        setListError(`Failed to ${action} justification.`);
+        setListError(err.message || `Failed to ${action} justification.`);
         clearMessages();
       }
     }
@@ -284,7 +264,8 @@ function ManageJustifications() {
                 <tr><td colSpan="4" className={`${tdStyle} text-center text-gray-500 py-6`}>No justifications found. Add company-specific ones above.</td></tr>
               ) : (
                 justifications.map((justification) => {
-                  const isCompanySpecific = justification.companyId === userData.companyId && !justification.esPredeterminada;
+                  // Use nested ID for comparison
+                  const isCompanySpecific = justification.companyId === userData?.company?.id && !justification.esPredeterminada; // <-- Use nested ID
                   const isGlobal = justification.companyId === null || justification.esPredeterminada === true;
                   const isActive = justification.estaActiva !== false; // Default to active if undefined
 

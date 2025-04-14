@@ -6,6 +6,7 @@
 /dist
 /frontend/dist
 
+
 # Logs
 logs
 *.log
@@ -142,3 +143,6 @@ public/build/
 *.swp
 *~
 .DS_Store
+
+# Secrets files (e.g., Firebase service account key)
+/secrets/

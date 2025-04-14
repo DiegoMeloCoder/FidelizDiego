@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'; // Added serverTimestamp
-import { initializeApp, deleteApp } from 'firebase/app'; // Added for secondary app
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // Added getAuth
-import { db, firebaseConfig } from '../../firebase/config'; // Import firebaseConfig, keep db for Firestore ops
-import { useAuth } from '../../contexts/AuthContext.jsx';
+// Firestore and secondary Firebase app imports removed
+import apiClient from '../../services/api'; // Import API client
+import { useAuth } from '../../contexts/AuthContext.jsx'; // Keep useAuth to get admin's companyId
 import Button from '../../components/ui/Button';
 import Papa from 'papaparse'; // Import papaparse
 import Input from '../../components/ui/Input';
@@ -57,26 +55,31 @@ function ManageEmployees() {
 
   // Fetch employees
   useEffect(() => {
-    fetchEmployees();
-  }, [adminUserData?.companyId]);
+    // Depend on the nested company ID from the API response
+    if (adminUserData?.company?.id) { // Fetch only if ID is available
+        fetchEmployees();
+    } else if (adminUserData !== null) { // If userData is loaded but no companyId
+        setListError("Admin company information not available.");
+        setLoading(false);
+    }
+    // If adminUserData is null (still loading initial profile), loading remains true
+  }, [adminUserData?.company?.id]); // <-- Use nested ID
 
   const fetchEmployees = async () => {
-     if (!adminUserData?.companyId) {
-        setListError("Admin company information not available."); setLoading(false); return;
-      }
+     // Check the nested company ID (redundant check removed, handled by useEffect dependency)
+     // if (!adminUserData?.company?.id) {
+     //    setListError("Admin company information not available."); setLoading(false); return;
+     // }
       setLoading(true); setListError(''); setSuccessMessage('');
       try {
-        const usersCol = collection(db, 'users');
-        const q = query(
-          usersCol,
-          where('role', '==', 'Employee'),
-          where('companyId', '==', adminUserData.companyId)
-        );
-        const snapshot = await getDocs(q);
-        const list = snapshot.docs.map(doc => ({ id: doc.id, isActive: true, ...doc.data() }));
+        // Fetch employees using API (backend filters by admin's company)
+        const response = await apiClient.get('/employees');
+        // Ensure isActive defaults to true if missing
+        const list = response.data.map(emp => ({ ...emp, isActive: emp.isActive !== undefined ? emp.isActive : true }));
         setEmployees(list);
       } catch (err) {
-        console.error("Error fetching employees:", err); setListError('Failed to load employees.');
+        console.error("Error fetching employees:", err);
+        setListError(err.message || 'Failed to load employees.');
         clearMessages();
       } finally {
         setLoading(false);
@@ -89,73 +92,40 @@ function ManageEmployees() {
     if (!newEmployeeName.trim() || !newEmployeeEmail.trim() || !newEmployeePassword.trim()) {
       setAddError('Please fill in all fields.'); clearMessages(); return;
     }
-    if (!adminUserData?.companyId) {
-      setAddError("Cannot add employee: Admin's company ID is missing."); clearMessages(); return;
-    }
+    // Backend uses the authenticated admin's company ID, no need to check here explicitly
+    // if (!adminUserData?.company?.id) {
+    //   setAddError("Cannot add employee: Admin's company ID is missing."); clearMessages(); return;
+    // }
 
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
-    let tempApp = null; // Variable to hold the temporary app instance
-    let newUser = null; // Variable to hold the created user
     try {
-      // 1. Initialize temporary Firebase app
-      const tempAppName = `secondary-auth-${Date.now()}`;
-      tempApp = initializeApp(firebaseConfig, tempAppName);
-      const tempAuth = getAuth(tempApp);
-
-      // 2. Create Firebase Auth user using the temporary instance
-      console.log("Creating user with temporary auth instance...");
-      const userCredential = await createUserWithEmailAndPassword(tempAuth, newEmployeeEmail, newEmployeePassword);
-      newUser = userCredential.user;
-      console.log("User created successfully in temporary auth instance:", newUser.uid);
-
-      // 3. Create Firestore user document (using the main 'db' instance)
-      const userDocRef = doc(db, 'users', newUser.uid); // Use main db instance
-      const newEmployeeData = {
+      // Call backend API to create employee (handles Auth and DB)
+      const response = await apiClient.post('/employees', {
         email: newEmployeeEmail,
-        name: newEmployeeName.trim(),
-        role: 'Employee',
-        companyId: adminUserData.companyId,
-        points: 0, // Initial points
-        isActive: true, // Employees are active by default
-        createdAt: serverTimestamp() // Add createdAt timestamp
-      };
-      await setDoc(userDocRef, newEmployeeData); // Use main db instance
+        password: newEmployeePassword,
+        nombre: newEmployeeName.trim(),
+        // companyId is implicitly taken from the authenticated Admin user on the backend
+      });
+      const addedEmployee = response.data; // API returns the created employee profile
 
-      // 4. Update local state
-      setEmployees(prev => [...prev, { id: newUser.uid, ...newEmployeeData, isActive: true }]); // Ensure isActive is set locally
+      // Update local state
+      setEmployees(prev => [...prev, addedEmployee]);
       setNewEmployeeName(''); setNewEmployeeEmail(''); setNewEmployeePassword('');
-      setSuccessMessage(`Employee ${newEmployeeData.name} added successfully.`);
+      setSuccessMessage(`Employee ${addedEmployee.nombre || addedEmployee.email} added successfully.`);
       clearMessages();
     } catch (err) {
       console.error("Error adding employee:", err);
-      // Handle specific auth errors from the temporary instance
-      if (err.code === 'auth/email-already-in-use') {
-        setAddError('This email address is already registered.');
-      } else if (err.code === 'auth/weak-password') {
-        setAddError('Password is too weak (min. 6 characters).');
-      } else {
-         // General error (could be auth or Firestore)
-        setAddError('Failed to add employee. Check console for details.');
-      }
+      setAddError(err.message || 'Failed to add employee. Check console for details.');
       clearMessages();
     } finally {
       setAdding(false);
-       // 5. Clean up the temporary Firebase app instance regardless of success/failure
-       if (tempApp) {
-        try {
-          await deleteApp(tempApp);
-          console.log("Temporary Firebase app instance deleted.");
-        } catch (deleteError) {
-          console.error("Error deleting temporary Firebase app instance:", deleteError);
-        }
-      }
     }
   };
 
   // Edit Employee - Open Modal
   const handleEditClick = (employee) => {
     setEditingEmployee(employee);
-    setEditName(employee.name || '');
+    setEditName(employee.nombre || ''); // <-- Corregido
     setEditIsActive(employee.isActive !== undefined ? employee.isActive : true);
     setEditError(''); setSuccessMessage('');
     setIsModalOpen(true);
@@ -169,15 +139,21 @@ function ManageEmployees() {
     }
     setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
-      const employeeDocRef = doc(db, 'users', editingEmployee.id);
-      const updatedData = { name: editName.trim(), isActive: editIsActive };
-      await updateDoc(employeeDocRef, updatedData);
-      setEmployees(prev => prev.map(emp => emp.id === editingEmployee.id ? { ...emp, ...updatedData } : emp));
+      // Call backend API to update employee (handles Auth and DB)
+      const response = await apiClient.put(`/employees/${editingEmployee.id}`, {
+        nombre: editName.trim(),
+        isActive: editIsActive,
+      });
+      const updatedEmployee = response.data; // API returns updated profile
+
+      // Update local state
+      setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
       closeModal();
-      setSuccessMessage(`Employee "${editName.trim()}" updated successfully.`);
+      setSuccessMessage(`Employee "${updatedEmployee.nombre || updatedEmployee.email}" updated successfully.`);
       clearMessages();
     } catch (err) {
-      console.error("Error updating employee:", err); setEditError('Failed to update employee.');
+      console.error("Error updating employee:", err);
+      setEditError(err.message || 'Failed to update employee.');
       clearMessages();
     } finally {
       setSaving(false);
@@ -186,18 +162,22 @@ function ManageEmployees() {
 
   // Delete Employee (Logical Delete)
   const handleDeleteClick = async (employeeId, employeeName) => {
+    // Use nombre for confirmation message
     if (window.confirm(`Are you sure you want to set employee "${employeeName || 'N/A'}" to inactive? They won't be able to log in.`)) {
       setListError(''); setSuccessMessage('');
       // TODO: Add button loading state
       try {
-        const employeeDocRef = doc(db, 'users', employeeId);
-        await updateDoc(employeeDocRef, { isActive: false });
-        setEmployees(prev => prev.map(emp => emp.id === employeeId ? { ...emp, isActive: false } : emp));
-        setSuccessMessage(`Employee "${employeeName || 'N/A'}" set to inactive.`);
+        // Call backend API to toggle status
+        const response = await apiClient.patch(`/employees/${employeeId}/toggle-status`);
+        const updatedEmployee = response.data.employee; // API returns updated employee
+
+        // Update local state
+        setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error("Error setting employee inactive:", err);
-        setListError(`Failed to set employee "${employeeName || 'N/A'}" to inactive.`);
+        setListError(err.message || `Failed to set employee "${employeeName || 'N/A'}" to inactive.`);
         clearMessages();
       }
     }
@@ -205,18 +185,22 @@ function ManageEmployees() {
 
    // Activate Employee
    const handleActivateClick = async (employeeId, employeeName) => {
+    // Use nombre for confirmation message
     if (window.confirm(`Are you sure you want to set employee "${employeeName || 'N/A'}" to active?`)) {
       setListError(''); setSuccessMessage('');
        // TODO: Add button loading state
       try {
-        const employeeDocRef = doc(db, 'users', employeeId);
-        await updateDoc(employeeDocRef, { isActive: true });
-        setEmployees(prev => prev.map(emp => emp.id === employeeId ? { ...emp, isActive: true } : emp));
-        setSuccessMessage(`Employee "${employeeName || 'N/A'}" set to active.`);
+        // Call backend API to toggle status
+        const response = await apiClient.patch(`/employees/${employeeId}/toggle-status`);
+        const updatedEmployee = response.data.employee; // API returns updated employee
+
+        // Update local state
+        setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error("Error setting employee active:", err);
-        setListError(`Failed to set employee "${employeeName || 'N/A'}" to active.`);
+        setListError(err.message || `Failed to set employee "${employeeName || 'N/A'}" to active.`);
         clearMessages();
       }
     }
@@ -316,87 +300,49 @@ function ManageEmployees() {
     return password;
   }
 
-  const handleBulkUpload = async () => {
+   const handleBulkUpload = async () => {
+    // Check admin company ID before starting bulk upload
+    if (!adminUserData?.company?.id) {
+        setUploadError("Cannot start bulk upload: Admin's company information is missing.");
+        return;
+    }
     if (parsedData.length === 0) {
       setUploadError('No valid employee data to upload.');
       return;
     }
     setUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(0); // Reset progress for API call
     setUploadResults({ success: [], errors: [] });
     setIsProcessingComplete(false);
-    const total = parsedData.length;
-    let currentSuccess = [];
-    let currentErrors = [];
 
-    for (let i = 0; i < total; i++) {
-      const row = parsedData[i];
-      const name = row.Nombre?.trim();
-      const email = row.Email?.trim();
+    // Prepare data in the format expected by the backend endpoint
+    const employeesToUpload = parsedData.map(row => ({
+        nombre: row.Nombre?.trim(),
+        email: row.Email?.trim(),
+    }));
 
-      if (!name || !email) {
-        currentErrors.push({ email: email || `Row ${i+1}`, error: 'Missing Name or Email' });
-        setUploadProgress(((i + 1) / total) * 100);
-        continue; // Skip this row
-      }
+    try {
+        console.log(`Sending ${employeesToUpload.length} employees to bulk upload endpoint...`);
+        // Call the dedicated backend endpoint
+        const response = await apiClient.post('/employees/bulk-upload', employeesToUpload);
 
-      // Basic email format check (can be improved)
-      if (!/\S+@\S+\.\S+/.test(email)) {
-          currentErrors.push({ email: email, error: 'Invalid Email Format' });
-          setUploadProgress(((i + 1) / total) * 100);
-          continue;
-      }
+        // Process results from the backend
+        const backendResults = response.data; // Expects { success: [...], errors: [...] }
+        setUploadResults(backendResults);
+        console.log("Bulk upload results:", backendResults);
 
-
-      const tempPassword = generateTemporaryPassword();
-      let tempApp = null;
-      let newUser = null;
-
-      try {
-        const tempAppName = `secondary-bulk-${Date.now()}-${i}`;
-        tempApp = initializeApp(firebaseConfig, tempAppName);
-        const tempAuth = getAuth(tempApp);
-
-        console.log(`Creating user ${i+1}/${total}: ${email}`);
-        const userCredential = await createUserWithEmailAndPassword(tempAuth, email, tempPassword);
-        newUser = userCredential.user;
-
-        const userDocRef = doc(db, 'users', newUser.uid);
-        const newEmployeeData = {
-          email: email, name: name, role: 'Employee',
-          companyId: adminUserData.companyId, points: 0, isActive: true,
-          createdAt: serverTimestamp()
-        };
-        await setDoc(userDocRef, newEmployeeData);
-
-        currentSuccess.push({ email: email, name: name, tempPassword: tempPassword });
-
-      } catch (err) {
-        console.error(`Error adding employee ${email}:`, err);
-        let errorMessage = 'Failed to create user.';
-        if (err.code === 'auth/email-already-in-use') {
-          errorMessage = 'Email already registered.';
-        } else if (err.code === 'auth/weak-password') {
-           // Should not happen with generated password, but include just in case
-           errorMessage = 'Generated password was too weak (unexpected).';
-        }
-        currentErrors.push({ email: email, error: errorMessage });
-      } finally {
-        if (tempApp) {
-          try { await deleteApp(tempApp); } catch (e) { console.error("Error deleting temp app", e); }
-        }
-        // Update progress after each attempt
-        setUploadProgress(((i + 1) / total) * 100);
-         // Optional delay to mitigate rate limits
-         // await new Promise(resolve => setTimeout(resolve, 200));
-      }
+    } catch (err) {
+        console.error("Error during bulk upload API call:", err);
+        setUploadError(err.message || 'An unexpected error occurred during bulk upload.');
+        // Set results to empty if the whole call failed
+        setUploadResults({ success: [], errors: [{ email: 'N/A', error: err.message || 'API Call Failed' }] });
+    } finally {
+        setUploading(false);
+        setIsProcessingComplete(true);
+        setUploadProgress(100); // Mark as complete
+        // Fetch updated employee list after bulk add attempt
+        fetchEmployees();
     }
-
-    setUploadResults({ success: currentSuccess, errors: currentErrors });
-    setUploading(false);
-    setIsProcessingComplete(true);
-    // Fetch updated employee list after bulk add
-     fetchEmployees();
   };
 
   const handleDownloadCredentials = () => {
@@ -498,7 +444,7 @@ function ManageEmployees() {
               ) : (
                 employees.map((employee) => (
                   <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{employee.name || <span className="text-gray-400 italic">No Name</span>}</td>
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{employee.nombre || <span className="text-gray-400 italic">No Name</span>}</td> {/* <-- Corregido */}
                     <td className={`${tdStyle} text-gray-500`}>{employee.email}</td>
                     <td className={`${tdStyle} text-gray-700 font-medium`}>{employee.points ?? 0}</td>
                     <td className={tdStyle}>
@@ -514,11 +460,11 @@ function ManageEmployees() {
                         <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
                       </Button>
                       {employee.isActive ? (
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(employee.id, employee.name)} className="inline-flex items-center">
+                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(employee.id, employee.nombre)} className="inline-flex items-center"> {/* <-- Corregido */}
                            <UserMinusIcon className="h-4 w-4 mr-1" /> Set Inactive
                          </Button>
                       ) : (
-                         <Button variant="success" size="sm" onClick={() => handleActivateClick(employee.id, employee.name)} className="inline-flex items-center">
+                         <Button variant="success" size="sm" onClick={() => handleActivateClick(employee.id, employee.nombre)} className="inline-flex items-center"> {/* <-- Corregido */}
                            <UserPlusIcon className="h-4 w-4 mr-1" /> Set Active
                          </Button>
                       )}
@@ -533,7 +479,7 @@ function ManageEmployees() {
 
        {/* Edit Modal - Refined */}
        {isModalOpen && editingEmployee && (
-         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Employee: ${editingEmployee.name || editingEmployee.email}`}>
+         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Employee: ${editingEmployee.nombre || editingEmployee.email}`}> {/* <-- Corregido */}
              <form onSubmit={handleSaveEdit} className="space-y-4">
                  <div>
                      <label htmlFor="edit-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>

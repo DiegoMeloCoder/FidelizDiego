@@ -1,40 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase/config'; // Ensure db is exported from config
+// Firestore imports removed
+import apiClient from '../../services/api'; // Import API client
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import Spinner from '../../components/ui/Spinner'; // Import Spinner
+import Spinner from '../../components/ui/Spinner';
 import { BuildingOffice2Icon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'; // Icons for stats
 
 function ManagerDashboard() {
   const { currentUser } = useAuth();
-  const [companies, setCompanies] = useState([]);
+  // const [companies, setCompanies] = useState([]); // No longer needed to fetch all companies here
+  const [stats, setStats] = useState({ companyStats: { total: 0, active: 0, inactive: 0, pending_payment: 0 }, adminCount: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCompanies = async () => {
+    const fetchStats = async () => {
       setLoading(true);
       setError(null);
       try {
-        const companiesCol = collection(db, 'companies');
-        const companySnapshot = await getDocs(companiesCol);
-        const companyList = companySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setCompanies(companyList);
+        // Fetch stats using API
+        const response = await apiClient.get('/stats/manager');
+        setStats(response.data); // API returns { companyStats: {...}, adminCount: ... }
       } catch (err) {
-        console.error("Error fetching companies:", err);
-        setError('Failed to load company data.');
+        console.error("Error fetching manager stats:", err);
+        setError(err.message || 'Failed to load dashboard data.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCompanies();
+    fetchStats();
   }, []);
 
-  const totalCompanies = companies.length;
-  const activeCompanies = companies.filter(c => c.status === 'active').length;
-  const inactiveCompanies = companies.filter(c => c.status === 'inactive').length;
-  // const pendingCompanies = companies.filter(c => c.status === 'pending_payment').length; // If you add this status
+  // Stats are now directly from the API response
+  const { companyStats, adminCount } = stats;
+  const totalCompanies = companyStats.total;
+  const activeCompanies = companyStats.active;
+  const inactiveCompanies = companyStats.inactive;
+  // const pendingCompanies = companyStats.pending_payment; // Available if needed
 
   return (
     <div className="space-y-6">

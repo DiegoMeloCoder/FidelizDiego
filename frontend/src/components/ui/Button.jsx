@@ -35,7 +35,8 @@ function Button({
       break;
     case 'primary':
     default:
-      variantStyles = 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500';
+      // Use brand-primary for background and focus ring
+      variantStyles = 'bg-brand-primary text-white hover:opacity-90 focus:ring-brand-primary';
       break;
   }
 

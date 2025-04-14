@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fideliz_postgres_dev
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password} # Cambiar en producción/entorno seguro
+      POSTGRES_DB: ${DB_NAME:-fideliz_dev}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: fideliz_redis_dev
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fideliz_backend_dev
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      NODE_ENV: development
+      PORT: ${PORT:-5000}
+      DB_HOST: postgres # Nombre del servicio postgres definido aquí
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_NAME: ${DB_NAME:-fideliz_dev}
+      DB_PORT: 5432 # Puerto interno del contenedor postgres
+      REDIS_HOST: redis # Nombre del servicio redis definido aquí
+      REDIS_PORT: 6379 # Puerto interno del contenedor redis
+      # Añadir otras variables de entorno necesarias (JWT_SECRET, FIREBASE_*, OPENAI_API_KEY, etc.)
+      # JWT_SECRET: your_jwt_secret_key # ¡Usar .env para secretos!
+    volumes:
+      # Montar el código fuente para desarrollo con nodemon
+      - ./backend:/usr/src/app
+      # Evitar sobreescribir node_modules del contenedor con el local (si existe)
+      - /usr/src/app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    command: npm run dev # Usar nodemon para desarrollo
+
+  # Opcional: Servicio para el frontend en desarrollo
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile.dev # Necesitarías crear un Dockerfile de desarrollo para frontend
+  #   container_name: fideliz_frontend_dev
+  #   ports:
+  #     - "5173:5173" # Puerto típico de Vite dev server
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #   environment:
+  #     NODE_ENV: development
+  #     VITE_API_BASE_URL: http://backend:5000 # URL para comunicarse con el backend desde el frontend dentro de Docker
+  #   depends_on:
+  #     - backend
+
+volumes:
+  postgres_data:
+  redis_data:

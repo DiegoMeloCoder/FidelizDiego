@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { useAuth } from '../../contexts/AuthContext.jsx';
+// Firestore imports removed
+import apiClient, { uploadRewardImage } from '../../services/api'; // Import API client AND upload function
+import { useAuth } from '../../contexts/AuthContext.jsx'; // Keep useAuth for companyId
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -19,17 +19,24 @@ function ManageRewards() {
   // Add Form State
   const [newRewardName, setNewRewardName] = useState('');
   const [newRewardPoints, setNewRewardPoints] = useState('');
+  const [newRewardStock, setNewRewardStock] = useState(''); // '' for infinite/null
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
+  const [newRewardImageFile, setNewRewardImageFile] = useState(null); // State for new image file
+  const [newRewardPreview, setNewRewardPreview] = useState(null); // State for new image preview URL
 
   // Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReward, setEditingReward] = useState(null);
   const [editName, setEditName] = useState('');
   const [editPoints, setEditPoints] = useState('');
+  const [editStock, setEditStock] = useState(''); // '' for infinite/null
   const [editIsActive, setEditIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState('');
+  const [editRewardImageFile, setEditRewardImageFile] = useState(null); // State for edited image file
+  const [editRewardPreview, setEditRewardPreview] = useState(null); // State for edited image preview URL
+  const [removeCurrentImage, setRemoveCurrentImage] = useState(false); // Flag to remove image on edit
 
   // Function to clear messages after a delay
   const clearMessages = () => {
@@ -43,31 +50,30 @@ function ManageRewards() {
 
   // Fetch rewards
   useEffect(() => {
-    fetchRewards();
-  }, [userData?.companyId]);
+    // Depend on the nested company ID from the API response
+    if (userData?.company?.id) { // Fetch only if ID is available
+        fetchRewards();
+    } else if (userData !== null) { // If userData is loaded but no companyId
+        setListError("Admin company information not available.");
+        setLoading(false);
+    }
+    // If userData is null (still loading initial profile), loading remains true
+  }, [userData?.company?.id]); // <-- Use nested ID
 
   const fetchRewards = async () => {
-    if (!userData?.companyId) {
-      setListError("Admin company information not available."); setLoading(false); return;
-    }
     setLoading(true); setListError(''); setSuccessMessage('');
     try {
-      const rewardsCol = collection(db, 'rewards');
-      const q = query(rewardsCol, where('companyId', '==', userData.companyId));
-      const snapshot = await getDocs(q);
-      // Correctly map isActive status from Firestore, defaulting to true if undefined
-      const list = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          // Reflect actual status from DB, default to true only if undefined
-          isActive: data.isActive !== undefined ? data.isActive : true,
-        };
-      });
+      // Fetch rewards using API (backend filters by company)
+      const response = await apiClient.get('/rewards');
+      // Ensure isActive defaults to true if missing
+      const list = response.data.map(reward => ({
+        ...reward,
+        isActive: reward.isActive !== undefined ? reward.isActive : true,
+      }));
       setRewards(list);
     } catch (err) {
-      console.error("Error fetching rewards:", err); setListError('Failed to load rewards.');
+      console.error("Error fetching rewards:", err);
+      setListError(err.message || 'Failed to load rewards.');
       clearMessages();
     } finally {
       setLoading(false);
@@ -78,27 +84,51 @@ function ManageRewards() {
   const handleAddReward = async (e) => {
     e.preventDefault();
     const points = parseInt(newRewardPoints, 10);
+    const stock = newRewardStock === '' ? null : parseInt(newRewardStock, 10); // Convert '' to null
+
     if (!newRewardName.trim() || isNaN(points) || points <= 0) {
       setAddError('Please enter a valid name and positive points value.'); clearMessages(); return;
     }
-    if (!userData?.companyId) {
-      setAddError("Cannot add reward: Admin's company ID is missing."); clearMessages(); return;
+    // Validate stock input if not null
+    if (stock !== null && (isNaN(stock) || stock < 0)) {
+        setAddError('Stock must be a non-negative number or empty for infinite.'); clearMessages(); return;
     }
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
     try {
-      const rewardsCol = collection(db, 'rewards');
-      const newRewardData = {
-        name: newRewardName.trim(), pointsRequired: points,
-        companyId: userData.companyId, isActive: true,
-        createdAt: serverTimestamp()
-      };
-      const docRef = await addDoc(rewardsCol, newRewardData);
-      setRewards(prev => [...prev, { id: docRef.id, ...newRewardData }]);
-      setNewRewardName(''); setNewRewardPoints('');
-      setSuccessMessage(`Reward "${newRewardData.name}" added successfully.`);
+      let uploadedImageUrl = null;
+      // 1. Upload image if selected
+      if (newRewardImageFile) {
+        try {
+          uploadedImageUrl = await uploadRewardImage(newRewardImageFile);
+        } catch (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          setAddError(`Image upload failed: ${uploadError.message}`);
+          clearMessages();
+          setAdding(false); // Stop loading state
+          return; // Prevent reward creation if image upload fails
+        }
+      }
+
+      // 2. Create reward using API, including the image URL if uploaded
+      const response = await apiClient.post('/rewards', {
+        nombre: newRewardName.trim(),
+        pointsRequired: points,
+        stock: stock, // Send null or number
+        imageUrl: uploadedImageUrl, // Send the uploaded image URL or null
+      });
+      const addedReward = response.data; // API returns the created reward (should include imageUrl)
+
+      // Update local state
+      // Update local state (ensure imageUrl is included if added)
+      setRewards(prev => [...prev, { ...addedReward, imageUrl: addedReward.imageUrl || null }]);
+      setNewRewardName(''); setNewRewardPoints(''); setNewRewardStock('');
+      setNewRewardImageFile(null); // Reset image file
+      setNewRewardPreview(null); // Reset image preview
+      setSuccessMessage(`Reward "${addedReward.nombre}" added successfully.`);
       clearMessages();
     } catch (err) {
-      console.error("Error adding reward:", err); setAddError('Failed to add reward.');
+      console.error("Error adding reward:", err);
+      setAddError(err.message || 'Failed to add reward.');
       clearMessages();
     } finally {
       setAdding(false);
@@ -108,31 +138,78 @@ function ManageRewards() {
   // Edit Reward - Open Modal
   const handleEditClick = (reward) => {
     setEditingReward(reward);
-    setEditName(reward.name);
+    setEditName(reward.nombre);
     setEditPoints(reward.pointsRequired.toString());
+    // Set stock state: if null/undefined use '', otherwise convert number to string
+    setEditStock(reward.stock === null || reward.stock === undefined ? '' : reward.stock.toString());
     setEditIsActive(reward.isActive !== undefined ? reward.isActive : true);
     setEditError(''); setSuccessMessage('');
+    setEditRewardImageFile(null); // Reset file input on open
+    setEditRewardPreview(null); // Reset preview on open
+    setRemoveCurrentImage(false); // Reset remove flag
     setIsModalOpen(true);
   };
 
   // Edit Reward - Save Changes
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    const points = parseInt(editPoints, 10);
-    if (!editName.trim() || !editingReward || isNaN(points) || points <= 0) {
+    const pointsValue = parseInt(editPoints, 10); // Use different variable name
+    const stockValue = editStock === '' ? null : parseInt(editStock, 10); // Convert '' to null, else parse int
+
+    if (!editName.trim() || !editingReward || isNaN(pointsValue) || pointsValue <= 0) {
       setEditError('Please enter a valid name and positive points value.'); clearMessages(); return;
     }
+    // Validate stock input if not null
+    if (stockValue !== null && (isNaN(stockValue) || stockValue < 0)) {
+        setEditError('Stock must be a non-negative number or empty for infinite.'); clearMessages(); return;
+    }
+
     setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
-      const rewardDocRef = doc(db, 'rewards', editingReward.id);
-      const updatedData = { name: editName.trim(), pointsRequired: points, isActive: editIsActive };
-      await updateDoc(rewardDocRef, updatedData);
-      setRewards(prev => prev.map(r => r.id === editingReward.id ? { ...r, ...updatedData } : r));
+      let imageUrlPayload; // Undefined initially
+
+      // 1. Upload new image if selected
+      if (editRewardImageFile) {
+        try {
+          imageUrlPayload = await uploadRewardImage(editRewardImageFile);
+        } catch (uploadError) {
+          console.error("Error uploading image during edit:", uploadError);
+          setEditError(`Image upload failed: ${uploadError.message}`);
+          clearMessages();
+          setSaving(false); // Stop loading state
+          return; // Prevent update if image upload fails
+        }
+      } else if (removeCurrentImage) {
+        // 2. If user explicitly clicked "Remove Image"
+        imageUrlPayload = null;
+      }
+      // If imageUrlPayload remains undefined, the backend won't update the image field
+
+      // 3. Prepare update payload
+      const updatePayload = {
+        nombre: editName.trim(),
+        pointsRequired: pointsValue,
+        isActive: editIsActive,
+        stock: stockValue,
+      };
+
+      // Only include imageUrl in payload if it needs changing (new upload or removal)
+      if (imageUrlPayload !== undefined) {
+        updatePayload.imageUrl = imageUrlPayload;
+      }
+
+      // 4. Update reward using API
+      const response = await apiClient.put(`/rewards/${editingReward.id}`, updatePayload);
+      const updatedReward = response.data; // API returns the updated reward (should include final imageUrl)
+
+      // Update local state
+      setRewards(prev => prev.map(r => r.id === updatedReward.id ? updatedReward : r));
       closeModal();
-      setSuccessMessage(`Reward "${editName.trim()}" updated successfully.`);
+      setSuccessMessage(`Reward "${updatedReward.nombre}" updated successfully.`); // <-- Use nombre
       clearMessages();
     } catch (err) {
-      console.error("Error updating reward:", err); setEditError('Failed to update reward.');
+      console.error("Error updating reward:", err);
+      setEditError(err.message || 'Failed to update reward.');
       clearMessages();
     } finally {
       setSaving(false);
@@ -141,18 +218,21 @@ function ManageRewards() {
 
   // Delete Reward (Logical Delete)
   const handleDeleteClick = async (rewardId, rewardName) => {
+    // Use nombre for confirmation
     if (window.confirm(`Are you sure you want to set reward "${rewardName}" to inactive?`)) {
       setListError(''); setSuccessMessage('');
-      // TODO: Add button loading state
       try {
-        const rewardDocRef = doc(db, 'rewards', rewardId);
-        await updateDoc(rewardDocRef, { isActive: false });
-        setRewards(prev => prev.map(r => r.id === rewardId ? { ...r, isActive: false } : r));
-        setSuccessMessage(`Reward "${rewardName}" set to inactive.`);
+        // Toggle status using API
+        const response = await apiClient.patch(`/rewards/${rewardId}/toggle-status`);
+        const updatedReward = response.data.reward; // API returns updated reward
+
+        // Update local state
+        setRewards(prev => prev.map(r => r.id === updatedReward.id ? updatedReward : r));
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error("Error setting reward inactive:", err);
-        setListError(`Failed to set reward "${rewardName}" to inactive.`);
+        setListError(err.message || `Failed to set reward "${rewardName}" to inactive.`);
         clearMessages();
       }
     }
@@ -160,18 +240,21 @@ function ManageRewards() {
 
    // Activate Reward
    const handleActivateClick = async (rewardId, rewardName) => {
+    // Use nombre for confirmation
     if (window.confirm(`Are you sure you want to set reward "${rewardName}" to active?`)) {
        setListError(''); setSuccessMessage('');
-       // TODO: Add button loading state
       try {
-        const rewardDocRef = doc(db, 'rewards', rewardId);
-        await updateDoc(rewardDocRef, { isActive: true });
-        setRewards(prev => prev.map(r => r.id === rewardId ? { ...r, isActive: true } : r));
-        setSuccessMessage(`Reward "${rewardName}" set to active.`);
+        // Toggle status using API
+        const response = await apiClient.patch(`/rewards/${rewardId}/toggle-status`);
+        const updatedReward = response.data.reward; // API returns updated reward
+
+        // Update local state
+        setRewards(prev => prev.map(r => r.id === updatedReward.id ? updatedReward : r));
+        setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error("Error setting reward active:", err);
-        setListError(`Failed to set reward "${rewardName}" to active.`);
+        setListError(err.message || `Failed to set reward "${rewardName}" to active.`);
         clearMessages();
       }
     }
@@ -182,12 +265,59 @@ function ManageRewards() {
     setEditingReward(null);
     setEditName('');
     setEditPoints('');
+    setEditStock(''); // Reset stock state
     setEditIsActive(true);
+    setEditRewardImageFile(null); // Reset image file state
+    setEditRewardPreview(null); // Reset image preview state
+    setRemoveCurrentImage(false); // Reset remove flag
   };
 
   // Define Tailwind classes for table cells - Refined
   const thStyle = "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
   const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
+
+  // Handle new image selection
+  const handleNewImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewRewardImageFile(file);
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewRewardPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setNewRewardImageFile(null);
+      setNewRewardPreview(null);
+    }
+  };
+
+  // Handle edit image selection
+  const handleEditImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditRewardImageFile(file);
+      setRemoveCurrentImage(false); // If new file is selected, don't remove current one (it will be replaced)
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditRewardPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Don't clear existing preview if no file selected, user might just cancel
+      // setEditRewardImageFile(null);
+      // setEditRewardPreview(null);
+    }
+  };
+
+  // Handle remove image click in edit modal
+  const handleRemoveImageClick = () => {
+    setEditRewardImageFile(null); // Clear selected file
+    setEditRewardPreview(null); // Clear preview
+    setRemoveCurrentImage(true); // Set flag to remove existing image on save
+  };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
@@ -196,7 +326,8 @@ function ManageRewards() {
       {/* Add Reward Form - Improved Layout */}
       <form onSubmit={handleAddReward} className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
          <h2 className="text-lg font-medium text-gray-700">Add New Reward</h2>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+         {/* Grid for Name, Points, Stock */}
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            <div>
              <label htmlFor="new-reward-name" className="block text-sm font-medium text-gray-700 mb-1">Reward Name</label>
              <Input id="new-reward-name" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} placeholder="e.g., Gift Card" required className="mt-0 w-full"/>
@@ -205,6 +336,28 @@ function ManageRewards() {
              <label htmlFor="new-reward-points" className="block text-sm font-medium text-gray-700 mb-1">Points Required</label>
              <Input id="new-reward-points" type="number" value={newRewardPoints} onChange={(e) => setNewRewardPoints(e.target.value)} placeholder="e.g., 1000" required min="1" className="mt-0 w-full"/>
            </div>
+           {/* Add Stock Input */}
+           <div>
+             <label htmlFor="new-reward-stock" className="block text-sm font-medium text-gray-700 mb-1">Stock (Optional)</label>
+             <Input id="new-reward-stock" type="number" value={newRewardStock} onChange={(e) => setNewRewardStock(e.target.value)} placeholder="Empty = Infinite" min="0" className="mt-0 w-full"/>
+           </div>
+         </div>
+         {/* Image Upload Section */}
+         <div>
+            <label htmlFor="new-reward-image" className="block text-sm font-medium text-gray-700 mb-1">Reward Image (Optional)</label>
+            <Input
+                id="new-reward-image"
+                type="file"
+                accept="image/jpeg, image/png, image/gif, image/webp" // Specify accepted types
+                onChange={handleNewImageChange}
+                className="mt-0 w-full file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            />
+            {/* Image Preview */}
+            {newRewardPreview && (
+                <div className="mt-2">
+                    <img src={newRewardPreview} alt="New reward preview" className="h-20 w-20 object-cover rounded-md border border-gray-300" />
+                </div>
+            )}
          </div>
          {addError && <Alert type="error">{addError}</Alert>}
          <div className="flex justify-end">
@@ -229,40 +382,56 @@ function ManageRewards() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
+                <th className={thStyle}>Image</th> {/* Add Image column */}
                 <th className={thStyle}>Name</th>
                 <th className={thStyle}>Points Required</th>
+                <th className={thStyle}>Stock</th>
                 <th className={thStyle}>Status</th>
                 <th className={`${thStyle} text-right pr-6`}>Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {rewards.length === 0 ? (
-                <tr><td colSpan="4" className={`${tdStyle} text-center text-gray-500 py-6`}>No rewards found for this company.</td></tr>
+                <tr>
+                  <td colSpan={6} className={`${tdStyle} text-center text-gray-500 py-6`}> {/* Incremented colspan */}
+                    No rewards found for this company.
+                  </td>
+                </tr>
               ) : (
                 rewards.map((reward) => (
                   <tr key={reward.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{reward.name}</td>
-                    <td className={`${tdStyle} text-gray-700 font-medium`}>{reward.pointsRequired}</td>
+                    {/* Image Cell */}
                     <td className={tdStyle}>
-                       {/* Improved Status Badge */}
-                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                         reward.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                       }`}>
-                         {reward.isActive ? 'Active' : 'Inactive'}
-                       </span>
+                      {reward.imageUrl ? (
+                        <img src={reward.imageUrl} alt={reward.nombre} className="h-10 w-10 object-cover rounded-md border border-gray-200" />
+                      ) : (
+                        <div className="h-10 w-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                      )}
+                    </td>
+                    <td className={`${tdStyle} font-medium text-gray-900`}>{reward.nombre}</td>
+                    <td className={`${tdStyle} text-gray-700 font-medium`}>{reward.pointsRequired}</td>
+                    <td className={`${tdStyle} text-gray-700`}>
+                      {reward.stock === null ? 'Infinite' : reward.stock}
+                    </td>
+                    <td className={tdStyle}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        reward.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {reward.isActive ? 'Active' : 'Inactive'}
+                      </span>
                     </td>
                     <td className={`${tdStyle} text-right space-x-2 pr-6`}>
                       <Button variant="secondary" size="sm" onClick={() => handleEditClick(reward)} className="inline-flex items-center">
                         <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
                       </Button>
                       {reward.isActive ? (
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.name)} className="inline-flex items-center">
-                           <ArchiveBoxXMarkIcon className="h-4 w-4 mr-1" /> Set Inactive
-                         </Button>
+                        <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.nombre)} className="inline-flex items-center">
+                          <ArchiveBoxXMarkIcon className="h-4 w-4 mr-1" /> Set Inactive
+                        </Button>
                       ) : (
-                         <Button variant="success" size="sm" onClick={() => handleActivateClick(reward.id, reward.name)} className="inline-flex items-center">
-                           <ArrowPathIcon className="h-4 w-4 mr-1" /> Set Active
-                         </Button>
+                        <Button variant="success" size="sm" onClick={() => handleActivateClick(reward.id, reward.nombre)} className="inline-flex items-center">
+                          <ArrowPathIcon className="h-4 w-4 mr-1" /> Set Active
+                        </Button>
                       )}
                     </td>
                   </tr>
@@ -275,7 +444,7 @@ function ManageRewards() {
 
       {/* Edit Modal - Refined */}
       {isModalOpen && editingReward && (
-         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Reward: ${editingReward.name}`}>
+         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Reward: ${editingReward.nombre}`}> {/* <-- Use nombre */}
              <form onSubmit={handleSaveEdit} className="space-y-4">
                  <div>
                      <label htmlFor="edit-reward-name" className="block text-sm font-medium text-gray-700 mb-1">Reward Name</label>
@@ -285,6 +454,44 @@ function ManageRewards() {
                      <label htmlFor="edit-reward-points" className="block text-sm font-medium text-gray-700 mb-1">Points Required</label>
                      <Input id="edit-reward-points" type="number" value={editPoints} onChange={(e) => setEditPoints(e.target.value)} required min="1" className="mt-0 w-full"/>
                  </div>
+                 {/* Add Stock Edit Input */}
+                 <div>
+                     <label htmlFor="edit-reward-stock" className="block text-sm font-medium text-gray-700 mb-1">Stock (Optional)</label>
+                     <Input id="edit-reward-stock" type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} placeholder="Empty = Infinite" min="0" className="mt-0 w-full"/>
+                 </div>
+                 {/* Edit Image Section */}
+                 <div>
+                    <label htmlFor="edit-reward-image" className="block text-sm font-medium text-gray-700 mb-1">Reward Image (Optional)</label>
+                    <div className="flex items-center space-x-4">
+                        {/* Current Image or New Preview */}
+                        {editRewardPreview ? (
+                            <img src={editRewardPreview} alt="New preview" className="h-16 w-16 object-cover rounded-md border border-gray-300" />
+                        ) : editingReward.imageUrl && !removeCurrentImage ? (
+                            <img src={editingReward.imageUrl} alt="Current reward" className="h-16 w-16 object-cover rounded-md border border-gray-300" />
+                        ) : (
+                            <div className="h-16 w-16 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                        )}
+                        <div className="flex-grow">
+                            <Input
+                                id="edit-reward-image"
+                                type="file"
+                                accept="image/jpeg, image/png, image/gif, image/webp"
+                                onChange={handleEditImageChange}
+                                className="mt-0 w-full file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                            />
+                            {/* Remove Image Button */}
+                            {(editingReward.imageUrl || editRewardPreview) && !removeCurrentImage && (
+                                <Button type="button" variant="link" size="sm" onClick={handleRemoveImageClick} className="mt-1 text-red-600 hover:text-red-800">
+                                    Remove Image
+                                </Button>
+                            )}
+                             {removeCurrentImage && (
+                                <span className="mt-1 text-sm text-red-600">Image will be removed on save.</span>
+                            )}
+                        </div>
+                    </div>
+                 </div>
+                 {/* Active Checkbox */}
                  <div>
                     <label htmlFor="edit-reward-active" className="flex items-center cursor-pointer">
                         <input
