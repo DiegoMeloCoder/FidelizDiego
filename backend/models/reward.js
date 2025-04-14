@@ -62,6 +62,10 @@ module.exports = (sequelize) => {
           min: 0 // El stock no puede ser negativo
         }
       },
+      imageUrl: { // Add the new field for image URL
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       // Considerar añadir campos como 'description', 'imageUrl', etc. si es necesario
       // createdAt y updatedAt son añadidos automáticamente
     },

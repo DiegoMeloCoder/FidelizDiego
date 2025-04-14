@@ -1,6 +1,8 @@
-const path = require('path'); // Necesitamos path para resolver la ruta
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') }); // Especificar ruta al .env de la raíz
-console.log('[Server Start] DB_PASSWORD from .env:', process.env.DB_PASSWORD ? 'Loaded (length: ' + process.env.DB_PASSWORD.length + ')' : 'NOT LOADED or empty'); // Log para verificar carga
+const path = require('path');
+// Load environment variables from root .env file for the running application
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+console.log('[Server Start] Root .env loaded for server.');
+
 const express = require('express');
 const cors = require('cors');
 
@@ -28,6 +30,7 @@ const pointRoutes = require('./routes/pointRoutes');
 const redemptionRoutes = require('./routes/redemptionRoutes');
 const historyRoutes = require('./routes/historyRoutes');
 const statsRoutes = require('./routes/statsRoutes'); // Importar rutas de estadísticas
+const uploadRoutes = require('./routes/uploadRoutes'); // Importar rutas de carga
 // TODO: Importar otras rutas (ranking, etc.)
 
 // Usar Rutas
@@ -43,6 +46,7 @@ app.use(`${API_PREFIX}/points`, pointRoutes); // Rutas para asignar puntos (solo
 app.use(`${API_PREFIX}/redemptions`, redemptionRoutes); // Rutas para canjear recompensas (solo Employee)
 app.use(`${API_PREFIX}/history`, historyRoutes); // Rutas para historiales (Admin/Employee)
 app.use(`${API_PREFIX}/stats`, statsRoutes); // Rutas para estadísticas
+app.use(`${API_PREFIX}/uploads`, uploadRoutes); // Rutas para carga de archivos
 // TODO: Usar otras rutas (ranking)
 // ...etc
 

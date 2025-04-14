@@ -67,6 +67,7 @@ const authorize = (requiredRoles = []) => {
       };
 
       // Verificar si el rol del usuario está en la lista de roles requeridos
+      // Note: JavaScript's includes is case-sensitive. Ensure requiredRoles match DB case.
       if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
         console.warn(`Acceso denegado para usuario ${user.id} (Rol: ${user.role}). Roles requeridos: ${requiredRoles}`);
         return res.status(403).send({ message: 'Acceso prohibido. Permisos insuficientes.' });

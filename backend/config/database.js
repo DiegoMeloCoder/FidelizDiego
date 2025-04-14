@@ -1,9 +1,14 @@
+const path = require('path'); // Need path for resolving
+// Load .env from root specifically for sequelize-cli usage
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+console.log('[Database Config] Root .env loaded for CLI.');
+
 // dotenv ya se carga en server.js, no es necesario aquí.
 
 module.exports = {
   development: {
     username: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '', // Usar string vacío si no está definida
+    password: process.env.DB_PASSWORD || '', // Revert to simpler fallback, dotenv should load it now
     database: process.env.DB_NAME || 'fideliz_dev',
     // Usar 'postgres' como host por defecto si DB_HOST no está definido,
     // ya que es el nombre del servicio en docker-compose.yml.

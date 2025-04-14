@@ -156,10 +156,14 @@ function AvailableRewards() {
                   key={reward.id}
                   className={`bg-white border rounded-lg shadow-md flex flex-col overflow-hidden transition-opacity duration-300 ${isRedeemingThis ? 'opacity-70' : ''}`}
                 >
-                  {/* Optional: Add an image placeholder or actual image later */}
-                  {/* <div className="h-32 bg-gray-200 flex items-center justify-center">
-                    <GiftIcon className="h-12 w-12 text-gray-400"/>
-                  </div> */}
+                  {/* Display Reward Image */}
+                  <div className="h-40 bg-gray-100 flex items-center justify-center overflow-hidden"> {/* Fixed height container */}
+                    {reward.imageUrl ? (
+                      <img src={reward.imageUrl} alt={reward.nombre} className="w-full h-full object-cover" /> // Cover the container
+                    ) : (
+                      <GiftIcon className="h-16 w-16 text-gray-400" /> // Placeholder icon
+                    )}
+                  </div>
 
                   <div className="p-4 flex flex-col flex-grow">
                     <h3 className="text-lg font-semibold text-gray-800 mb-1 flex-grow">{reward.nombre}</h3> {/* Use nombre */}

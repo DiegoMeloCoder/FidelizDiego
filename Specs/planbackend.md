@@ -6,6 +6,7 @@
 *   **Frontend:** React (Vite), Tailwind CSS, React Router, Axios (para llamadas API).
 *   **Backend:** Node.js, Express.js, Sequelize (ORM), PostgreSQL (Base de Datos).
 *   **Autenticación:** Inicialmente, verificar Tokens ID de Firebase Auth en el backend. Evaluar migración futura si es necesario.
+*   **Almacenamiento de Archivos:** AWS S3 (para imágenes de recompensas).
 *   **Cache:** Redis (para optimizar consultas frecuentes).
 *   **Tareas Asíncronas/Programadas:** Node-cron (o similar), potencialmente colas de mensajes si la complejidad aumenta.
 *   **IA:** SDK de OpenAI.
@@ -23,9 +24,10 @@
     3.  **[HECHO] Instalar Dependencias Core:**
         ```bash
         cd backend
-        npm install express sequelize pg pg-hstore dotenv cors bcrypt jsonwebtoken axios redis ioredis node-cron openai
+        npm install express sequelize pg pg-hstore dotenv cors bcrypt jsonwebtoken axios redis ioredis node-cron openai @aws-sdk/client-s3 multer multer-s3
         npm install -D nodemon eslint prettier eslint-config-prettier eslint-plugin-prettier @types/jest jest supertest sequelize-cli
         cd ..
+        # Nota: aws-sdk (v2) fue desinstalado y reemplazado por @aws-sdk/client-s3 (v3)
         ```
     4.  **[HECHO] Configurar Estructura de Carpetas Backend:** Crear subdirectorios: `config/`, `controllers/`, `middleware/`, `models/`, `routes/`, `services/`, `utils/`, `tests/`, `migrations/`, `seeders/`.
     5.  **[HECHO] Configurar Sequelize:**
@@ -45,8 +47,8 @@
 
 *   **Objetivo:** Definir y crear la estructura de la base de datos en PostgreSQL usando Sequelize, basándose en el diseño original y adaptando la estructura de Firestore.
 *   **Pasos:**
-    1.  **[HECHO] Definir Modelos Sequelize:** Creados modelos `User`, `Company`, `Reward`, `Justification`, `PointAssignment`, `Redemption` con asociaciones básicas.
-    2.  **[HECHO] Generar y Ejecutar Migraciones:** Generadas y ejecutadas migraciones para todas las tablas principales.
+    1.  **[HECHO] Definir Modelos Sequelize:** Creados modelos `User`, `Company`, `Reward` (incluye `imageUrl`), `Justification`, `PointAssignment`, `Redemption` con asociaciones básicas.
+    2.  **[HECHO] Generar y Ejecutar Migraciones:** Generadas y ejecutadas migraciones para todas las tablas principales (incluye `imageUrl` en `Rewards`).
     3.  **[HECHO] Crear Seeders:** Creados y ejecutados seeders para justificaciones globales, compañía demo y manager inicial.
     4.  **Planificar Migración de Datos (Opcional):** Si hay datos críticos en Firestore que deban migrarse, diseñar y (si es necesario) implementar un script de migración. Para un MVP, podría ser aceptable la re-entrada manual de datos clave.
 
@@ -66,7 +68,7 @@
 
 ---
 
-## Fase 3: Migración de Funcionalidades Core a la API Backend [EN PROGRESO]
+## Fase 3: Migración de Funcionalidades Core a la API Backend [HECHO]
 
 *   **Objetivo:** Reemplazar las llamadas directas a Firestore en el frontend por llamadas a la nueva API RESTful del backend. Esto implica crear los endpoints en el backend y refactorizar el frontend.
 *   **Pasos (Iterativos: Backend Endpoint -> Frontend Refactor):**
@@ -74,24 +76,25 @@
     2.  **[HECHO] Endpoints Manager:**
         *   [HECHO] Implementados endpoints CRUD para Compañías (`/api/v1/companies`).
         *   [HECHO] Implementados endpoints CRUD para Admins (`/api/v1/admins`).
-        *   [PENDIENTE] Implementar endpoint Dashboard Manager (`GET /api/v1/manager/dashboard`).
-        *   **[HECHO] Refactor Frontend:** Actualizados `ManageCompanies.jsx` y `ManageAdmins.jsx`.
+        *   [HECHO] Implementado endpoint Dashboard Manager (`GET /api/v1/stats/manager`).
+        *   **[HECHO] Refactor Frontend:** Actualizados `ManageCompanies.jsx`, `ManageAdmins.jsx`, `ManagerDashboard.jsx`.
     3.  **[HECHO] Endpoints Administrador:**
         *   [HECHO] Implementados endpoints CRUD para Empleados (`/api/v1/employees`).
         *   [HECHO] Implementado endpoint para carga masiva (`POST /api/v1/employees/bulk-upload`).
-        *   [HECHO] Implementados endpoints CRUD para Recompensas (`/api/v1/rewards`).
+        *   [HECHO] Implementados endpoints CRUD para Recompensas (`/api/v1/rewards`) (maneja `imageUrl`).
         *   [HECHO] Implementados endpoints CRUD para Justificaciones (`/api/v1/justifications`).
-        *   [HECHO] Implementado endpoint para Asignar Puntos (`POST /api/v1/points/assign`).
-        *   [HECHO] Implementados endpoints de Historial Admin (`GET /api/v1/history/admin/points`). [PENDIENTE] `GET /api/v1/admin/history/redemptions`.
+        *   [HECHO] Implementado endpoint para Asignar Puntos (`POST /api/v1/points/assign`) con validación de límites.
+        *   [HECHO] Implementados endpoints de Historial Admin (`GET /api/v1/history/admin/points`, `GET /api/v1/history/admin/redemptions`).
         *   [HECHO] Implementado endpoint de Ranking (`GET /api/v1/history/ranking`).
-        *   **[HECHO] Refactor Frontend:** Actualizados `ManageEmployees.jsx` (incluye bulk upload), `ManageRewards.jsx`, `ManageJustifications.jsx`, `AdminDashboard.jsx` (asignar puntos), `PointsHistoryAdmin.jsx`, `RankingPage.jsx`. Pendiente historial canjes admin.
+        *   [HECHO] Implementado endpoint de Estadísticas Admin (`GET /api/v1/stats/admin`).
+        *   **[HECHO] Refactor Frontend:** Actualizados `ManageEmployees.jsx` (incluye bulk upload), `ManageRewards.jsx` (con carga/visualización de imágenes), `ManageJustifications.jsx`, `AdminDashboard.jsx` (asignar puntos y stats), `PointsHistoryAdmin.jsx`, `RedemptionHistoryAdmin.jsx`, `RankingPage.jsx`.
     4.  **[HECHO] Endpoints Empleado:**
-        *   [PENDIENTE] Implementar endpoint Dashboard Empleado (`GET /api/v1/employee/dashboard`).
+        *   [PENDIENTE] Implementar endpoint Dashboard Empleado (`GET /api/v1/employee/dashboard`) si se necesita más info.
         *   [HECHO] Endpoint para listar Recompensas Disponibles (`GET /api/v1/rewards`).
-        *   [HECHO] Implementado endpoint para Canjear Recompensa (`POST /api/v1/redemptions/rewards/:rewardId/redeem`).
+        *   [HECHO] Implementado endpoint para Canjear Recompensa (`POST /api/v1/redemptions/rewards/:rewardId/redeem`) con validación de stock.
         *   [HECHO] Implementados endpoints de Historial Empleado (`GET /api/v1/history/employee/points`, `GET /api/v1/history/employee/redemptions`).
         *   [HECHO] Implementado endpoint de Ranking (`GET /api/v1/history/ranking`).
-        *   **[HECHO] Refactor Frontend:** Actualizados `EmployeeDashboard.jsx` (usa AuthContext), `AvailableRewards.jsx`, `HistoryEmployee.jsx`, `RankingPage.jsx`.
+        *   **[HECHO] Refactor Frontend:** Actualizados `EmployeeDashboard.jsx` (usa AuthContext), `AvailableRewards.jsx` (maneja stock y muestra imágenes), `HistoryEmployee.jsx`, `RankingPage.jsx`.
     5.  **Limpieza Firebase:** Una vez migrada toda la funcionalidad, eliminar gradualmente las llamadas directas a Firestore y las reglas de seguridad asociadas que ya no sean necesarias. Mantener Firebase Auth.
 
 ---
@@ -100,7 +103,12 @@
 
 *   **Objetivo:** Añadir las características pendientes que dependen intrínsecamente de un backend.
 *   **Pasos:**
-    1.  **Integración OpenAI:**
+    1.  **[HECHO - Parcial: Backend] Carga de Imágenes de Recompensas (S3):**
+        *   [HECHO] Configurar AWS SDK v3 (`@aws-sdk/client-s3`), Multer (`multer`, `multer-s3`) en `backend/config/s3Config.js`.
+        *   [HECHO] Crear endpoint `POST /api/v1/uploads/images/rewards` con autenticación/autorización (Admin) y middleware de carga.
+        *   [HECHO] Modificar controladores CRUD de Recompensas para manejar `imageUrl`.
+        *   **[HECHO - Frontend]** Refactorizar `ManageRewards.jsx` y `AvailableRewards.jsx` para cargar y mostrar imágenes.
+    2.  **Integración OpenAI:**
         *   Implementar endpoint `POST /api/admin/reports/generate`.
         *   Añadir lógica en `services/reportService.js`: Consultar datos agregados de la BD (puntos, canjes, ranking del último periodo para la empresa).
         *   Construir prompt detallado para OpenAI API.

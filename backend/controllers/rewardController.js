@@ -3,8 +3,8 @@ const { Reward } = require('../models');
 // Crear una nueva recompensa (solo Admin)
 const createReward = async (req, res) => {
   const adminCompanyId = req.dbUser.companyId;
-  // Incluir stock (opcional)
-  const { nombre, pointsRequired, stock } = req.body;
+  // Incluir stock (opcional) y imageUrl (opcional)
+  const { nombre, pointsRequired, stock, imageUrl } = req.body; // Add imageUrl
 
   if (!nombre || pointsRequired === undefined) {
     return res.status(400).send({ message: 'Nombre y puntos requeridos son obligatorios.' });
@@ -32,6 +32,7 @@ const createReward = async (req, res) => {
       companyId: adminCompanyId,
       isActive: true,
       stock: stockValue, // Guardar valor de stock (puede ser null)
+      imageUrl: imageUrl || null, // Save imageUrl if provided, otherwise null
     });
     res.status(201).json(newReward);
   } catch (error) {
@@ -94,11 +95,12 @@ const getRewardById = async (req, res) => {
 // Se usa checkTenant en la ruta
 const updateReward = async (req, res) => {
   const { rewardId } = req.params;
-  // Incluir stock en los campos a actualizar
-  const { nombre, pointsRequired, isActive, stock } = req.body;
+  // Incluir stock y imageUrl en los campos a actualizar
+  const { nombre, pointsRequired, isActive, stock, imageUrl } = req.body; // Add imageUrl
 
-  if (nombre === undefined && pointsRequired === undefined && isActive === undefined && stock === undefined) {
-     return res.status(400).send({ message: 'Se requiere al menos un campo (nombre, pointsRequired, isActive o stock) para actualizar.' });
+  // Check if at least one field is provided for update
+  if (nombre === undefined && pointsRequired === undefined && isActive === undefined && stock === undefined && imageUrl === undefined) {
+     return res.status(400).send({ message: 'Se requiere al menos un campo (nombre, pointsRequired, isActive, stock o imageUrl) para actualizar.' });
   }
 
   let pointsValue;
@@ -133,6 +135,9 @@ const updateReward = async (req, res) => {
     if (pointsValue !== undefined) reward.pointsRequired = pointsValue;
     if (isActive !== undefined) reward.isActive = isActive;
     if (stock !== undefined) reward.stock = stockValue; // Actualizar stock (puede ser null)
+    // Update imageUrl only if it's explicitly provided in the request body
+    // Allows setting it to null to remove the image, or updating it
+    if (imageUrl !== undefined) reward.imageUrl = imageUrl;
 
     await reward.save();
     res.status(200).json(reward);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // Firestore imports removed
-import apiClient from '../../services/api'; // Import API client
+import apiClient, { uploadRewardImage } from '../../services/api'; // Import API client AND upload function
 import { useAuth } from '../../contexts/AuthContext.jsx'; // Keep useAuth for companyId
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -22,6 +22,8 @@ function ManageRewards() {
   const [newRewardStock, setNewRewardStock] = useState(''); // '' for infinite/null
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
+  const [newRewardImageFile, setNewRewardImageFile] = useState(null); // State for new image file
+  const [newRewardPreview, setNewRewardPreview] = useState(null); // State for new image preview URL
 
   // Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,6 +34,9 @@ function ManageRewards() {
   const [editIsActive, setEditIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState('');
+  const [editRewardImageFile, setEditRewardImageFile] = useState(null); // State for edited image file
+  const [editRewardPreview, setEditRewardPreview] = useState(null); // State for edited image preview URL
+  const [removeCurrentImage, setRemoveCurrentImage] = useState(false); // Flag to remove image on edit
 
   // Function to clear messages after a delay
   const clearMessages = () => {
@@ -90,17 +95,35 @@ function ManageRewards() {
     }
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
     try {
-      // Add reward using API
+      let uploadedImageUrl = null;
+      // 1. Upload image if selected
+      if (newRewardImageFile) {
+        try {
+          uploadedImageUrl = await uploadRewardImage(newRewardImageFile);
+        } catch (uploadError) {
+          console.error("Error uploading image:", uploadError);
+          setAddError(`Image upload failed: ${uploadError.message}`);
+          clearMessages();
+          setAdding(false); // Stop loading state
+          return; // Prevent reward creation if image upload fails
+        }
+      }
+
+      // 2. Create reward using API, including the image URL if uploaded
       const response = await apiClient.post('/rewards', {
         nombre: newRewardName.trim(),
         pointsRequired: points,
         stock: stock, // Send null or number
+        imageUrl: uploadedImageUrl, // Send the uploaded image URL or null
       });
-      const addedReward = response.data; // API returns the created reward
+      const addedReward = response.data; // API returns the created reward (should include imageUrl)
 
       // Update local state
-      setRewards(prev => [...prev, addedReward]);
-      setNewRewardName(''); setNewRewardPoints(''); setNewRewardStock(''); // Reset stock field
+      // Update local state (ensure imageUrl is included if added)
+      setRewards(prev => [...prev, { ...addedReward, imageUrl: addedReward.imageUrl || null }]);
+      setNewRewardName(''); setNewRewardPoints(''); setNewRewardStock('');
+      setNewRewardImageFile(null); // Reset image file
+      setNewRewardPreview(null); // Reset image preview
       setSuccessMessage(`Reward "${addedReward.nombre}" added successfully.`);
       clearMessages();
     } catch (err) {
@@ -121,6 +144,9 @@ function ManageRewards() {
     setEditStock(reward.stock === null || reward.stock === undefined ? '' : reward.stock.toString());
     setEditIsActive(reward.isActive !== undefined ? reward.isActive : true);
     setEditError(''); setSuccessMessage('');
+    setEditRewardImageFile(null); // Reset file input on open
+    setEditRewardPreview(null); // Reset preview on open
+    setRemoveCurrentImage(false); // Reset remove flag
     setIsModalOpen(true);
   };
 
@@ -140,14 +166,41 @@ function ManageRewards() {
 
     setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
-      // Update reward using API, including stock
-      const response = await apiClient.put(`/rewards/${editingReward.id}`, {
+      let imageUrlPayload; // Undefined initially
+
+      // 1. Upload new image if selected
+      if (editRewardImageFile) {
+        try {
+          imageUrlPayload = await uploadRewardImage(editRewardImageFile);
+        } catch (uploadError) {
+          console.error("Error uploading image during edit:", uploadError);
+          setEditError(`Image upload failed: ${uploadError.message}`);
+          clearMessages();
+          setSaving(false); // Stop loading state
+          return; // Prevent update if image upload fails
+        }
+      } else if (removeCurrentImage) {
+        // 2. If user explicitly clicked "Remove Image"
+        imageUrlPayload = null;
+      }
+      // If imageUrlPayload remains undefined, the backend won't update the image field
+
+      // 3. Prepare update payload
+      const updatePayload = {
         nombre: editName.trim(),
         pointsRequired: pointsValue,
         isActive: editIsActive,
-        stock: stockValue, // Send null or the number
-      });
-      const updatedReward = response.data; // API returns the updated reward
+        stock: stockValue,
+      };
+
+      // Only include imageUrl in payload if it needs changing (new upload or removal)
+      if (imageUrlPayload !== undefined) {
+        updatePayload.imageUrl = imageUrlPayload;
+      }
+
+      // 4. Update reward using API
+      const response = await apiClient.put(`/rewards/${editingReward.id}`, updatePayload);
+      const updatedReward = response.data; // API returns the updated reward (should include final imageUrl)
 
       // Update local state
       setRewards(prev => prev.map(r => r.id === updatedReward.id ? updatedReward : r));
@@ -214,11 +267,57 @@ function ManageRewards() {
     setEditPoints('');
     setEditStock(''); // Reset stock state
     setEditIsActive(true);
+    setEditRewardImageFile(null); // Reset image file state
+    setEditRewardPreview(null); // Reset image preview state
+    setRemoveCurrentImage(false); // Reset remove flag
   };
 
   // Define Tailwind classes for table cells - Refined
   const thStyle = "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
   const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
+
+  // Handle new image selection
+  const handleNewImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewRewardImageFile(file);
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewRewardPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setNewRewardImageFile(null);
+      setNewRewardPreview(null);
+    }
+  };
+
+  // Handle edit image selection
+  const handleEditImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditRewardImageFile(file);
+      setRemoveCurrentImage(false); // If new file is selected, don't remove current one (it will be replaced)
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditRewardPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Don't clear existing preview if no file selected, user might just cancel
+      // setEditRewardImageFile(null);
+      // setEditRewardPreview(null);
+    }
+  };
+
+  // Handle remove image click in edit modal
+  const handleRemoveImageClick = () => {
+    setEditRewardImageFile(null); // Clear selected file
+    setEditRewardPreview(null); // Clear preview
+    setRemoveCurrentImage(true); // Set flag to remove existing image on save
+  };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
@@ -227,7 +326,8 @@ function ManageRewards() {
       {/* Add Reward Form - Improved Layout */}
       <form onSubmit={handleAddReward} className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
          <h2 className="text-lg font-medium text-gray-700">Add New Reward</h2>
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-4"> {/* Changed to 3 cols */}
+         {/* Grid for Name, Points, Stock */}
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            <div>
              <label htmlFor="new-reward-name" className="block text-sm font-medium text-gray-700 mb-1">Reward Name</label>
              <Input id="new-reward-name" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} placeholder="e.g., Gift Card" required className="mt-0 w-full"/>
@@ -241,6 +341,23 @@ function ManageRewards() {
              <label htmlFor="new-reward-stock" className="block text-sm font-medium text-gray-700 mb-1">Stock (Optional)</label>
              <Input id="new-reward-stock" type="number" value={newRewardStock} onChange={(e) => setNewRewardStock(e.target.value)} placeholder="Empty = Infinite" min="0" className="mt-0 w-full"/>
            </div>
+         </div>
+         {/* Image Upload Section */}
+         <div>
+            <label htmlFor="new-reward-image" className="block text-sm font-medium text-gray-700 mb-1">Reward Image (Optional)</label>
+            <Input
+                id="new-reward-image"
+                type="file"
+                accept="image/jpeg, image/png, image/gif, image/webp" // Specify accepted types
+                onChange={handleNewImageChange}
+                className="mt-0 w-full file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            />
+            {/* Image Preview */}
+            {newRewardPreview && (
+                <div className="mt-2">
+                    <img src={newRewardPreview} alt="New reward preview" className="h-20 w-20 object-cover rounded-md border border-gray-300" />
+                </div>
+            )}
          </div>
          {addError && <Alert type="error">{addError}</Alert>}
          <div className="flex justify-end">
@@ -265,6 +382,7 @@ function ManageRewards() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
+                <th className={thStyle}>Image</th> {/* Add Image column */}
                 <th className={thStyle}>Name</th>
                 <th className={thStyle}>Points Required</th>
                 <th className={thStyle}>Stock</th>
@@ -275,13 +393,21 @@ function ManageRewards() {
             <tbody className="bg-white divide-y divide-gray-200">
               {rewards.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className={`${tdStyle} text-center text-gray-500 py-6`}>
+                  <td colSpan={6} className={`${tdStyle} text-center text-gray-500 py-6`}> {/* Incremented colspan */}
                     No rewards found for this company.
                   </td>
                 </tr>
               ) : (
                 rewards.map((reward) => (
                   <tr key={reward.id} className="hover:bg-gray-50 transition-colors duration-150">
+                    {/* Image Cell */}
+                    <td className={tdStyle}>
+                      {reward.imageUrl ? (
+                        <img src={reward.imageUrl} alt={reward.nombre} className="h-10 w-10 object-cover rounded-md border border-gray-200" />
+                      ) : (
+                        <div className="h-10 w-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                      )}
+                    </td>
                     <td className={`${tdStyle} font-medium text-gray-900`}>{reward.nombre}</td>
                     <td className={`${tdStyle} text-gray-700 font-medium`}>{reward.pointsRequired}</td>
                     <td className={`${tdStyle} text-gray-700`}>
@@ -333,6 +459,39 @@ function ManageRewards() {
                      <label htmlFor="edit-reward-stock" className="block text-sm font-medium text-gray-700 mb-1">Stock (Optional)</label>
                      <Input id="edit-reward-stock" type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} placeholder="Empty = Infinite" min="0" className="mt-0 w-full"/>
                  </div>
+                 {/* Edit Image Section */}
+                 <div>
+                    <label htmlFor="edit-reward-image" className="block text-sm font-medium text-gray-700 mb-1">Reward Image (Optional)</label>
+                    <div className="flex items-center space-x-4">
+                        {/* Current Image or New Preview */}
+                        {editRewardPreview ? (
+                            <img src={editRewardPreview} alt="New preview" className="h-16 w-16 object-cover rounded-md border border-gray-300" />
+                        ) : editingReward.imageUrl && !removeCurrentImage ? (
+                            <img src={editingReward.imageUrl} alt="Current reward" className="h-16 w-16 object-cover rounded-md border border-gray-300" />
+                        ) : (
+                            <div className="h-16 w-16 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                        )}
+                        <div className="flex-grow">
+                            <Input
+                                id="edit-reward-image"
+                                type="file"
+                                accept="image/jpeg, image/png, image/gif, image/webp"
+                                onChange={handleEditImageChange}
+                                className="mt-0 w-full file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                            />
+                            {/* Remove Image Button */}
+                            {(editingReward.imageUrl || editRewardPreview) && !removeCurrentImage && (
+                                <Button type="button" variant="link" size="sm" onClick={handleRemoveImageClick} className="mt-1 text-red-600 hover:text-red-800">
+                                    Remove Image
+                                </Button>
+                            )}
+                             {removeCurrentImage && (
+                                <span className="mt-1 text-sm text-red-600">Image will be removed on save.</span>
+                            )}
+                        </div>
+                    </div>
+                 </div>
+                 {/* Active Checkbox */}
                  <div>
                     <label htmlFor="edit-reward-active" className="flex items-center cursor-pointer">
                         <input

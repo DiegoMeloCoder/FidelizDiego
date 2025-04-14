@@ -84,5 +84,33 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Function to upload reward image
+export const uploadRewardImage = async (file) => {
+  if (!file) {
+    throw new Error('No file provided for upload.');
+  }
+
+  const formData = new FormData();
+  // Ensure the key matches the one expected by multer middleware on the backend (.single('rewardImage'))
+  formData.append('rewardImage', file);
+
+  try {
+    // Make the POST request to the upload endpoint
+    // Important: Set Content-Type to multipart/form-data for file uploads
+    // The Authorization header will be added automatically by the interceptor
+    const response = await apiClient.post('/uploads/images/rewards', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    // Return the image URL from the response
+    return response.data.imageUrl;
+  } catch (error) {
+    console.error('Error uploading reward image:', error);
+    // Re-throw a more specific error message if possible
+    // Use the error object structure returned by the interceptor if available
+    throw new Error(error.message || 'Failed to upload image.');
+  }
+};
 
 export default apiClient;
