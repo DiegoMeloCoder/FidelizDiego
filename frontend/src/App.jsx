@@ -13,7 +13,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import ManageCompanies from './pages/manager/ManageCompanies';
-import ManageAdmins from './pages/manager/ManageAdmins'; // Import ManageAdmins
+import ManageAdmins from './pages/manager/ManageAdmins';
+import GlobalRedemptionHistory from './pages/manager/history/GlobalRedemptionHistory'; // Import Manager History page
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageEmployees from './pages/admin/ManageEmployees';
 import ManageRewards from './pages/admin/ManageRewards';
@@ -79,9 +80,14 @@ function App() {
           }
         >
           {/* Nested routes render inside AppLayout's <Outlet /> */}
-          <Route index element={<ManagerDashboard />} /> {/* Default page for /manager */}
+          <Route index element={<ManagerDashboard />} />
           <Route path="companies" element={<ManageCompanies />} />
-          <Route path="admins" element={<ManageAdmins />} /> {/* Add Admins Route */}
+          <Route path="admins" element={<ManageAdmins />} />
+          {/* Add route for Manager's global redemption history */}
+          <Route path="history/global-redemptions" element={<GlobalRedemptionHistory />} />
+          {/* Add route for Manager to access Reward Management (Global Rewards) */}
+          {/* Note: Points to the same component as admin, but protected for Manager */}
+          <Route path="rewards" element={<ManageRewards />} />
         </Route>
 
         <Route
@@ -94,6 +100,7 @@ function App() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="employees" element={<ManageEmployees />} />
+          {/* Keep original /admin/rewards route protected only for Admin */}
           <Route path="rewards" element={<ManageRewards />} />
           <Route path="justifications" element={<ManageJustifications />} />
           <Route path="history/points" element={<PointsHistoryAdmin />} />

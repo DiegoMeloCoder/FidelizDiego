@@ -148,6 +148,13 @@ function AppLayout() {
             <Link to="/manager/admins" className={`${linkBaseClasses} ${isActive('/manager/admins') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <UserGroupIcon className={`${iconClasses} ${isActive('/manager/admins') ? activeIconClasses : ''}`} /> Admins
             </Link>
+            {/* Links for Global Rewards Management - Point to /manager/rewards */}
+            <Link to="/manager/rewards" className={`${linkBaseClasses} ${isActive('/manager/rewards') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
+              <GiftIcon className={`${iconClasses} ${isActive('/manager/rewards') ? activeIconClasses : ''}`} /> Global Rewards
+            </Link>
+            <Link to="/manager/history/global-redemptions" className={`${linkBaseClasses} ${isActive('/manager/history/global-redemptions') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
+              <ArchiveBoxIcon className={`${iconClasses} ${isActive('/manager/history/global-redemptions') ? activeIconClasses : ''}`} /> Global Redemptions
+            </Link>
           </>
         )}
         {userData?.role === 'Admin' && (

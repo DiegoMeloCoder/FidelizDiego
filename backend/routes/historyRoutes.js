@@ -40,5 +40,13 @@ router.get(
     historyController.getRanking
 );
 
+// Rutas para Manager
+router.get(
+    '/manager/redemptions/global',
+    authenticate,
+    authorize('Manager'), // Solo Manager
+    historyController.getManagerGlobalRedemptionHistory
+);
+
 
 module.exports = router;

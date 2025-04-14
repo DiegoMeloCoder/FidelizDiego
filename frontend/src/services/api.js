@@ -138,5 +138,30 @@ export const uploadCompanyLogo = async (file) => {
   }
 };
 
+// Function to upload GLOBAL reward image (for Manager)
+export const uploadGlobalRewardImage = async (file) => {
+  if (!file) {
+    throw new Error('No file provided for global reward image upload.');
+  }
+
+  const formData = new FormData();
+  // Use the same field name 'rewardImage' as expected by the reused middleware
+  formData.append('rewardImage', file);
+
+  try {
+    // Make the POST request to the new global reward image upload endpoint
+    const response = await apiClient.post('/uploads/images/rewards/global', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    // Return the image URL from the response
+    return response.data.imageUrl;
+  } catch (error) {
+    console.error('Error uploading global reward image:', error);
+    throw new Error(error.message || 'Failed to upload global reward image.');
+  }
+};
+
 
 export default apiClient;

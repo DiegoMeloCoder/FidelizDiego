@@ -30,14 +30,14 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 *   Tecnología: **PostgreSQL + Sequelize ORM**.
 1.  [HECHO] Definición de Modelos Sequelize:
     *   [HECHO] Modelo `User` (ID = UID Firebase, email, nombre, role, companyId, points, isActive).
-    *   [HECHO] Modelo `Company` (id, nombre, status).
-    *   [HECHO] Modelo `Reward` (id, companyId, nombre, pointsRequired, isActive, stock, imageUrl).
+    *   [HECHO] Modelo `Company` (id, nombre, status, logoUrl, motto, primaryColor, secondaryColor, tertiaryColor).
+    *   [HECHO] Modelo `Reward` (id, companyId (nullable), nombre, pointsRequired, isActive, stock, imageUrl).
     *   [HECHO] Modelo `Justification` (id, textoJustificacion, companyId, estaActiva, esPredeterminada).
     *   [HECHO] Modelo `PointAssignment` (id, adminId, empleadoId, companyId, cantidad, fechaAsignacion, justificacionId, justificacionTexto).
     *   [HECHO] Modelo `Redemption` (id, empleadoId, companyId, recompensaId, puntosCosto, fechaCanje).
     *   [HECHO] Asociaciones definidas en modelos.
 2.  [HECHO] Implementar Migraciones Sequelize:
-    *   [HECHO] Migraciones generadas y ejecutadas para todas las tablas (incluyendo `stock` e `imageUrl` en Rewards).
+    *   [HECHO] Migraciones generadas y ejecutadas para todas las tablas (incluyendo `stock`, `imageUrl`, branding de `Company`, `companyId` nullable en `Reward`).
 3.  [HECHO] Implementar Seeds Iniciales:
     *   [HECHO] Seeder para Justificaciones globales/predeterminadas.
     *   [HECHO] Seeder para Compañía "Empresa Demo".
@@ -56,7 +56,8 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 
 **Fase 3: Backend - Funcionalidades Manager [HECHO]**
 1.  [HECHO] Endpoints API - Gestión de Empresas (CRUD):
-    *   [HECHO] Endpoints `GET /`, `POST /`, `GET /:id`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/companies`.
+    *   [HECHO] Endpoints `GET /`, `POST /`, `GET /:id`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/companies` (maneja campos de branding).
+    *   [HECHO] Endpoint `POST /api/v1/uploads/images/logos` para subida de logos (Manager, S3).
 2.  [HECHO] Endpoints API - Gestión de Administradores:
     *   [HECHO] Endpoints `GET /`, `POST /`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/admins`.
 3.  [HECHO] Endpoints API - Dashboard Manager:
@@ -68,8 +69,9 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
     *   [HECHO] Endpoint `POST /api/v1/employees/bulk-upload` implementado.
     *   [HECHO] Endpoint `GET /api/v1/employees/:employeeId` implementado.
 2.  [HECHO] Endpoints API - Gestión de Recompensas (CRUD):
-    *   [HECHO] Endpoints `GET /`, `POST /`, `GET /:id`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/rewards` (incluye manejo de stock e `imageUrl`).
+    *   [HECHO] Endpoints `GET /`, `POST /`, `GET /:id`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/rewards` (maneja stock, imageUrl, roles Admin/Manager para recompensas de empresa/globales).
     *   [HECHO] Endpoint `POST /api/v1/uploads/images/rewards` para subida de imágenes (Admin, S3).
+    *   [HECHO] Endpoint `POST /api/v1/uploads/images/rewards/global` para subida de imágenes globales (Manager, S3).
 3.  [HECHO] Endpoints API - Gestión de Justificaciones (CRUD):
     *   [HECHO] Endpoints `GET /`, `POST /`, `PUT /:id`, `PATCH /:id/toggle-status` implementados en `/api/v1/justifications`.
 4.  [HECHO] Endpoint API - Asignación/Deducción de Puntos:
@@ -77,6 +79,7 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 5.  [HECHO] Endpoints API - Historiales (Admin):
     *   [HECHO] Endpoint `GET /api/v1/history/admin/points` implementado.
     *   [HECHO] Endpoint `GET /api/v1/history/admin/redemptions` implementado.
+    *   [HECHO] Endpoint `GET /api/v1/history/manager/redemptions/global` implementado.
 6.  [HECHO] Endpoint API - Ranking (Admin):
     *   [HECHO] Endpoint `GET /api/v1/history/ranking` implementado (cubre Admin y Employee).
 7.  [HECHO] Endpoint API - Estadísticas Dashboard (Admin):
@@ -88,10 +91,10 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 2.  [HECHO] Endpoint API - Historial de Puntos (Empleado):
     *   [HECHO] Endpoint `GET /api/v1/history/employee/points` implementado.
 3.  [HECHO] Endpoint API - Catálogo de Recompensas:
-    *   [HECHO] Cubierto por `GET /api/v1/rewards` (filtrado por rol/estado en controlador).
+    *   [HECHO] Cubierto por `GET /api/v1/rewards` (filtrado por rol/estado/global en controlador).
     *   [PENDIENTE] Optimización con caché.
 4.  [HECHO] Endpoint API - Canje de Recompensas:
-    *   [HECHO] Endpoint `POST /api/v1/redemptions/rewards/:rewardId/redeem` implementado con lógica transaccional y validación de stock.
+    *   [HECHO] Endpoint `POST /api/v1/redemptions/rewards/:rewardId/redeem` implementado con lógica transaccional, validación de stock y permiso para canjear recompensas globales.
 5.  [HECHO] Endpoint API - Historial de Canjes (Empleado):
     *   [HECHO] Endpoint `GET /api/v1/history/employee/redemptions` implementado.
 6.  [HECHO] Endpoint API - Ranking (Empleado):
@@ -109,12 +112,14 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
     *   [HECHO] Manejo de Logout.
     *   [HECHO] `AuthContext` obtiene perfil desde API y persiste sesión.
 3.  [HECHO] Dashboard Manager UI:
-    *   [HECHO] Vista Empresas (`ManageCompanies.jsx` refactorizada para API).
+    *   [HECHO] Vista Empresas (`ManageCompanies.jsx` refactorizada para API, incluye gestión de branding).
     *   [HECHO] Vista Admins (`ManageAdmins.jsx` refactorizada para API).
     *   [HECHO] Dashboard Principal (`ManagerDashboard.jsx` refactorizado para API).
+    *   [HECHO] Vista Gestión Recompensas Globales (reutiliza `ManageRewards.jsx` con lógica adaptada).
+    *   [HECHO] Vista Historial Canjes Globales (`GlobalRedemptionHistory.jsx`).
 4.  [HECHO] Dashboard Administrador UI:
     *   [HECHO] Vistas CRUD Empleados (`ManageEmployees.jsx` refactorizada para API, incluyendo bulk upload).
-    *   [HECHO] Vistas CRUD Recompensas (`ManageRewards.jsx` refactorizada para API con stock y carga/visualización de imágenes).
+    *   [HECHO] Vistas CRUD Recompensas (`ManageRewards.jsx` refactorizada para API con stock, imágenes y lógica de roles Admin/Manager).
     *   [HECHO] Vistas CRUD Justificaciones (`ManageJustifications.jsx` refactorizada para API).
     *   [HECHO] Formulario Asignar Puntos (`AdminDashboard.jsx` modal refactorizado para API).
     *   [HECHO] Vistas de Historial (Puntos Asignados) (`PointsHistoryAdmin.jsx` refactorizada para API).
@@ -125,7 +130,7 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
     *   [PENDIENTE] Botón "Generar Reporte IA".
 5.  [HECHO] Dashboard Empleado UI:
     *   [HECHO] Vista Principal (`EmployeeDashboard.jsx` - Usa datos de AuthContext).
-    *   [HECHO] Vista Catálogo Recompensas (`AvailableRewards.jsx` refactorizada para API, canje, stock y visualización de imágenes).
+    *   [HECHO] Vista Catálogo Recompensas (`AvailableRewards.jsx` refactorizada para API, canje, stock, visualización de imágenes y distinción de recompensas globales).
     *   [HECHO] Vistas Historial (`HistoryEmployee.jsx` refactorizada para API).
     *   [HECHO] Vista Ranking (`RankingPage.jsx` refactorizada para API).
 6.  [PENDIENTE] Diseño Responsivo: Revisión dedicada pendiente.

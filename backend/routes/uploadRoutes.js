@@ -30,6 +30,18 @@ router.post(
   uploadController.handleRewardImageUpload // 4. Controller sends back the URL
 );
 
+// Route for uploading GLOBAL reward images (Manager only)
+// POST /api/v1/uploads/images/rewards/global
+router.post(
+  '/images/rewards/global',
+  authenticate,       // 1. Check login
+  authorize(['Manager']), // 2. Check role is 'Manager'
+  // Reuse the reward image upload config, as it saves to the correct folder ('rewards/')
+  uploadRewardImage.single('rewardImage'), // 3. Handle upload. Expects field 'rewardImage'
+  // Reuse the same controller function
+  uploadController.handleRewardImageUpload // 4. Controller sends back the URL
+);
+
 
 // Add a basic error handler for multer errors (like file size limit or type)
 router.use((error, req, res, next) => {

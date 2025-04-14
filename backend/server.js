@@ -58,6 +58,9 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
+
+  // --- REMOVED TEMPORARY DB Sync ---
+
 });
 
 module.exports = app; // Exportar para posibles pruebas

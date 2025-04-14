@@ -47,8 +47,8 @@
 
 *   **Objetivo:** Definir y crear la estructura de la base de datos en PostgreSQL usando Sequelize, basándose en el diseño original y adaptando la estructura de Firestore.
 *   **Pasos:**
-    1.  **[HECHO] Definir Modelos Sequelize:** Creados modelos `User`, `Company`, `Reward` (incluye `imageUrl`), `Justification`, `PointAssignment`, `Redemption` con asociaciones básicas.
-    2.  **[HECHO] Generar y Ejecutar Migraciones:** Generadas y ejecutadas migraciones para todas las tablas principales (incluye `imageUrl` en `Rewards`).
+    1.  **[HECHO] Definir Modelos Sequelize:** Creados modelos `User`, `Company` (incluye branding), `Reward` (incluye `imageUrl`, `companyId` nullable), `Justification`, `PointAssignment`, `Redemption` con asociaciones básicas.
+    2.  **[HECHO] Generar y Ejecutar Migraciones:** Generadas y ejecutadas migraciones para todas las tablas principales (incluye `imageUrl` y `companyId` nullable en `Rewards`, branding en `Companies`).
     3.  **[HECHO] Crear Seeders:** Creados y ejecutados seeders para justificaciones globales, compañía demo y manager inicial.
     4.  **Planificar Migración de Datos (Opcional):** Si hay datos críticos en Firestore que deban migrarse, diseñar y (si es necesario) implementar un script de migración. Para un MVP, podría ser aceptable la re-entrada manual de datos clave.
 
@@ -74,27 +74,28 @@
 *   **Pasos (Iterativos: Backend Endpoint -> Frontend Refactor):**
     1.  **[HECHO] Refactorizar Servicios Frontend:** Creado `src/services/api.js` con Axios e interceptor de token.
     2.  **[HECHO] Endpoints Manager:**
-        *   [HECHO] Implementados endpoints CRUD para Compañías (`/api/v1/companies`).
+        *   [HECHO] Implementados endpoints CRUD para Compañías (`/api/v1/companies`) (maneja branding).
         *   [HECHO] Implementados endpoints CRUD para Admins (`/api/v1/admins`).
         *   [HECHO] Implementado endpoint Dashboard Manager (`GET /api/v1/stats/manager`).
+        *   [HECHO] Implementado endpoint Historial Canjes Globales (`GET /api/v1/history/manager/redemptions/global`).
         *   **[HECHO] Refactor Frontend:** Actualizados `ManageCompanies.jsx`, `ManageAdmins.jsx`, `ManagerDashboard.jsx`.
     3.  **[HECHO] Endpoints Administrador:**
         *   [HECHO] Implementados endpoints CRUD para Empleados (`/api/v1/employees`).
         *   [HECHO] Implementado endpoint para carga masiva (`POST /api/v1/employees/bulk-upload`).
-        *   [HECHO] Implementados endpoints CRUD para Recompensas (`/api/v1/rewards`) (maneja `imageUrl`).
+        *   [HECHO] Implementados endpoints CRUD para Recompensas (`/api/v1/rewards`) (maneja `imageUrl`, roles Admin/Manager, recompensas globales/empresa).
         *   [HECHO] Implementados endpoints CRUD para Justificaciones (`/api/v1/justifications`).
         *   [HECHO] Implementado endpoint para Asignar Puntos (`POST /api/v1/points/assign`) con validación de límites.
         *   [HECHO] Implementados endpoints de Historial Admin (`GET /api/v1/history/admin/points`, `GET /api/v1/history/admin/redemptions`).
         *   [HECHO] Implementado endpoint de Ranking (`GET /api/v1/history/ranking`).
         *   [HECHO] Implementado endpoint de Estadísticas Admin (`GET /api/v1/stats/admin`).
-        *   **[HECHO] Refactor Frontend:** Actualizados `ManageEmployees.jsx` (incluye bulk upload), `ManageRewards.jsx` (con carga/visualización de imágenes), `ManageJustifications.jsx`, `AdminDashboard.jsx` (asignar puntos y stats), `PointsHistoryAdmin.jsx`, `RedemptionHistoryAdmin.jsx`, `RankingPage.jsx`.
+        *   **[HECHO] Refactor Frontend:** Actualizados `ManageEmployees.jsx` (incluye bulk upload), `ManageRewards.jsx` (adaptado para Admin/Manager), `ManageJustifications.jsx`, `AdminDashboard.jsx` (asignar puntos y stats), `PointsHistoryAdmin.jsx`, `RedemptionHistoryAdmin.jsx`, `RankingPage.jsx`, `GlobalRedemptionHistory.jsx`.
     4.  **[HECHO] Endpoints Empleado:**
         *   [PENDIENTE] Implementar endpoint Dashboard Empleado (`GET /api/v1/employee/dashboard`) si se necesita más info.
-        *   [HECHO] Endpoint para listar Recompensas Disponibles (`GET /api/v1/rewards`).
-        *   [HECHO] Implementado endpoint para Canjear Recompensa (`POST /api/v1/redemptions/rewards/:rewardId/redeem`) con validación de stock.
+        *   [HECHO] Endpoint para listar Recompensas Disponibles (`GET /api/v1/rewards`) (devuelve globales + empresa).
+        *   [HECHO] Implementado endpoint para Canjear Recompensa (`POST /api/v1/redemptions/rewards/:rewardId/redeem`) con validación de stock y permiso para globales.
         *   [HECHO] Implementados endpoints de Historial Empleado (`GET /api/v1/history/employee/points`, `GET /api/v1/history/employee/redemptions`).
         *   [HECHO] Implementado endpoint de Ranking (`GET /api/v1/history/ranking`).
-        *   **[HECHO] Refactor Frontend:** Actualizados `EmployeeDashboard.jsx` (usa AuthContext), `AvailableRewards.jsx` (maneja stock y muestra imágenes), `HistoryEmployee.jsx`, `RankingPage.jsx`.
+        *   **[HECHO] Refactor Frontend:** Actualizados `EmployeeDashboard.jsx` (usa AuthContext), `AvailableRewards.jsx` (maneja stock, muestra imágenes, indica globales), `HistoryEmployee.jsx`, `RankingPage.jsx`.
     5.  **Limpieza Firebase:** Una vez migrada toda la funcionalidad, eliminar gradualmente las llamadas directas a Firestore y las reglas de seguridad asociadas que ya no sean necesarias. Mantener Firebase Auth.
 
 ---
@@ -103,12 +104,25 @@
 
 *   **Objetivo:** Añadir las características pendientes que dependen intrínsecamente de un backend.
 *   **Pasos:**
-    1.  **[HECHO - Parcial: Backend] Carga de Imágenes de Recompensas (S3):**
-        *   [HECHO] Configurar AWS SDK v3 (`@aws-sdk/client-s3`), Multer (`multer`, `multer-s3`) en `backend/config/s3Config.js`.
-        *   [HECHO] Crear endpoint `POST /api/v1/uploads/images/rewards` con autenticación/autorización (Admin) y middleware de carga.
-        *   [HECHO] Modificar controladores CRUD de Recompensas para manejar `imageUrl`.
-        *   **[HECHO - Frontend]** Refactorizar `ManageRewards.jsx` y `AvailableRewards.jsx` para cargar y mostrar imágenes.
-    2.  **Integración OpenAI:**
+    1.  **[HECHO] Carga de Imágenes (S3):**
+        *   [HECHO] Configurar AWS SDK v3 (`@aws-sdk/client-s3`), Multer (`multer`, `multer-s3`) en `backend/config/s3Config.js` (para logos y recompensas).
+        *   [HECHO] Crear endpoints de carga: `/uploads/images/rewards` (Admin), `/uploads/images/rewards/global` (Manager), `/uploads/images/logos` (Manager).
+        *   [HECHO] Modificar controladores CRUD (`Reward`, `Company`) para manejar `imageUrl`/`logoUrl`.
+        *   **[HECHO - Frontend]** Refactorizar `ManageRewards.jsx`, `AvailableRewards.jsx`, `ManageCompanies.jsx` para cargar/mostrar imágenes.
+    2.  **[HECHO] Recompensas Globales:**
+        *   [HECHO] Modificar modelo `Reward` (`companyId` nullable) y migración.
+        *   [HECHO] Adaptar `rewardController` y `redemptionController` para lógica de roles y `companyId=null`.
+        *   [HECHO] Adaptar `rewardRoutes` para permisos Admin/Manager.
+        *   [HECHO] Crear endpoint y controlador para historial de canjes globales (`historyController`, `historyRoutes`).
+        *   **[HECHO - Frontend]** Adaptar `ManageRewards.jsx`, `AvailableRewards.jsx`, `AppLayout.jsx` y crear `GlobalRedemptionHistory.jsx`.
+    3.  **[HECHO - Parcial: Frontend] Personalización de Marca (UI Theme):**
+        *   [HECHO] Modificar modelo `Company` y migración para campos de branding.
+        *   [HECHO] Actualizar `companyController` y `authController` (`getMe`) para manejar/devolver datos de branding.
+        *   **[HECHO - Frontend]** Actualizar `ManageCompanies.jsx` para editar branding.
+        *   **[HECHO - Frontend]** Implementar lógica en `AuthContext` y `AppLayout` para leer datos y aplicar tema (logo, lema, variables CSS).
+        *   **[HECHO - Frontend]** Configurar Tailwind (`tailwind.config.js`) para usar variables CSS.
+        *   **[HECHO - Parcial: Frontend]** Aplicar clases `brand-*` a componentes clave (`Button`, `Input`, `Alert`, `AppLayout`, títulos, tablas, tarjetas de dashboard) como ejemplo. *Refinamiento completo pendiente.*
+    4.  **Integración OpenAI:**
         *   Implementar endpoint `POST /api/admin/reports/generate`.
         *   Añadir lógica en `services/reportService.js`: Consultar datos agregados de la BD (puntos, canjes, ranking del último periodo para la empresa).
         *   Construir prompt detallado para OpenAI API.

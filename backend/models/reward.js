@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
       Reward.belongsTo(models.Company, {
         foreignKey: 'companyId',
         as: 'company',
-        allowNull: false, // Una recompensa siempre pertenece a una empresa
+        allowNull: true, // Allow association to be nullable for global rewards
       });
       Reward.hasMany(models.Redemption, {
         foreignKey: 'recompensaId',
@@ -31,7 +31,7 @@ module.exports = (sequelize) => {
       },
       companyId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true, // Allow null for global rewards
         references: {
           model: 'Companies',
           key: 'id',

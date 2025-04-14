@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-// Firestore imports removed
-import apiClient, { uploadRewardImage } from '../../services/api'; // Import API client AND upload function
-import { useAuth } from '../../contexts/AuthContext.jsx'; // Keep useAuth for companyId
+// Import both upload functions
+import apiClient, { uploadRewardImage, uploadGlobalRewardImage } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext.jsx'; // Keep useAuth for companyId and role
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -48,17 +48,32 @@ function ManageRewards() {
     }, 4000);
   };
 
-  // Fetch rewards
+  // Fetch rewards - Adjusted for Manager role
   useEffect(() => {
-    // Depend on the nested company ID from the API response
-    if (userData?.company?.id) { // Fetch only if ID is available
-        fetchRewards();
-    } else if (userData !== null) { // If userData is loaded but no companyId
-        setListError("Admin company information not available.");
-        setLoading(false);
+    if (!userData) {
+      // Still waiting for user data
+      setLoading(true); // Keep loading true if userData is not yet available
+      return;
     }
-    // If userData is null (still loading initial profile), loading remains true
-  }, [userData?.company?.id]); // <-- Use nested ID
+
+    if (userData.role === 'Manager') {
+      // Manager fetches global rewards (no companyId needed)
+      fetchRewards();
+    } else if (userData.role === 'Admin') {
+      // Admin fetches company-specific rewards
+      if (userData.company?.id) {
+        fetchRewards();
+      } else {
+        // Admin exists but has no company assigned (edge case?)
+        setListError("Admin user is not assigned to a company.");
+        setLoading(false);
+      }
+    } else {
+      // Should not happen if routing/protection is correct, but handle defensively
+      setListError("Unauthorized role to manage rewards.");
+      setLoading(false);
+    }
+  }, [userData]); // Depend on the whole userData object
 
   const fetchRewards = async () => {
     setLoading(true); setListError(''); setSuccessMessage('');
@@ -96,12 +111,13 @@ function ManageRewards() {
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
     try {
       let uploadedImageUrl = null;
-      // 1. Upload image if selected
+      // 1. Upload image if selected, using the correct function based on role
       if (newRewardImageFile) {
+        const uploadFunction = userData?.role === 'Manager' ? uploadGlobalRewardImage : uploadRewardImage;
         try {
-          uploadedImageUrl = await uploadRewardImage(newRewardImageFile);
+          uploadedImageUrl = await uploadFunction(newRewardImageFile);
         } catch (uploadError) {
-          console.error("Error uploading image:", uploadError);
+          console.error(`Error uploading ${userData?.role === 'Manager' ? 'global ' : ''}reward image:`, uploadError);
           setAddError(`Image upload failed: ${uploadError.message}`);
           clearMessages();
           setAdding(false); // Stop loading state
@@ -168,12 +184,13 @@ function ManageRewards() {
     try {
       let imageUrlPayload; // Undefined initially
 
-      // 1. Upload new image if selected
+      // 1. Upload new image if selected, using the correct function based on role
       if (editRewardImageFile) {
+        const uploadFunction = userData?.role === 'Manager' ? uploadGlobalRewardImage : uploadRewardImage;
         try {
-          imageUrlPayload = await uploadRewardImage(editRewardImageFile);
+          imageUrlPayload = await uploadFunction(editRewardImageFile);
         } catch (uploadError) {
-          console.error("Error uploading image during edit:", uploadError);
+          console.error(`Error uploading ${userData?.role === 'Manager' ? 'global ' : ''}reward image during edit:`, uploadError);
           setEditError(`Image upload failed: ${uploadError.message}`);
           clearMessages();
           setSaving(false); // Stop loading state
@@ -421,17 +438,26 @@ function ManageRewards() {
                       </span>
                     </td>
                     <td className={`${tdStyle} text-right space-x-2 pr-6`}>
-                      <Button variant="secondary" size="sm" onClick={() => handleEditClick(reward)} className="inline-flex items-center">
-                        <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
-                      </Button>
-                      {reward.isActive ? (
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.nombre)} className="inline-flex items-center">
-                          <ArchiveBoxXMarkIcon className="h-4 w-4 mr-1" /> Set Inactive
-                        </Button>
-                      ) : (
-                        <Button variant="success" size="sm" onClick={() => handleActivateClick(reward.id, reward.nombre)} className="inline-flex items-center">
-                          <ArrowPathIcon className="h-4 w-4 mr-1" /> Set Active
-                        </Button>
+                      {/* Show buttons only if Manager OR if Admin AND reward is not global */}
+                      {(userData?.role === 'Manager' || (userData?.role === 'Admin' && reward.companyId !== null)) && (
+                        <>
+                          <Button variant="secondary" size="sm" onClick={() => handleEditClick(reward)} className="inline-flex items-center">
+                            <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
+                          </Button>
+                          {reward.isActive ? (
+                            <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.nombre)} className="inline-flex items-center">
+                              <ArchiveBoxXMarkIcon className="h-4 w-4 mr-1" /> Set Inactive
+                            </Button>
+                          ) : (
+                            <Button variant="success" size="sm" onClick={() => handleActivateClick(reward.id, reward.nombre)} className="inline-flex items-center">
+                              <ArrowPathIcon className="h-4 w-4 mr-1" /> Set Active
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      {/* Optional: Show a placeholder or nothing if Admin and reward is global */}
+                      {userData?.role === 'Admin' && reward.companyId === null && (
+                        <span className="text-xs text-gray-400 italic">Global</span>
                       )}
                     </td>
                   </tr>

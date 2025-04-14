@@ -1,17 +1,22 @@
 const { Reward } = require('../models');
+const { Op } = require("sequelize"); // Import Op for OR queries
 
-// Crear una nueva recompensa (solo Admin)
+// Crear una nueva recompensa (Admin o Manager)
 const createReward = async (req, res) => {
-  const adminCompanyId = req.dbUser.companyId;
+  const userRole = req.dbUser.role;
+  const userCompanyId = req.dbUser.companyId;
   // Incluir stock (opcional) y imageUrl (opcional)
   const { nombre, pointsRequired, stock, imageUrl } = req.body; // Add imageUrl
 
   if (!nombre || pointsRequired === undefined) {
     return res.status(400).send({ message: 'Nombre y puntos requeridos son obligatorios.' });
   }
-  if (!adminCompanyId) {
-     return res.status(403).send({ message: 'El administrador no tiene una compañía asignada.' });
+
+  // Admins must belong to a company to create company-specific rewards
+  if (userRole === 'Admin' && !userCompanyId) {
+     return res.status(403).send({ message: 'El Admin debe pertenecer a una compañía para crear recompensas.' });
   }
+
   const points = parseInt(pointsRequired);
   if (isNaN(points) || points <= 0) {
     return res.status(400).send({ message: 'Los puntos requeridos deben ser un número positivo.' });
@@ -26,10 +31,13 @@ const createReward = async (req, res) => {
   }
 
   try {
+    // Determine companyId based on role
+    const rewardCompanyId = userRole === 'Manager' ? null : userCompanyId;
+
     const newReward = await Reward.create({
       nombre,
       pointsRequired: points,
-      companyId: adminCompanyId,
+      companyId: rewardCompanyId, // Set to null for Manager, companyId for Admin
       isActive: true,
       stock: stockValue, // Guardar valor de stock (puede ser null)
       imageUrl: imageUrl || null, // Save imageUrl if provided, otherwise null
@@ -42,28 +50,41 @@ const createReward = async (req, res) => {
   }
 };
 
-// Listar recompensas de la compañía (para Admin y Employee)
-// Los Admins ven todas (activas e inactivas) de su compañía.
-// Los Employees ven solo las activas de su compañía.
+// Listar recompensas (para Admin, Manager y Employee)
+// Admins/Managers ven todas (activas e inactivas) de su ámbito (empresa o globales).
+// Employees ven solo las activas de su ámbito (empresa + globales).
 const getRewardsByCompany = async (req, res) => {
   const userCompanyId = req.dbUser.companyId;
   const userRole = req.dbUser.role;
 
-  if (!userCompanyId) {
-     return res.status(403).send({ message: 'Usuario sin compañía asignada.' });
+  // Managers see global rewards, Admins/Employees see their company + global
+  let companyIdFilter;
+  if (userRole === 'Manager') {
+    companyIdFilter = { companyId: null }; // Managers only see global rewards in this context (can be adjusted if needed)
+  } else if (userCompanyId) {
+    // Admins and Employees see their company's rewards OR global rewards
+    companyIdFilter = {
+      [Op.or]: [
+        { companyId: userCompanyId },
+        { companyId: null }
+      ]
+    };
+  } else {
+    // Employee or Admin without companyId - should ideally not happen for these roles
+    // but if it does, they can only see global rewards
+    companyIdFilter = { companyId: null };
   }
 
-  const whereClause = { companyId: userCompanyId };
-
-  // Los empleados solo ven las recompensas activas
-  if (userRole === 'Employee') {
-    whereClause.isActive = true;
-  }
+  const whereClause = {
+    ...companyIdFilter,
+    // Employees only see active rewards
+    ...(userRole === 'Employee' && { isActive: true })
+  };
 
   try {
     const rewards = await Reward.findAll({
       where: whereClause,
-      order: [['pointsRequired', 'ASC'], ['nombre', 'ASC']], // Ordenar por puntos, luego nombre
+      order: [['companyId', 'ASC NULLS FIRST'], ['pointsRequired', 'ASC'], ['nombre', 'ASC']], // Show global first, then order
     });
     res.status(200).json(rewards);
   } catch (error) {
@@ -72,17 +93,27 @@ const getRewardsByCompany = async (req, res) => {
   }
 };
 
-// Obtener una recompensa específica por ID (solo Admin)
-// Se usa checkTenant en la ruta para verificar pertenencia
+// Obtener una recompensa específica por ID (Admin o Manager, con verificación)
 const getRewardById = async (req, res) => {
   const { rewardId } = req.params;
+  const userRole = req.dbUser.role;
+  const userCompanyId = req.dbUser.companyId;
+
   try {
-    // checkTenant ya verificó que el admin pertenece a la misma compañía que la recompensa
     const reward = await Reward.findByPk(rewardId);
-    // findByPk devuelve null si no lo encuentra, no necesitamos verificar pertenencia de nuevo
+
     if (!reward) {
       return res.status(404).send({ message: 'Recompensa no encontrada.' });
     }
+
+    // Authorization Check:
+    if (userRole === 'Admin' && reward.companyId !== userCompanyId) {
+      return res.status(403).send({ message: 'Acceso prohibido. No es una recompensa de su compañía.' });
+    }
+    if (userRole === 'Manager' && reward.companyId !== null) {
+      return res.status(403).send({ message: 'Acceso prohibido. No es una recompensa global.' });
+    }
+    // If checks pass, user is authorized for this reward
     res.status(200).json(reward);
   } catch (error) {
     console.error(`Error al obtener recompensa ${rewardId}:`, error);
@@ -91,10 +122,11 @@ const getRewardById = async (req, res) => {
 };
 
 
-// Actualizar una recompensa (solo Admin)
-// Se usa checkTenant en la ruta
+// Actualizar una recompensa (Admin o Manager, con verificación)
 const updateReward = async (req, res) => {
   const { rewardId } = req.params;
+  const userRole = req.dbUser.role;
+  const userCompanyId = req.dbUser.companyId;
   // Incluir stock y imageUrl en los campos a actualizar
   const { nombre, pointsRequired, isActive, stock, imageUrl } = req.body; // Add imageUrl
 
@@ -124,12 +156,20 @@ const updateReward = async (req, res) => {
   }
 
   try {
-    // checkTenant ya verificó pertenencia
     const reward = await Reward.findByPk(rewardId);
     if (!reward) {
       return res.status(404).send({ message: 'Recompensa no encontrada.' });
     }
 
+    // Authorization Check:
+    if (userRole === 'Admin' && reward.companyId !== userCompanyId) {
+      return res.status(403).send({ message: 'Acceso prohibido. No puede modificar recompensas de otra compañía.' });
+    }
+    if (userRole === 'Manager' && reward.companyId !== null) {
+      return res.status(403).send({ message: 'Acceso prohibido. No puede modificar recompensas específicas de una compañía.' });
+    }
+
+    // If checks pass, proceed with update
     // Actualizar campos
     if (nombre !== undefined) reward.nombre = nombre;
     if (pointsValue !== undefined) reward.pointsRequired = pointsValue;
@@ -148,18 +188,27 @@ const updateReward = async (req, res) => {
   }
 };
 
-// Desactivar/Activar una recompensa (eliminación lógica) (solo Admin)
-// Se usa checkTenant en la ruta
+// Desactivar/Activar una recompensa (Admin o Manager, con verificación)
 const toggleRewardStatus = async (req, res) => {
    const { rewardId } = req.params;
+   const userRole = req.dbUser.role;
+   const userCompanyId = req.dbUser.companyId;
 
    try {
-    // checkTenant ya verificó pertenencia
     const reward = await Reward.findByPk(rewardId);
     if (!reward) {
       return res.status(404).send({ message: 'Recompensa no encontrada.' });
     }
 
+    // Authorization Check:
+    if (userRole === 'Admin' && reward.companyId !== userCompanyId) {
+      return res.status(403).send({ message: 'Acceso prohibido. No puede modificar recompensas de otra compañía.' });
+    }
+    if (userRole === 'Manager' && reward.companyId !== null) {
+      return res.status(403).send({ message: 'Acceso prohibido. No puede modificar recompensas específicas de una compañía.' });
+    }
+
+    // If checks pass, proceed
     reward.isActive = !reward.isActive;
     await reward.save();
 

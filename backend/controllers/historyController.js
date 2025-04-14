@@ -1,4 +1,5 @@
-const { PointAssignment, User, Redemption, Reward, sequelize } = require('../models'); // Asegurarse que Redemption y Reward estén importados
+// Import Company model as well
+const { PointAssignment, User, Redemption, Reward, Company, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 // --- Definiciones de Funciones ---
@@ -38,6 +39,45 @@ const getPointAssignmentHistory = async (req, res) => {
   } catch (error) {
     console.error('Error al obtener historial de puntos asignados:', error);
     res.status(500).send({ message: 'Error interno al obtener el historial.' });
+  }
+};
+
+// Obtener historial de canjes GLOBALES (para Manager)
+const getManagerGlobalRedemptionHistory = async (req, res) => {
+  // No necesitamos companyId aquí, buscamos canjes de recompensas globales
+
+  try {
+    const history = await Redemption.findAll({
+      include: [
+        {
+          model: Reward,
+          as: 'reward',
+          attributes: ['id', 'nombre', 'companyId'], // Incluir companyId para verificar
+          where: { companyId: null }, // *** Filtrar solo recompensas globales ***
+          required: true, // INNER JOIN para asegurar que solo traemos canjes de recompensas existentes y globales
+        },
+        {
+          model: User,
+          as: 'employee', // Empleado que canjeó
+          attributes: ['id', 'nombre', 'email', 'companyId'], // Incluir companyId del empleado
+          include: [ // Incluir la compañía del empleado
+            {
+              model: Company,
+              as: 'company',
+              attributes: ['id', 'nombre'],
+            }
+          ]
+        },
+      ],
+      order: [['fechaCanje', 'DESC']], // Ordenar por fecha descendente
+      // Considerar paginación
+    });
+
+    res.status(200).json(history);
+
+  } catch (error) {
+    console.error('Error al obtener historial de canjes globales (Manager):', error);
+    res.status(500).send({ message: 'Error interno al obtener el historial de canjes globales.' });
   }
 };
 
@@ -160,5 +200,6 @@ module.exports = {
   getMyPointHistory,
   getMyRedemptionHistory,
   getRanking,
-  getRedemptionHistoryAdmin, // Exportar nueva función
+  getRedemptionHistoryAdmin,
+  getManagerGlobalRedemptionHistory, // Exportar la nueva función para managers
 };

@@ -170,6 +170,15 @@ function AvailableRewards() {
                   </div>
 
                   <div className="p-4 flex flex-col flex-grow">
+                    {/* Add Global indicator */}
+                    {reward.companyId === null && (
+                      <span className="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full self-start mb-2 inline-flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m0 0a9 9 0 019-9m-9 9a9 9 0 009 9m-9-9H3m6 0a3 3 0 11-6 0 3 3 0 016 0zM12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Global Reward
+                      </span>
+                    )}
                     <h3 className="text-lg font-semibold text-gray-800 mb-1 flex-grow">{reward.nombre}</h3> {/* Use nombre */}
                     <div className="flex items-center text-indigo-600 font-bold text-xl mt-2">
                        <StarIcon className="h-5 w-5 mr-1 text-yellow-400"/>

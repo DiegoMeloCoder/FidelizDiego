@@ -44,9 +44,10 @@ const redeemReward = async (req, res) => {
       await transaction.rollback();
       return res.status(404).send({ message: 'Recompensa no encontrada.' });
     }
-    if (reward.companyId !== employeeCompanyId) {
+    // Allow redemption if reward is global (companyId is null) OR belongs to the employee's company
+    if (reward.companyId !== null && reward.companyId !== employeeCompanyId) {
       await transaction.rollback();
-      return res.status(403).send({ message: 'La recompensa no pertenece a tu compañía.' });
+      return res.status(403).send({ message: 'Esta recompensa no pertenece a tu compañía ni es una recompensa global.' });
     }
     if (!reward.isActive) {
        await transaction.rollback();
