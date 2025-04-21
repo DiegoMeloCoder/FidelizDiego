@@ -1,11 +1,13 @@
 const express = require('express');
 const justificationController = require('../controllers/justificationController');
-const { authenticate, authorize, checkTenant } = require('../middleware/auth');
+// Importar checkSubscription
+const { authenticate, authorize, checkTenant, checkSubscription } = require('../middleware/auth'); 
 
 const router = express.Router();
 
-// Aplicar autenticación y autorización (solo Admin) a todas las rutas de justificaciones
-router.use(authenticate, authorize('Admin'));
+// Aplicar autenticación, autorización (solo Admin) y verificación de suscripción
+// Usar checkSubscription() sin opciones (allowPending: false por defecto) para bloquear si no está activa
+router.use(authenticate, authorize('Admin'), checkSubscription()); 
 
 // Rutas CRUD para Justificaciones
 router.get('/', justificationController.getJustifications); // Lista globales activas y todas las de la compañía

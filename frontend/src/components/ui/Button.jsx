@@ -28,15 +28,22 @@ function Button({
   let variantStyles = '';
   switch (variant) {
     case 'secondary':
-      variantStyles = 'bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500';
+      // Use brand-tertiary for bg, FORCE white text for better contrast in most cases, focus on primary
+      variantStyles = 'bg-brand-tertiary text-white hover:opacity-90 focus:ring-brand-primary'; // Force white text
       break;
     case 'danger':
       variantStyles = 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500';
       break;
+    case 'landing': // New variant for landing page theme
+      variantStyles = 'bg-landing-primary text-white hover:bg-landing-primary-dark focus:ring-landing-primary';
+      break;
+    case 'landing-outline': // New outline variant for landing page
+      variantStyles = 'bg-white text-landing-primary border border-landing-primary hover:bg-landing-primary hover:text-white focus:ring-landing-primary';
+      break;
     case 'primary':
     default:
-      // Use brand-primary for background and focus ring
-      variantStyles = 'bg-brand-primary text-white hover:opacity-90 focus:ring-brand-primary';
+      // Use brand-primary for background and focus ring, FORCE white text
+      variantStyles = 'bg-brand-primary text-white hover:opacity-90 focus:ring-brand-primary'; // Ensure text-white
       break;
   }
 

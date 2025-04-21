@@ -105,6 +105,7 @@ export function AuthProvider({ children }) {
     loading,
     authError, // Expose error state
     refreshUserData, // Expose the refresh function
+    fetchUserProfile, // <-- Add fetchUserProfile to the context value
   };
 
   // Render children only when loading is complete to prevent rendering with incomplete state

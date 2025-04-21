@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
-import { GiftIcon, StarIcon, CheckCircleIcon } from '@heroicons/react/24/outline'; // Icons
+// Added HandThumbUpIcon, HandThumbDownIcon
+import { GiftIcon, StarIcon, CheckCircleIcon, SparklesIcon, HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/react/24/outline';
 
 function AvailableRewards() {
   // Import refreshUserData from context
@@ -16,6 +17,7 @@ function AvailableRewards() {
   const [redeemingId, setRedeemingId] = useState(null);
   const [redeemError, setRedeemError] = useState('');
   const [redeemSuccess, setRedeemSuccess] = useState('');
+  const [votingState, setVotingState] = useState({}); // { [rewardId]: { loading: bool, error: string, userVote: 'like'|'dislike'|null } }
 
   // Function to clear messages after a delay
   const clearMessages = () => {
@@ -23,6 +25,8 @@ function AvailableRewards() {
       setListError('');
       setRedeemError('');
       setRedeemSuccess('');
+      // Clear voting errors too if needed, or handle separately
+      // setVotingState(prev => ({ ...prev, [rewardId]: { ...prev[rewardId], error: '' } }));
     }, 4000); // Clear after 4 seconds
   };
 
@@ -52,7 +56,10 @@ function AvailableRewards() {
     } finally {
       setLoading(false);
     }
-  }, [userData?.company?.id]); // Dependency: fetchRewards needs to be recreated if companyId changes
+  // }, [userData?.company?.id]); // Dependency: fetchRewards needs to be recreated if companyId changes
+  // --> Let's remove companyId dependency for now, assuming rewards list doesn't change often based on company alone
+  // --> Re-add if necessary, but might cause re-fetches if userData object changes reference unnecessarily
+  }, []); // Fetch only once on mount for now
 
 
   // Fetch rewards on initial load or when companyId changes
@@ -62,7 +69,8 @@ function AvailableRewards() {
     // Call the memoized fetchRewards function
     fetchRewards();
 
-  }, [userData?.company?.id, authLoading, fetchRewards]); // Add fetchRewards to dependency array
+  // }, [userData?.company?.id, authLoading, fetchRewards]); // Adjust dependencies if fetchRewards changes
+  }, [authLoading, fetchRewards]); // Fetch when auth is ready
 
 
   // Handle Redeem Reward
@@ -104,6 +112,42 @@ function AvailableRewards() {
       setRedeemingId(null);
     }
   };
+
+  // Handle Vote Reward
+  const handleVote = async (rewardId, voteType) => {
+    setVotingState(prev => ({
+      ...prev,
+      [rewardId]: { ...prev[rewardId], loading: true, error: '' }
+    }));
+
+    try {
+      const response = await apiClient.post(`/rewards/${rewardId}/vote`, { voteType });
+      const updatedReward = response.data.reward; // Get updated reward with counts
+
+      // Update the specific reward in the local state
+      setRewards(prevRewards => prevRewards.map(r =>
+        r.id === rewardId ? { ...r, likes: updatedReward.likes, dislikes: updatedReward.dislikes } : r
+      ));
+
+      // Update voting state for this reward
+      setVotingState(prev => ({
+        ...prev,
+        [rewardId]: { loading: false, error: '', userVote: voteType } // Store user's current vote? Or just success?
+      }));
+      // Optionally show a success message or just update button appearance
+
+    } catch (err) {
+      console.error(`Error voting ${voteType} on reward ${rewardId}:`, err);
+      const errorMsg = err.response?.data?.message || `Failed to register ${voteType}.`;
+      setVotingState(prev => ({
+        ...prev,
+        [rewardId]: { ...prev[rewardId], loading: false, error: errorMsg }
+      }));
+      // Optionally use Alert component for voting errors
+      // clearMessages(); // Maybe clear voting errors differently
+    }
+  };
+
 
   const isLoading = loading || authLoading;
   const currentPoints = userData?.points ?? 0;
@@ -179,11 +223,20 @@ function AvailableRewards() {
                         Global Reward
                       </span>
                     )}
+                    {/* Recommendation Badge */}
+                    {reward.recommendation?.score > 0 && (
+                        <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full self-start mb-2 inline-flex items-center" title={`Reasons: ${reward.recommendation.reasons.join(', ')}`}>
+                            <SparklesIcon className="h-3 w-3 mr-1" />
+                            Recommended
+                        </span>
+                    )}
                     <h3 className="text-lg font-semibold text-gray-800 mb-1 flex-grow">{reward.nombre}</h3> {/* Use nombre */}
-                    <div className="flex items-center text-indigo-600 font-bold text-xl mt-2">
-                       <StarIcon className="h-5 w-5 mr-1 text-yellow-400"/>
+                    {/* Use brand-primary for points text */}
+                    <div className="flex items-center text-brand-primary font-bold text-xl mt-2">
+                       <StarIcon className="h-5 w-5 mr-1 text-yellow-400"/> {/* Keep star yellow */}
                        {reward.pointsRequired}
-                       <span className="text-sm font-medium text-gray-500 ml-1">Points</span>
+                       {/* Use brand-secondary for "Points" label */}
+                       <span className="text-sm font-medium text-brand-secondary ml-1">Points</span>
                     </div>
                     {/* Display Stock if finite */}
                     {reward.stock !== null && (
@@ -191,16 +244,47 @@ function AvailableRewards() {
                             Stock: {isOutOfStock ? '0 (Out of Stock)' : reward.stock}
                         </p>
                     )}
+                    {/* Display Likes/Dislikes */}
+                    <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                       <span className="inline-flex items-center"><HandThumbUpIcon className="h-4 w-4 mr-1"/> {reward.likes ?? 0}</span>
+                       <span className="inline-flex items-center"><HandThumbDownIcon className="h-4 w-4 mr-1"/> {reward.dislikes ?? 0}</span>
+                    </div>
                   </div>
 
-                  <div className="p-4 bg-gray-50 border-t border-gray-200">
+                  {/* Redeem Button Area */}
+                  <div className="p-4 pt-2 border-t border-gray-200 mt-auto"> {/* Added mt-auto */}
+                     {/* Vote Buttons */}
+                     <div className="flex justify-center space-x-3 mb-3">
+                        <button
+                          onClick={() => handleVote(reward.id, 'like')}
+                          disabled={votingState[reward.id]?.loading}
+                          className={`p-1 rounded-full text-gray-400 hover:text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition ${votingState[reward.id]?.userVote === 'like' ? 'text-green-600 bg-green-100' : ''}`}
+                          aria-label="Like reward"
+                        >
+                           {votingState[reward.id]?.loading && votingState[reward.id]?.voteType === 'like' ? <Spinner size="xs"/> : <HandThumbUpIcon className="h-5 w-5"/>}
+                        </button>
+                         <button
+                          onClick={() => handleVote(reward.id, 'dislike')}
+                          disabled={votingState[reward.id]?.loading}
+                          className={`p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition ${votingState[reward.id]?.userVote === 'dislike' ? 'text-red-600 bg-red-100' : ''}`}
+                          aria-label="Dislike reward"
+                        >
+                           {votingState[reward.id]?.loading && votingState[reward.id]?.voteType === 'dislike' ? <Spinner size="xs"/> : <HandThumbDownIcon className="h-5 w-5"/>}
+                        </button>
+                     </div>
+                     {/* Display voting error for this card */}
+                     {votingState[reward.id]?.error && <p className="text-xs text-red-600 text-center mb-2">{votingState[reward.id]?.error}</p>}
+
+                    {/* Redeem Button */}
                     <Button
                       onClick={() => handleRedeem(reward.id, reward.pointsRequired, reward.nombre)}
                       // Disable if not affordable OR redeeming OR out of stock
                       disabled={!canAfford || isRedeemingThis || isOutOfStock}
-                      variant={(canAfford && !isOutOfStock) ? "primary" : "secondary"} // Primary only if affordable and in stock
+                      // Use primary variant for redeem button (already themed)
+                      variant={(canAfford && !isOutOfStock) ? "primary" : "secondary"}
+                      // Remove specific green colors, rely on Button component's variant styles
                       className={`w-full inline-flex items-center justify-center ${
-                        (!canAfford || isOutOfStock) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500' // TODO: Apply brand colors here too?
+                        (!canAfford || isOutOfStock) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : '' // Keep disabled style
                       }`}
                       size="sm"
                     >

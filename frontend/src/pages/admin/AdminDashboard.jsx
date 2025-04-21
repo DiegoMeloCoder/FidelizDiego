@@ -7,7 +7,22 @@ import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Spinner from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
-import { UsersIcon, GiftIcon, PlusCircleIcon } from '@heroicons/react/24/outline'; // Icons
+// Added HeartIcon for common interest
+import { UsersIcon, GiftIcon, PlusCircleIcon, DocumentChartBarIcon, ArrowDownTrayIcon, SparklesIcon, ClipboardDocumentIcon, CheckCircleIcon, HeartIcon } from '@heroicons/react/24/outline';
+
+// Helper function to get default dates (e.g., last month)
+const getLastMonthRange = () => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 1);
+    startDate.setDate(1); // Start from the 1st of last month
+    endDate.setDate(0); // End on the last day of last month
+
+    // Format as YYYY-MM-DD
+    const formatDate = (date) => date.toISOString().split('T')[0];
+    return { startDate: formatDate(startDate), endDate: formatDate(endDate) };
+};
+
 
 function AdminDashboard() {
   const { currentUser, userData, loading: authLoading } = useAuth(); // userData now contains company info { id, nombre, status }
@@ -16,6 +31,9 @@ function AdminDashboard() {
   const [stats, setStats] = useState({ employeeCount: 0, rewardCount: 0 }); // Initialize with 0 or null
   const [loadingStats, setLoadingStats] = useState(true); // Start loading stats
   const [statsError, setStatsError] = useState('');
+  const [commonInterest, setCommonInterest] = useState({ mostCommonInterest: null, count: 0 }); // State for common interest
+  const [loadingInterest, setLoadingInterest] = useState(true); // Loading state for interest
+  const [interestError, setInterestError] = useState(''); // Error state for interest
 
   // State for Assign Points Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +45,20 @@ function AdminDashboard() {
   const [assigning, setAssigning] = useState(false);
   const [assignError, setAssignError] = useState('');
   const [loadingModalData, setLoadingModalData] = useState(false);
+  const [pointsSuggestion, setPointsSuggestion] = useState(''); // State for suggestion text
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false); // State for suggestion loading
+  const [generatedMessages, setGeneratedMessages] = useState([]); // State for AI message suggestions
+  const [loadingMessageGen, setLoadingMessageGen] = useState(false); // State for message generation loading
+  const [messageGenError, setMessageGenError] = useState(''); // State for message generation error
+  const [copiedMessageIndex, setCopiedMessageIndex] = useState(null); // Track which message index was copied
+
+  // State for AI Report Generation
+  const defaultDates = getLastMonthRange();
+  const [reportStartDate, setReportStartDate] = useState(defaultDates.startDate);
+  const [reportEndDate, setReportEndDate] = useState(defaultDates.endDate);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportError, setReportError] = useState('');
+  const [generatedReport, setGeneratedReport] = useState(null); // { summary: '...', data: {...} }
 
   // Fetch company name - Removed, now comes from userData.company.nombre
 
@@ -53,16 +85,43 @@ function AdminDashboard() {
         setLoadingStats(false);
         if (!authLoading) { // Only set error if auth has finished loading
              setStatsError("User company data not available to fetch stats.");
+             setInterestError("User company data not available to fetch interest."); // Also set interest error
         }
       }
     };
-    // Fetch stats only if userData is available and not authLoading
+
+    const fetchCommonInterest = async () => {
+       if (userData?.company?.id) {
+           setLoadingInterest(true);
+           setInterestError('');
+           try {
+               const response = await apiClient.get('/stats/company/common-interest');
+               setCommonInterest(response.data);
+           } catch (error) {
+               console.error("Error fetching common interest:", error);
+               setInterestError(error.message || 'Failed to load common interest.');
+               setCommonInterest({ mostCommonInterest: 'Err', count: 0 });
+           } finally {
+               setLoadingInterest(false);
+           }
+       } else {
+           setLoadingInterest(false);
+           if (!authLoading) {
+               setInterestError("User company data not available to fetch interest.");
+           }
+       }
+    };
+
+    // Fetch stats and common interest only if userData is available and not authLoading
     if (userData && !authLoading) {
         fetchStats();
+        fetchCommonInterest(); // Fetch interest data
     } else if (!authLoading && !userData) {
         // Handle case where user data failed to load in AuthContext
         setLoadingStats(false);
+        setLoadingInterest(false); // Also stop loading interest
         setStatsError("User data not available to fetch stats.");
+        setInterestError("User data not available to fetch interest.");
     }
     // If authLoading is true, we wait for userData
   }, [userData, authLoading]); // Depender de userData y authLoading
@@ -98,7 +157,40 @@ function AdminDashboard() {
       }
     };
     fetchModalData();
+    // Reset suggestion when modal opens
+    if (isModalOpen) {
+        setPointsSuggestion('');
+    }
   }, [isModalOpen, userData?.company?.id]); // Depend on companyId as well
+
+  // Fetch points suggestion when justification changes
+  useEffect(() => {
+    const fetchSuggestion = async () => {
+      if (selectedJustificationId && isModalOpen) { // Only fetch if modal is open and justification selected
+        setLoadingSuggestion(true);
+        setPointsSuggestion(''); // Clear previous suggestion
+        try {
+          const response = await apiClient.get(`/points/suggestions/justification/${selectedJustificationId}`);
+          if (response.data?.suggestion) { // Check if suggestion data exists
+            setPointsSuggestion(response.data.message); // Set the suggestion text
+          } else {
+            setPointsSuggestion(''); // Clear if no suggestion (e.g., not enough data)
+          }
+        } catch (error) {
+          console.error("Error fetching points suggestion:", error);
+          // Optionally show a small error message for suggestion fetching? For now, just log.
+          setPointsSuggestion(''); // Clear on error
+        } finally {
+          setLoadingSuggestion(false);
+        }
+      } else {
+        setPointsSuggestion(''); // Clear suggestion if no justification selected
+      }
+    };
+
+    fetchSuggestion();
+  }, [selectedJustificationId, isModalOpen]); // Re-run when justification changes or modal opens/closes
+
 
   // Handle Assign Points Submission
   const handleAssignPoints = async (e) => {
@@ -130,6 +222,38 @@ function AdminDashboard() {
     }
   };
 
+  // Handle AI Report Generation
+  const handleGenerateReport = async () => {
+      if (!reportStartDate || !reportEndDate) {
+          setReportError('Please select both start and end dates.');
+          return;
+      }
+      setIsGeneratingReport(true);
+      setReportError('');
+      setGeneratedReport(null); // Clear previous report
+
+      try {
+          const response = await apiClient.post('/reports/generate', {
+              startDate: reportStartDate,
+              endDate: reportEndDate,
+          });
+          setGeneratedReport(response.data); // Store { summary, data, startDate, endDate }
+      } catch (err) {
+          console.error("Error generating AI report:", err);
+          setReportError(err.response?.data?.message || err.message || 'Failed to generate report.');
+      } finally {
+          setIsGeneratingReport(false);
+      }
+  };
+
+  // TODO: Implement PDF export function
+  const handleExportReport = () => {
+      alert('PDF export functionality not yet implemented.');
+      // Use generatedReport.summary and generatedReport.data
+      // Library like html2pdf.js or jsPDF could be used here
+  };
+
+
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
@@ -137,7 +261,56 @@ function AdminDashboard() {
     setSelectedJustificationId('');
     setPointsToAssign('');
     setAssignError('');
+    setPointsSuggestion(''); // Clear suggestion on close
+    setLoadingSuggestion(false); // Reset loading state
+    setGeneratedMessages([]); // Clear generated messages on close
+    setMessageGenError(''); // Clear message gen error on close
+    setCopiedMessageIndex(null); // Clear copied index on close
   };
+
+  // Handle Copy Message
+  const handleCopyMessage = (text, index) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedMessageIndex(index);
+      setTimeout(() => setCopiedMessageIndex(null), 1500); // Clear after 1.5 seconds
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      // Optionally show an error alert to the user
+    });
+  };
+
+  // Handle AI Recognition Message Generation
+  const handleGenerateMessage = async () => {
+      const employee = employees.find(e => e.id === selectedEmployeeId);
+      const justification = justifications.find(j => j.id === parseInt(selectedJustificationId));
+      const points = parseInt(pointsToAssign);
+
+      if (!employee || !justification || isNaN(points) || points === 0) {
+          setMessageGenError('Please select employee, justification, and enter valid points before generating a message.');
+          setGeneratedMessages([]);
+          return;
+      }
+
+      setLoadingMessageGen(true);
+      setMessageGenError('');
+      setGeneratedMessages([]);
+
+      try {
+          const response = await apiClient.post('/points/generate-message', {
+              employeeName: employee.nombre || employee.email, // Use name or email
+              justificationText: justification.textoJustificacion,
+              points: points,
+          });
+          setGeneratedMessages(response.data.suggestions || []);
+      } catch (err) {
+          console.error("Error generating recognition message:", err);
+          setMessageGenError(err.response?.data?.message || err.message || 'Failed to generate message.');
+          setGeneratedMessages([]);
+      } finally {
+          setLoadingMessageGen(false);
+      }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -160,12 +333,15 @@ function AdminDashboard() {
       </div>
 
        {/* Stats Section */}
-       {loadingStats && <div className="flex justify-center p-10"><Spinner /></div>}
+       {/* Combined Loading/Error state for initial stats */}
+       {(loadingStats || loadingInterest) && <div className="flex justify-center p-10"><Spinner /></div>}
        {statsError && <Alert type="error">{statsError}</Alert>}
-       {!loadingStats && !statsError && userData?.company?.id && (
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+       {interestError && <Alert type="error">{interestError}</Alert>}
+       {/* Grid for Stats - Show only when all data is loaded and no errors */}
+       {!loadingStats && !statsError && !loadingInterest && !interestError && userData?.company?.id && (
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6"> {/* Changed to 3 cols */}
            {/* Active Employees Card - Apply brand colors */}
-           <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary flex items-center space-x-4"> {/* Use brand-tertiary for border */}
+           <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary flex items-center space-x-4">
              <div className="bg-brand-tertiary p-3 rounded-full"> {/* Use brand-tertiary for icon bg */}
                <UsersIcon className="h-6 w-6 text-brand-primary" /> {/* Use brand-primary for icon color */}
              </div>
@@ -185,6 +361,19 @@ function AdminDashboard() {
                <p className="text-2xl font-semibold text-gray-800">{stats.rewardCount}</p>
              </div>
            </div>
+            {/* Common Interest Card */}
+           <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary flex items-center space-x-4">
+             <div className="bg-brand-tertiary p-3 rounded-full">
+               <HeartIcon className="h-6 w-6 text-brand-primary" />
+             </div>
+             <div>
+               <p className="text-sm font-medium text-gray-500">Top Team Interest</p>
+               <p className="text-2xl font-semibold text-gray-800 capitalize">
+                 {commonInterest.mostCommonInterest || 'N/A'}
+                 {commonInterest.count > 0 && <span className="text-sm font-normal text-gray-500 ml-1">({commonInterest.count} votes)</span>}
+               </p>
+             </div>
+           </div>
          </div>
        )}
        {/* No longer need the placeholder message, loading state handles it */}
@@ -193,6 +382,82 @@ function AdminDashboard() {
             Statistics will be available soon.
           </div>
        )} */}
+
+      {/* --- AI Report Generation Section --- */}
+      <div className="bg-white p-5 rounded-lg shadow border border-gray-200 space-y-4">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+              <DocumentChartBarIcon className="h-6 w-6 mr-2 text-brand-primary" />
+              Generate AI-Powered Report
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+              {/* Date Inputs */}
+              <div>
+                  <label htmlFor="report-start-date" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <Input
+                      id="report-start-date"
+                      type="date"
+                      value={reportStartDate}
+                      onChange={(e) => setReportStartDate(e.target.value)}
+                      className="w-full"
+                      disabled={isGeneratingReport}
+                  />
+              </div>
+              <div>
+                  <label htmlFor="report-end-date" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                  <Input
+                      id="report-end-date"
+                      type="date"
+                      value={reportEndDate}
+                      onChange={(e) => setReportEndDate(e.target.value)}
+                      className="w-full"
+                      disabled={isGeneratingReport}
+                  />
+              </div>
+              {/* Generate Button */}
+              <Button
+                  onClick={handleGenerateReport}
+                  variant="primary"
+                  disabled={isGeneratingReport || !userData?.company?.id}
+                  className="w-full inline-flex items-center justify-center"
+              >
+                  {isGeneratingReport ? <Spinner size="sm" color="text-white" className="mr-2"/> : <DocumentChartBarIcon className="h-5 w-5 mr-1.5"/>}
+                  {isGeneratingReport ? 'Generating...' : 'Generate Report'}
+              </Button>
+          </div>
+
+          {/* Error Display */}
+          {reportError && <Alert type="error">{reportError}</Alert>}
+
+          {/* Report Display Area */}
+          {generatedReport && !isGeneratingReport && (
+              <div className="mt-4 border-t border-gray-200 pt-4 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-700">
+                        Report for {generatedReport.period?.startDate} to {generatedReport.period?.endDate}
+                    </h3>
+                    <Button onClick={handleExportReport} variant="secondary" size="sm" className="inline-flex items-center">
+                        <ArrowDownTrayIcon className="h-4 w-4 mr-1.5" />
+                        Export PDF
+                    </Button>
+                  </div>
+                  {/* Display AI Summary */}
+                  <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded border border-gray-200">
+                      {/* Render the summary, handling newlines */}
+                      {generatedReport.summary.split('\n').map((line, index) => (
+                          <p key={index} className={line.startsWith('**') ? 'font-semibold' : ''}>
+                              {line.replace(/\*\*/g, '')} {/* Remove markdown bold for now */}
+                          </p>
+                      ))}
+                  </div>
+                  {/* TODO: Add Charts using generatedReport.data */}
+                  {/* <div className="mt-4">
+                      <p className="text-sm text-gray-500">(Charts based on report data will be displayed here)</p>
+                  </div> */}
+              </div>
+          )}
+      </div>
+      {/* --- End AI Report Generation Section --- */}
+
 
       {/* Welcome Message (Optional) */}
       {/* <p className="text-gray-600 text-lg">
@@ -233,6 +498,7 @@ function AdminDashboard() {
                  <select
                    id="justification-select"
                    value={selectedJustificationId}
+                   // Update state and trigger suggestion fetch
                    onChange={(e) => setSelectedJustificationId(e.target.value)}
                    className="block w-full px-3 py-2 mt-1 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                    required
@@ -241,6 +507,13 @@ function AdminDashboard() {
                    {/* <option value="" disabled>-- Select a justification --</option> */}
                    {justifications.map(jus => (<option key={jus.id} value={jus.id}>{jus.textoJustificacion}</option>))}
                  </select>
+                 {/* Display Suggestion */}
+                 {loadingSuggestion && <p className="text-xs text-gray-500 mt-1 flex items-center"><Spinner size="xs" className="mr-1"/> Loading suggestion...</p>}
+                 {pointsSuggestion && !loadingSuggestion && (
+                    <p className="text-xs text-gray-600 bg-gray-100 p-1.5 rounded mt-1 border border-gray-200">
+                        💡 {pointsSuggestion}
+                    </p>
+                 )}
                </div>
               {/* Points Input */}
               <div>
@@ -252,10 +525,53 @@ function AdminDashboard() {
                   onChange={(e) => setPointsToAssign(e.target.value)}
                   placeholder="e.g., 50 or -10"
                   required
-                  className="mt-0 w-full" // Ensure Input component takes full width if needed
+                  className="mt-0 w-full"
                 />
+                {/* Generate Message Button */}
+                <div className="mt-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateMessage}
+                        disabled={loadingMessageGen || !selectedEmployeeId || !selectedJustificationId || !pointsToAssign || isNaN(parseInt(pointsToAssign))}
+                        className="inline-flex items-center"
+                    >
+                         {loadingMessageGen ? <Spinner size="xs" className="mr-1.5"/> : <SparklesIcon className="h-4 w-4 mr-1.5"/> }
+                         {loadingMessageGen ? 'Generating...' : 'Generate Message (AI)'}
+                    </Button>
+                </div>
+                 {/* Display Generated Messages */}
+                 {messageGenError && <Alert type="error" className="mt-2">{messageGenError}</Alert>}
+                 {generatedMessages.length > 0 && !loadingMessageGen && (
+                    <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md space-y-2">
+                        <p className="text-sm font-medium text-indigo-700 mb-1">Suggested Messages:</p>
+                        <div className="space-y-1.5">
+                            {generatedMessages.map((msg, index) => (
+                                <div key={index} className="flex items-center justify-between text-sm text-indigo-800 bg-indigo-100/50 p-2 rounded">
+                                    <span>{msg}</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost" // Use a less prominent variant
+                                        size="xs"
+                                        onClick={() => handleCopyMessage(msg, index)}
+                                        className="ml-2 !p-1 text-indigo-600 hover:bg-indigo-200"
+                                        title="Copy message"
+                                    >
+                                        {copiedMessageIndex === index ? (
+                                            <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                                        ) : (
+                                            <ClipboardDocumentIcon className="h-4 w-4" />
+                                        )}
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <p className="text-xs text-indigo-600 pt-1">Click the icon to copy a message.</p>
+                    </div>
+                 )}
               </div>
-              {/* Error Alert */}
+              {/* Error Alert for Assignment */}
               {assignError && <Alert type="error">{assignError}</Alert>}
               {/* Action Buttons */}
               <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">

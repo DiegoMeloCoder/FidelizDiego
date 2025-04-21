@@ -7,8 +7,8 @@ import { StarIcon, GiftIcon, ClipboardDocumentListIcon } from '@heroicons/react/
 function EmployeeDashboard() {
   const { currentUser, userData } = useAuth(); // userData contains points
 
-  // Determine the name to display
-  const displayName = userData?.name || currentUser?.email || 'Employee';
+  // Determine the name to display - Use 'nombre' from userData
+  const displayName = userData?.nombre || currentUser?.email || 'Employee';
 
   return (
     <div className="space-y-6">

@@ -16,6 +16,8 @@ function ManageEmployees() {
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState('');
   const [successMessage, setSuccessMessage] = useState(''); // State for success messages
+  const [engagementScores, setEngagementScores] = useState({}); // Store scores as { employeeId: score }
+  const [loadingScores, setLoadingScores] = useState(false);
 
   // Add Form State
   const [newEmployeeName, setNewEmployeeName] = useState('');
@@ -72,11 +74,33 @@ function ManageEmployees() {
      // }
       setLoading(true); setListError(''); setSuccessMessage('');
       try {
-        // Fetch employees using API (backend filters by admin's company)
-        const response = await apiClient.get('/employees');
-        // Ensure isActive defaults to true if missing
-        const list = response.data.map(emp => ({ ...emp, isActive: emp.isActive !== undefined ? emp.isActive : true }));
-        setEmployees(list);
+        // Fetch employees first
+        const empResponse = await apiClient.get('/employees');
+        const empList = empResponse.data.map(emp => ({ ...emp, isActive: emp.isActive !== undefined ? emp.isActive : true }));
+        setEmployees(empList);
+
+        // Then fetch engagement scores
+        if (empList.length > 0) {
+            setLoadingScores(true);
+            try {
+                const scoreResponse = await apiClient.get('/engagement/scores'); // Uses admin's companyId implicitly
+                // Convert array to map for easy lookup
+                const scoreMap = scoreResponse.data.reduce((acc, scoreData) => {
+                    acc[scoreData.employeeId] = scoreData.engagementScore;
+                    return acc;
+                }, {});
+                setEngagementScores(scoreMap);
+            } catch (scoreErr) {
+                 console.error("Error fetching engagement scores:", scoreErr);
+                 // Don't overwrite listError, maybe show a separate score error? For now, just log.
+                 setEngagementScores({}); // Clear scores on error
+            } finally {
+                 setLoadingScores(false);
+            }
+        } else {
+             setEngagementScores({}); // No employees, no scores
+        }
+
       } catch (err) {
         console.error("Error fetching employees:", err);
         setListError(err.message || 'Failed to load employees.');
@@ -434,39 +458,75 @@ function ManageEmployees() {
                 <th className={thStyle}>Name</th>
                 <th className={thStyle}>Email</th>
                 <th className={thStyle}>Points</th>
+                <th className={thStyle}>Engagement Score</th> {/* New Column */}
                 <th className={thStyle}>Status</th>
                 <th className={`${thStyle} text-right pr-6`}>Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {employees.length === 0 ? (
-                <tr><td colSpan="5" className={`${tdStyle} text-center text-gray-500 py-6`}>No employees found for this company.</td></tr>
+                <tr>
+                  <td colSpan={6} className={`${tdStyle} text-center text-gray-500 py-6`}>
+                    No employees found for this company.
+                  </td>
+                </tr>
               ) : (
                 employees.map((employee) => (
                   <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{employee.nombre || <span className="text-gray-400 italic">No Name</span>}</td> {/* <-- Corregido */}
+                    <td className={`${tdStyle} font-medium text-gray-900`}>
+                      {employee.nombre || <span className="text-gray-400 italic">No Name</span>}
+                    </td>
                     <td className={`${tdStyle} text-gray-500`}>{employee.email}</td>
-                    <td className={`${tdStyle} text-gray-700 font-medium`}>{employee.points ?? 0}</td>
+                    <td className={`${tdStyle} text-gray-700 font-medium`}>
+                      {employee.points ?? 0}
+                    </td>
+                    <td className={`${tdStyle} text-center`}>
+                      {loadingScores ? (
+                        <Spinner size="xs"/>
+                      ) : (
+                        <span className={`font-semibold ${
+                          engagementScores[employee.id] >= 2 ? 'text-green-600' :
+                          engagementScores[employee.id] === 1 ? 'text-yellow-600' :
+                          'text-gray-400'
+                        }`}>
+                          {engagementScores[employee.id] ?? '-'}
+                        </span>
+                      )}
+                    </td>
                     <td className={tdStyle}>
-                       {/* Improved Status Badge */}
-                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                         employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                       }`}>
-                         {employee.isActive ? 'Active' : 'Inactive'}
-                       </span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {employee.isActive ? 'Active' : 'Inactive'}
+                      </span>
                     </td>
                     <td className={`${tdStyle} text-right space-x-2 pr-6`}>
-                      <Button variant="secondary" size="sm" onClick={() => handleEditClick(employee)} className="inline-flex items-center">
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        onClick={() => handleEditClick(employee)} 
+                        className="inline-flex items-center"
+                      >
                         <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
                       </Button>
                       {employee.isActive ? (
-                         <Button variant="danger" size="sm" onClick={() => handleDeleteClick(employee.id, employee.nombre)} className="inline-flex items-center"> {/* <-- Corregido */}
-                           <UserMinusIcon className="h-4 w-4 mr-1" /> Set Inactive
-                         </Button>
+                        <Button 
+                          variant="danger" 
+                          size="sm" 
+                          onClick={() => handleDeleteClick(employee.id, employee.nombre)} 
+                          className="inline-flex items-center"
+                        >
+                          <UserMinusIcon className="h-4 w-4 mr-1" /> Set Inactive
+                        </Button>
                       ) : (
-                         <Button variant="success" size="sm" onClick={() => handleActivateClick(employee.id, employee.nombre)} className="inline-flex items-center"> {/* <-- Corregido */}
-                           <UserPlusIcon className="h-4 w-4 mr-1" /> Set Active
-                         </Button>
+                        <Button 
+                          variant="success" 
+                          size="sm" 
+                          onClick={() => handleActivateClick(employee.id, employee.nombre)} 
+                          className="inline-flex items-center"
+                        >
+                          <UserPlusIcon className="h-4 w-4 mr-1" /> Set Active
+                        </Button>
                       )}
                     </td>
                   </tr>

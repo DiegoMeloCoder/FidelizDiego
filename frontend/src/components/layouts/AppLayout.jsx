@@ -8,6 +8,7 @@ import Button from '../ui/Button';
 // Import Heroicons (assuming you'll install @heroicons/react)
 import {
   HomeIcon, // Dashboard
+  UserCircleIcon, // Profile
   BuildingOffice2Icon, // Companies / Company Info
   UserGroupIcon, // Admins (Manager view)
   UsersIcon, // Employees / Users
@@ -18,7 +19,9 @@ import {
   ArrowLeftOnRectangleIcon, // Logout
   Bars3Icon, // Menu Open
   XMarkIcon, // Menu Close
-  ArchiveBoxIcon, // Icon for Redemption History <--- Añadido
+  ArchiveBoxIcon, // Icon for Redemption History
+  ExclamationTriangleIcon, // Icon for Anomalies
+  InboxArrowDownIcon, // Icon for Reward Requests
 } from '@heroicons/react/24/outline'; // Using outline style
 
 function AppLayout() {
@@ -155,6 +158,14 @@ function AppLayout() {
             <Link to="/manager/history/global-redemptions" className={`${linkBaseClasses} ${isActive('/manager/history/global-redemptions') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <ArchiveBoxIcon className={`${iconClasses} ${isActive('/manager/history/global-redemptions') ? activeIconClasses : ''}`} /> Global Redemptions
             </Link>
+            {/* Link for Anomaly Management */}
+            <Link to="/manager/anomalies" className={`${linkBaseClasses} ${isActive('/manager/anomalies') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
+              <ExclamationTriangleIcon className={`${iconClasses} ${isActive('/manager/anomalies') ? activeIconClasses : ''}`} /> Anomalies
+            </Link>
+            {/* Link for Reward Request Management */}
+            <Link to="/manager/reward-requests" className={`${linkBaseClasses} ${isActive('/manager/reward-requests') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
+              <InboxArrowDownIcon className={`${iconClasses} ${isActive('/manager/reward-requests') ? activeIconClasses : ''}`} /> Reward Requests
+            </Link>
           </>
         )}
         {userData?.role === 'Admin' && (
@@ -163,20 +174,20 @@ function AppLayout() {
               <HomeIcon className={`${iconClasses} ${isActive('/admin') ? activeIconClasses : ''}`} /> Dashboard
             </Link>
             <Link to="/admin/employees" className={`${linkBaseClasses} ${isActive('/admin/employees') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
-              <UsersIcon className={`${iconClasses} ${isActive('/admin/employees') ? activeIconClasses : ''}`} /> Employees
+              <UsersIcon className={`${iconClasses} ${isActive('/admin/employees') ? activeIconClasses : ''}`} /> Colaboradores
             </Link>
             <Link to="/admin/rewards" className={`${linkBaseClasses} ${isActive('/admin/rewards') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
-              <GiftIcon className={`${iconClasses} ${isActive('/admin/rewards') ? activeIconClasses : ''}`} /> Rewards
+              <GiftIcon className={`${iconClasses} ${isActive('/admin/rewards') ? activeIconClasses : ''}`} /> Recompensas
             </Link>
             <Link to="/admin/justifications" className={`${linkBaseClasses} ${isActive('/admin/justifications') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
-              <DocumentMagnifyingGlassIcon className={`${iconClasses} ${isActive('/admin/justifications') ? activeIconClasses : ''}`} /> Justifications
+              <DocumentMagnifyingGlassIcon className={`${iconClasses} ${isActive('/admin/justifications') ? activeIconClasses : ''}`} /> Justificaciones
             </Link>
             <Link to="/admin/history/points" className={`${linkBaseClasses} ${isActive('/admin/history/points') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
-              <ClipboardDocumentListIcon className={`${iconClasses} ${isActive('/admin/history/points') ? activeIconClasses : ''}`} /> Points History
+              <ClipboardDocumentListIcon className={`${iconClasses} ${isActive('/admin/history/points') ? activeIconClasses : ''}`} /> Historial de Puntos
             </Link>
             {/* Añadir enlace para Historial de Canjes Admin */}
             <Link to="/admin/history/redemptions" className={`${linkBaseClasses} ${isActive('/admin/history/redemptions') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
-              <ArchiveBoxIcon className={`${iconClasses} ${isActive('/admin/history/redemptions') ? activeIconClasses : ''}`} /> Redemption History
+              <ArchiveBoxIcon className={`${iconClasses} ${isActive('/admin/history/redemptions') ? activeIconClasses : ''}`} /> Historial de Canjes
             </Link>
             <Link to="/admin/ranking" className={`${linkBaseClasses} ${isActive('/admin/ranking') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <ChartBarIcon className={`${iconClasses} ${isActive('/admin/ranking') ? activeIconClasses : ''}`} /> Ranking
@@ -189,13 +200,17 @@ function AppLayout() {
               <HomeIcon className={`${iconClasses} ${isActive('/employee') ? activeIconClasses : ''}`} /> Dashboard
             </Link>
             <Link to="/employee/rewards" className={`${linkBaseClasses} ${isActive('/employee/rewards') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
-              <GiftIcon className={`${iconClasses} ${isActive('/employee/rewards') ? activeIconClasses : ''}`} /> Rewards Catalog
+              <GiftIcon className={`${iconClasses} ${isActive('/employee/rewards') ? activeIconClasses : ''}`} /> Catalogo de Recompensas
             </Link>
             <Link to="/employee/history" className={`${linkBaseClasses} ${isActive('/employee/history') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <ClipboardDocumentListIcon className={`${iconClasses} ${isActive('/employee/history') ? activeIconClasses : ''}`} /> My History
             </Link>
             <Link to="/employee/ranking" className={`${linkBaseClasses} ${isActive('/employee/ranking') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <ChartBarIcon className={`${iconClasses} ${isActive('/employee/ranking') ? activeIconClasses : ''}`} /> Ranking
+            </Link>
+            {/* Add Profile Link */}
+            <Link to="/employee/profile" className={`${linkBaseClasses} ${isActive('/employee/profile') ? activeLinkClasses : ''}`} onClick={() => setIsSidebarOpen(false)}>
+              <UserCircleIcon className={`${iconClasses} ${isActive('/employee/profile') ? activeIconClasses : ''}`} /> Mi Perfil
             </Link>
           </>
         )}

@@ -44,9 +44,9 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
         className={`bg-white rounded-lg shadow-xl w-full ${sizeClass} transform transition-all duration-300 ease-in-out scale-100 opacity-100 overflow-hidden`}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
       >
-        {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+        {/* Header - Apply brand colors */}
+        <div className="flex justify-between items-center p-4 border-b border-brand-tertiary"> {/* Use brand-tertiary for border */}
+          <h2 className="text-lg font-semibold text-brand-secondary">{title}</h2> {/* Use brand-secondary for title */}
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-2xl leading-none focus:outline-none"

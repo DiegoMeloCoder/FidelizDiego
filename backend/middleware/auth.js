@@ -148,9 +148,81 @@ const checkTenant = (modelName, paramName = 'id') => {
   };
 };
 
+// Middleware para verificar si la compañía del usuario tiene una suscripción activa
+// Acepta un objeto de opciones, por ejemplo: { allowPending: true } para permitir acceso limitado en estado pendiente.
+const checkSubscription = (options = { allowPending: false }) => {
+  return async (req, res, next) => {
+    // Asume que authenticate y authorize ya se ejecutaron y adjuntaron req.dbUser
+    if (!req.dbUser || !req.dbUser.id) {
+      console.error('Middleware checkSubscription llamado sin usuario de BD adjunto.');
+      return res.status(401).send({ message: 'No autenticado o usuario no encontrado.' });
+    }
+
+    // Los Managers no tienen check de suscripción
+    if (req.dbUser.role === 'Manager') {
+      console.log(`Subscription check omitido para Manager ${req.dbUser.id}`);
+      return next();
+    }
+
+    // Admins y Employees deben pertenecer a una compañía
+    if (!req.dbUser.companyId) {
+      console.error(`Usuario ${req.dbUser.id} (Rol: ${req.dbUser.role}) no tiene companyId asignado.`);
+      return res.status(402).send({ message: 'Acceso restringido. El usuario no pertenece a una compañía.' });
+    }
+
+    try {
+      const Company = require('../models').Company;
+      const company = await Company.findByPk(req.dbUser.companyId, {
+        attributes: ['status'],
+      });
+
+      if (!company) {
+        console.error(`Compañía con ID ${req.dbUser.companyId} no encontrada para usuario ${req.dbUser.id}.`);
+        return res.status(403).send({ message: 'Error interno: Compañía asociada no encontrada.' });
+      }
+
+      // Lógica de verificación basada en estado y opciones
+
+      // 1. Bloquear inmediatamente si la compañía está inactiva
+      if (company.status === 'inactive') {
+        console.warn(`Acceso denegado para usuario ${req.dbUser.id}. Compañía ${req.dbUser.companyId} está inactiva.`);
+        return res.status(403).send({
+          message: `Acceso denegado. La compañía asociada está inactiva. Contacte al soporte o a su manager.`,
+          status: company.status
+        });
+      }
+
+      // 2. Verificar otros estados (active, pending_payment)
+      if (company.status === 'active') {
+        // Siempre permitir si está activa
+        console.log(`Subscription check OK (Active) para usuario ${req.dbUser.id} (Compañía: ${req.dbUser.companyId})`);
+        return next();
+      } else if (company.status === 'pending_payment' && options.allowPending) {
+        // Permitir si está pendiente y la opción lo permite
+        console.log(`Subscription check OK (Pending Allowed) para usuario ${req.dbUser.id} (Compañía: ${req.dbUser.companyId})`);
+        // Podríamos adjuntar una bandera a req para que el frontend sepa que está en modo limitado
+        req.subscriptionStatus = 'pending_payment'; 
+        return next();
+      } else {
+        // Denegar en cualquier otro caso (inactive, o pending_payment sin permiso)
+        console.warn(`Acceso denegado para usuario ${req.dbUser.id}. Compañía ${req.dbUser.companyId} tiene estado: ${company.status} (allowPending: ${options.allowPending})`);
+        return res.status(402).send({ 
+          message: `Acceso restringido. La suscripción de la compañía no está activa (Estado: ${company.status}). Contacte a su administrador.`,
+          status: company.status // Devolver el estado puede ser útil para el frontend
+        });
+      }
+
+    } catch (error) {
+      console.error(`Error en middleware checkSubscription para usuario ${req.dbUser.id}:`, error);
+      return res.status(500).send({ message: 'Error interno del servidor durante la verificación de suscripción.' });
+    }
+  };
+};
+
 
 module.exports = {
   authenticate,
   authorize,
   checkTenant,
+  checkSubscription, // Exportar el nuevo middleware
 };

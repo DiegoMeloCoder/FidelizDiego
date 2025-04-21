@@ -18,9 +18,10 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
     *   [HECHO] Backend: `npm init`, dependencias core instaladas, base Express configurada (`server.js`).
     *   [HECHO] Frontend: Proyecto Vite/React existente con dependencias (React Router, Axios, TailwindCSS).
 4.  [HECHO - Parcial] Configuración CI/CD Básica (GitHub Actions):
-    *   [HECHO] Workflow `backend-ci.yml` para linting de backend.
-    *   [PENDIENTE] Añadir build/test al workflow.
-    *   [PENDIENTE] Workflow para frontend.
+    *   [HECHO] Workflow `backend-ci.yml` para linting e instalación de dependencias del backend.
+    *   [PENDIENTE] Añadir test al workflow de backend (cuando se implementen).
+    *   [HECHO] Workflow `frontend-ci.yml` para linting e instalación de dependencias del frontend.
+    *   [PENDIENTE] Añadir test y build (opcional) al workflow de frontend (cuando se implementen).
 5.  [HECHO] Configuración Linters y Formateadores:
     *   [HECHO] ESLint y Prettier configurados para backend.
     *   [HECHO - Existente] ESLint configurado para frontend.
@@ -50,7 +51,11 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 2.  [HECHO] Middleware Core Backend:
     *   [HECHO] Middleware `authorize` para verificar roles desde BD.
     *   [HECHO] Middleware `checkTenant` para verificar pertenencia a compañía.
-    *   [PENDIENTE] Middleware `checkSubscription`.
+    *   **[HECHO]** Middleware `checkSubscription` (implementado y aplicado a rutas clave):
+        *   Bloquea completamente el acceso a usuarios (Admin/Employee) si `Company.status` es `'inactive'`.
+        *   Permite acceso limitado (lectura/asistencia) pero bloquea acciones críticas (escritura/gestión/canje) si `Company.status` es `'pending_payment'`, dependiendo de la opción `allowPending` usada en la ruta.
+        *   Permite acceso completo si `Company.status` es `'active'`.
+        *   *Nota: Se decidió mantener el bloqueo total para 'inactive' por simplicidad y seguridad. A futuro, podría evaluarse permitir un modo "solo lectura" para incentivar la reactivación.*
 3.  [HECHO] Endpoints API - Perfil de Usuario:
     *   [HECHO] Endpoint `GET /api/v1/auth/me` implementado.
 
@@ -106,9 +111,9 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
     *   [HECHO] React Router.
     *   [HECHO] Gestor de Estado (`AuthContext` refactorizado para API y persistencia).
     *   [HECHO] API Service (`src/services/api.js` creado).
-    *   [HECHO] Layouts (`AppLayout` existente).
+    *   [HECHO] Layouts (`AppLayout` existente, añadido enlace a Perfil Empleado).
 2.  [HECHO] Flujo de Autenticación UI:
-    *   [HECHO] Página Login.
+    *   [HECHO] Página Login (Rediseñada con estilo landing).
     *   [HECHO] Manejo de Logout.
     *   [HECHO] `AuthContext` obtiene perfil desde API y persiste sesión.
 3.  [HECHO] Dashboard Manager UI:
@@ -126,20 +131,42 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
     *   [HECHO] Vistas de Historial (Canjes Empresa) (`RedemptionHistoryAdmin.jsx` creada y usa API).
     *   [HECHO] Vista Ranking (`RankingPage.jsx` refactorizada para API).
     *   [HECHO] Estadísticas Dashboard (`AdminDashboard.jsx` refactorizado para API).
+    *   [HECHO] Asistente de Asignación de Puntos (Sugerencias de Cantidad) en modal (`AdminDashboard.jsx`).
+    *   [HECHO] Generador de Mensajes de Reconocimiento (AI) en modal (`AdminDashboard.jsx`).
+    *   [HECHO - MVP] Botón "Generar Reporte IA" (`AdminDashboard.jsx`). (Funcionalidad básica implementada, pendiente gráficos/PDF).
+    *   [HECHO] Score de Engagement (MVP) mostrado en tabla (`ManageEmployees.jsx`).
     *   [PENDIENTE] Banner/Notificación para Estado de Suscripción.
-    *   [PENDIENTE] Botón "Generar Reporte IA".
 5.  [HECHO] Dashboard Empleado UI:
-    *   [HECHO] Vista Principal (`EmployeeDashboard.jsx` - Usa datos de AuthContext).
-    *   [HECHO] Vista Catálogo Recompensas (`AvailableRewards.jsx` refactorizada para API, canje, stock, visualización de imágenes y distinción de recompensas globales).
+    *   [HECHO] Vista Principal (`EmployeeDashboard.jsx` - Usa datos de AuthContext, corregido saludo para usar nombre).
+    *   **[HECHO - Parcial]** Vista Catálogo Recompensas (`AvailableRewards.jsx` refactorizada para API, canje, stock, imágenes, recompensas globales, **Recomendaciones Mejoradas (intereses/votos)**, botones Like/Dislike con actualización de contadores). **[PENDIENTE]** Persistencia visual del voto del usuario.
     *   [HECHO] Vistas Historial (`HistoryEmployee.jsx` refactorizada para API).
     *   [HECHO] Vista Ranking (`RankingPage.jsx` refactorizada para API).
-6.  [PENDIENTE] Diseño Responsivo: Revisión dedicada pendiente.
+    *   **[HECHO - Parcial]** Vista Perfil (`ProfilePage.jsx` creada con edición de teléfono/intereses y sugerencia de recompensa predefinida - conexión API lista y funcional).
+6.  [HECHO - Parcial] Landing Page Pública:
+    *   [HECHO] Creada ruta `/` y componente `HomePage.jsx`.
+    *   [HECHO] Creados componentes de sección (`LandingNavbar`, `HeroSection`, etc.) con placeholders.
+    *   [HECHO] Aplicada paleta de colores y estilos básicos (incluyendo logo real).
+    *   [HECHO] Implementado carrusel de testimonios y marquee de logos (con opción de no pausar al hover y corrección de alineación).
+    *   [HECHO - Básico] Aplicados ajustes iniciales de responsividad e interactividad (incluyendo corrección scroll layout).
+    *   [PENDIENTE] Contenido final, imágenes/visuales, implementación final de CTAs, optimización y pruebas exhaustivas.
+7.  **[HECHO - Parcial]** Funcionalidades de Engagement (Frontend):
+    *   **[HECHO]** Votación (Like/Dislike) en `AvailableRewards.jsx` (muestra contadores, falta persistencia visual del botón).
+    *   **[HECHO]** Gestión de Tags con checkboxes en `ManageRewards.jsx`.
+    *   **[HECHO]** Visualización de Votos en tabla de `ManageRewards.jsx`.
+    *   **[HECHO]** Widgets de Interés Común y Top Solicitudes en `AdminDashboard.jsx` y `ManagerDashboard.jsx` (con filtro global/compañía para Manager).
+    *   **[HECHO - Básico]** Página de Gestión de Solicitudes (`ManageRewardRequests.jsx`) creada con tabla de visualización. **[PENDIENTE]** Filtros y acciones de cambio de estado.
+8.  [PENDIENTE] Diseño Responsivo General: Revisión dedicada pendiente para toda la aplicación.
+9.  [HECHO - MVP] Vista Gestión de Anomalías (`/manager/anomalies`) para rol Manager.
 
-**Fase 7: Funcionalidades Avanzadas y Optimizaciones [PENDIENTE]**
+**Fase 7: Funcionalidades Avanzadas y Optimizaciones [HECHO - Parcial]**
 1.  [PENDIENTE] Backend - Carga Masiva de Empleados Optimizada (Admin): (Endpoint actual funciona, pero se puede optimizar).
-2.  [PENDIENTE] Backend - Integración OpenAI para Reportes (Admin).
-3.  [PENDIENTE] Implementación Redis Cache.
-4.  [PENDIENTE] Backend - Job Programado (Reseteo Anual / Estado Suscripción).
+2.  [HECHO - MVP] Backend - Integración OpenAI para Reportes (Admin). (Implementado con prompt mejorado, pendiente modelo más avanzado y datos históricos).
+3.  [HECHO - MVP] Backend - Asistente de Asignación de Puntos (Sugerencias).
+4.  [HECHO - MVP] Backend - Generador de Mensajes de Reconocimiento (AI).
+5.  [HECHO - MVP] Backend - Score de Engagement (Cálculo basado en actividad reciente).
+6.  [HECHO - MVP] Backend - Detección de Anomalías Básica (Job diario, guarda en DB).
+7.  [PENDIENTE] Implementación Redis Cache.
+8.  [PENDIENTE] Backend - Job Programado (Reseteo Anual / Estado Suscripción).
 
 **Fase 8: Pruebas, Refinamiento y Despliegue [PENDIENTE]**
 1.  [PENDIENTE] Pruebas Backend (Jest).
@@ -148,6 +175,7 @@ Stack: React/Tailwind, Node/Express, PostgreSQL/Sequelize, **Firebase Auth**, Re
 4.  [PENDIENTE] Configuración AWS para Producción.
 5.  [PENDIENTE] Pipeline CI/CD Completo (GitHub Actions).
 
-**Fase 9: Documentación y Entrega Final [PENDIENTE]**
+**Fase 9: Documentación y Entrega Final [HECHO - Parcial]**
 1.  [PENDIENTE] Documentación (README, API, Arquitectura).
-2.  [PENDIENTE] Revisión Final y Handover.
+2.  [HECHO] Creado plan detallado de implementación IA (`Specs/planimplementacionIA.md`).
+3.  [PENDIENTE] Revisión Final y Handover.

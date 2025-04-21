@@ -1,11 +1,13 @@
 const express = require('express');
 const redemptionController = require('../controllers/redemptionController');
-const { authenticate, authorize } = require('../middleware/auth');
+// Importar checkSubscription
+const { authenticate, authorize, checkSubscription } = require('../middleware/auth'); 
 
 const router = express.Router();
 
-// Aplicar autenticación y autorización (solo Employee)
-router.use(authenticate, authorize('Employee'));
+// Aplicar autenticación, autorización (solo Employee) y verificación de suscripción
+// Usar checkSubscription() sin opciones (allowPending: false por defecto) para bloquear si no está activa
+router.use(authenticate, authorize('Employee'), checkSubscription()); 
 
 // Ruta para canjear una recompensa específica
 router.post('/rewards/:rewardId/redeem', redemptionController.redeemReward);

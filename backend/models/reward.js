@@ -66,7 +66,27 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      // Considerar añadir campos como 'description', 'imageUrl', etc. si es necesario
+      tags: { // Nuevo campo para tags/categorías
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+        defaultValue: [],
+      },
+      likes: { // Nuevo campo para contador de likes
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+          min: 0
+        }
+      },
+      dislikes: { // Nuevo campo para contador de dislikes
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+          min: 0
+        }
+      },
       // createdAt y updatedAt son añadidos automáticamente
     },
     {

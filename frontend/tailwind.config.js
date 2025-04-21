@@ -14,6 +14,21 @@ module.exports = { // Changed to module.exports
           secondary: 'var(--color-secondary, #374151)', // Default: Gray 700
           tertiary: 'var(--color-tertiary, #d1d5db)',  // Default: Gray 300
         },
+        // Landing Page Specific Colors (Static Theme - Based on provided palette)
+        landing: {
+          primary: {
+            light: '#6CBA42',    // Light-Medium Green
+            DEFAULT: '#339A2D', // Medium Green
+            dark: '#2C5C2E',     // Dark Green
+          },
+          lime: '#92C71A',
+          teal: '#118361',
+          olive: '#4A7722',
+          muted: '#90B77F',
+          accent: '#64B055',     // Another Light-Medium Green
+          // background: '#ffffff', // Example: Explicit white background
+          // text: '#1f2937', // Example: Default text color (gray-800)
+        },
         // Keep existing grays, indigo, etc. for potential direct use or reference
         gray: {
           50: '#f9fafb',

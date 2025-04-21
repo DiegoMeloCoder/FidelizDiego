@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import Button from '../components/ui/Button'; // Import Button
 import Input from '../components/ui/Input';   // Import Input
+import fidelizTextLogo from '../assets/logos/TEXTOFIDELIZ.png'; // Corrected import path
+
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -27,7 +29,8 @@ function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/'); // Navigate to root after successful login
+      // Navigate to the intermediate redirect route instead of root
+      navigate('/post-login-redirect');
     } catch (err) {
       console.error("Firebase Login Error:", err);
       switch (err.code) {
@@ -48,9 +51,18 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-900">Fideliz Login</h1>
+    // Use a light gray background consistent with landing page sections
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
+       {/* Logo */}
+       <div className="mb-8">
+         <Link to="/">
+            {/* Use img tag with imported logo */}
+            <img className="h-10 w-auto mx-auto" src={fidelizTextLogo} alt="Fideliz Logo" />
+         </Link>
+       </div>
+
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-xl"> {/* Increased shadow */}
+        <h1 className="text-2xl font-bold text-center text-gray-900">Iniciar Sesión</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
@@ -94,17 +106,30 @@ function LoginPage() {
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div>
-            {/* Use Button component */}
+            {/* Use Button component with landing variant */}
             <Button
               type="submit"
               disabled={loading}
-              variant="primary" // Explicitly set variant
-              className="w-full justify-center" // Add w-full and justify-center
+              variant="landing" // Use the new landing variant
+              className="w-full justify-center"
+              size="lg" // Make button slightly larger
             >
-              {loading ? 'Logging in...' : 'Sign in'}
+              {loading ? 'Ingresando...' : 'Ingresar'}
             </Button>
           </div>
         </form>
+         {/* Back to Home Button */}
+         <div className="mt-6 text-center">
+            <Link to="/">
+              <Button
+                type="button"
+                variant="landing-outline" // Use outline variant
+                className="w-full justify-center"
+              >
+                Volver al Inicio
+              </Button>
+            </Link>
+          </div>
       </div>
     </div>
   );

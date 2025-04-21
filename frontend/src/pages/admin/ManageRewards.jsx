@@ -9,6 +9,9 @@ import Spinner from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
 import { PlusIcon, PencilSquareIcon, ArchiveBoxXMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline'; // Icons
 
+// Lista predefinida de intereses/tags (debería coincidir con la del backend/config y ProfilePage)
+const predefinedTags = ['Deportes', 'Tecnología', 'Viajes', 'Hogar', 'Gastronomía', 'Moda', 'Bienestar', 'Lectura', 'Música', 'Cine/Series', 'Mascotas', 'Videojuegos', 'Arte/Cultura', 'Aire Libre'];
+
 function ManageRewards() {
   const { userData } = useAuth();
   const [rewards, setRewards] = useState([]);
@@ -24,6 +27,7 @@ function ManageRewards() {
   const [addError, setAddError] = useState('');
   const [newRewardImageFile, setNewRewardImageFile] = useState(null); // State for new image file
   const [newRewardPreview, setNewRewardPreview] = useState(null); // State for new image preview URL
+  const [newRewardTags, setNewRewardTags] = useState([]); // State for new reward tags (now an array)
 
   // Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,6 +41,7 @@ function ManageRewards() {
   const [editRewardImageFile, setEditRewardImageFile] = useState(null); // State for edited image file
   const [editRewardPreview, setEditRewardPreview] = useState(null); // State for edited image preview URL
   const [removeCurrentImage, setRemoveCurrentImage] = useState(false); // Flag to remove image on edit
+  const [editTags, setEditTags] = useState([]); // State for editing tags (now an array)
 
   // Function to clear messages after a delay
   const clearMessages = () => {
@@ -95,11 +100,31 @@ function ManageRewards() {
     }
   };
 
+  // Handle tag checkbox change for Add form
+  const handleNewTagChange = (tag) => {
+    setNewRewardTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag) // Remove tag
+        : [...prev, tag] // Add tag
+    );
+  };
+
+  // Handle tag checkbox change for Edit modal
+  const handleEditTagChange = (tag) => {
+    setEditTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag) // Remove tag
+        : [...prev, tag] // Add tag
+    );
+  };
+
   // Add Reward
   const handleAddReward = async (e) => {
     e.preventDefault();
     const points = parseInt(newRewardPoints, 10);
     const stock = newRewardStock === '' ? null : parseInt(newRewardStock, 10); // Convert '' to null
+    // Tags state is already an array
+    const tagsArray = newRewardTags;
 
     if (!newRewardName.trim() || isNaN(points) || points <= 0) {
       setAddError('Please enter a valid name and positive points value.'); clearMessages(); return;
@@ -131,13 +156,13 @@ function ManageRewards() {
         pointsRequired: points,
         stock: stock, // Send null or number
         imageUrl: uploadedImageUrl, // Send the uploaded image URL or null
+        tags: tagsArray, // Send the tags array directly
       });
-      const addedReward = response.data; // API returns the created reward (should include imageUrl)
+      const addedReward = response.data; // API returns the created reward (should include imageUrl and tags)
 
-      // Update local state
-      // Update local state (ensure imageUrl is included if added)
-      setRewards(prev => [...prev, { ...addedReward, imageUrl: addedReward.imageUrl || null }]);
-      setNewRewardName(''); setNewRewardPoints(''); setNewRewardStock('');
+      // Update local state (ensure imageUrl and tags are included if added)
+      setRewards(prev => [...prev, { ...addedReward, imageUrl: addedReward.imageUrl || null, tags: addedReward.tags || [] }]);
+      setNewRewardName(''); setNewRewardPoints(''); setNewRewardStock(''); setNewRewardTags([]); // Reset tags state
       setNewRewardImageFile(null); // Reset image file
       setNewRewardPreview(null); // Reset image preview
       setSuccessMessage(`Reward "${addedReward.nombre}" added successfully.`);
@@ -158,6 +183,8 @@ function ManageRewards() {
     setEditPoints(reward.pointsRequired.toString());
     // Set stock state: if null/undefined use '', otherwise convert number to string
     setEditStock(reward.stock === null || reward.stock === undefined ? '' : reward.stock.toString());
+    // Set tags state: Use the array directly
+    setEditTags(Array.isArray(reward.tags) ? reward.tags : []);
     setEditIsActive(reward.isActive !== undefined ? reward.isActive : true);
     setEditError(''); setSuccessMessage('');
     setEditRewardImageFile(null); // Reset file input on open
@@ -171,6 +198,8 @@ function ManageRewards() {
     e.preventDefault();
     const pointsValue = parseInt(editPoints, 10); // Use different variable name
     const stockValue = editStock === '' ? null : parseInt(editStock, 10); // Convert '' to null, else parse int
+    // Tags state is already an array
+    const tagsArray = editTags;
 
     if (!editName.trim() || !editingReward || isNaN(pointsValue) || pointsValue <= 0) {
       setEditError('Please enter a valid name and positive points value.'); clearMessages(); return;
@@ -208,6 +237,7 @@ function ManageRewards() {
         pointsRequired: pointsValue,
         isActive: editIsActive,
         stock: stockValue,
+        tags: tagsArray, // Include tags in payload
       };
 
       // Only include imageUrl in payload if it needs changing (new upload or removal)
@@ -283,6 +313,7 @@ function ManageRewards() {
     setEditName('');
     setEditPoints('');
     setEditStock(''); // Reset stock state
+    setEditTags([]); // Reset tags state to empty array
     setEditIsActive(true);
     setEditRewardImageFile(null); // Reset image file state
     setEditRewardPreview(null); // Reset image preview state
@@ -356,8 +387,25 @@ function ManageRewards() {
            {/* Add Stock Input */}
            <div>
              <label htmlFor="new-reward-stock" className="block text-sm font-medium text-gray-700 mb-1">Stock (Optional)</label>
-             <Input id="new-reward-stock" type="number" value={newRewardStock} onChange={(e) => setNewRewardStock(e.target.value)} placeholder="Empty = Infinite" min="0" className="mt-0 w-full"/>
-           </div>
+              <Input id="new-reward-stock" type="number" value={newRewardStock} onChange={(e) => setNewRewardStock(e.target.value)} placeholder="Empty = Infinite" min="0" className="mt-0 w-full"/>
+            </div>
+         </div>
+         {/* Tags Checkboxes */}
+         <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tags (Optional)</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {predefinedTags.map(tag => (
+                    <label key={tag} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={newRewardTags.includes(tag)}
+                            onChange={() => handleNewTagChange(tag)} // Use specific handler
+                            className="rounded text-brand-primary focus:ring-brand-primary"
+                        />
+                        <span className="text-sm text-gray-700">{tag}</span>
+                    </label>
+                ))}
+            </div>
          </div>
          {/* Image Upload Section */}
          <div>
@@ -403,6 +451,10 @@ function ManageRewards() {
                 <th className={thStyle}>Name</th>
                 <th className={thStyle}>Points Required</th>
                 <th className={thStyle}>Stock</th>
+                {/* Add Tags Column */}
+                <th className={thStyle}>Tags</th>
+                {/* Remove Votes Columns */}
+                {/* <th className={thStyle}>Votes (L/D)</th> */}
                 <th className={thStyle}>Status</th>
                 <th className={`${thStyle} text-right pr-6`}>Actions</th>
               </tr>
@@ -410,7 +462,8 @@ function ManageRewards() {
             <tbody className="bg-white divide-y divide-gray-200">
               {rewards.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={`${tdStyle} text-center text-gray-500 py-6`}> {/* Incremented colspan */}
+                  {/* Adjust colspan back */}
+                  <td colSpan={7} className={`${tdStyle} text-center text-gray-500 py-6`}>
                     No rewards found for this company.
                   </td>
                 </tr>
@@ -430,6 +483,21 @@ function ManageRewards() {
                     <td className={`${tdStyle} text-gray-700`}>
                       {reward.stock === null ? 'Infinite' : reward.stock}
                     </td>
+                    {/* Tags Cell */}
+                    <td className={tdStyle}>
+                      {Array.isArray(reward.tags) && reward.tags.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {reward.tags.map(tag => (
+                            <span key={tag} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">None</span>
+                      )}
+                    </td>
+                    {/* Remove Votes Cell */}
                     <td className={tdStyle}>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                         reward.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -484,6 +552,23 @@ function ManageRewards() {
                  <div>
                      <label htmlFor="edit-reward-stock" className="block text-sm font-medium text-gray-700 mb-1">Stock (Optional)</label>
                      <Input id="edit-reward-stock" type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} placeholder="Empty = Infinite" min="0" className="mt-0 w-full"/>
+                 </div>
+                 {/* Edit Tags Checkboxes */}
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tags (Optional)</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {predefinedTags.map(tag => (
+                            <label key={tag} className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={editTags.includes(tag)}
+                                    onChange={() => handleEditTagChange(tag)} // Use specific handler
+                                    className="rounded text-brand-primary focus:ring-brand-primary"
+                                />
+                                <span className="text-sm text-gray-700">{tag}</span>
+                            </label>
+                        ))}
+                    </div>
                  </div>
                  {/* Edit Image Section */}
                  <div>

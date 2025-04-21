@@ -69,6 +69,16 @@ module.exports = (sequelize) => { // Modificado para exportar una función que r
         allowNull: false,
         defaultValue: true,
       },
+      phoneNumber: { // Nuevo campo para teléfono
+        type: DataTypes.STRING,
+        allowNull: true, // Hacerlo opcional
+        // Se podría añadir validación de formato aquí si es necesario
+      },
+      interests: { // Nuevo campo para intereses
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true, // Hacerlo opcional
+        defaultValue: [], // Valor por defecto un array vacío
+      },
       // createdAt y updatedAt son añadidos automáticamente por Sequelize
     },
     {

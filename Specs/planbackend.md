@@ -13,6 +13,7 @@
 *   **Contenerización:** Docker, Docker Compose.
 *   **Despliegue:** AWS (EC2/ECS/Fargate, RDS, S3, ElastiCache, CloudFront), GitHub Actions (CI/CD).
 
+
 ---
 
 ## Fase 0: Fundación del Backend y Configuración Inicial [HECHO]
@@ -41,6 +42,7 @@
     10. **[HECHO] Crear `docker-compose.yml`:** Añadir servicios `postgres`, `redis`, `backend`. Crear `.env.example`.
     11. **[HECHO] Configurar CI/CD Básico (GitHub Actions):** Workflow inicial `backend-ci.yml` creado.
 
+
 ---
 
 ## Fase 1: Migración de Base de Datos y Modelos Core [HECHO]
@@ -64,7 +66,14 @@
     2.  **[HECHO] Middleware de Autorización:**
         *   [HECHO] Crear middleware `authorize(roles)` (`middleware/auth.js`) para verificar rol desde la BD.
         *   [HECHO] Crear middleware `checkTenant` (`middleware/auth.js`) para verificar pertenencia a compañía.
-    3.  **[HECHO] Endpoint de Perfil de Usuario:** Creada ruta `GET /api/v1/auth/me` con controlador y middlewares.
+        *   **[HECHO]** Crear/Refinar middleware `checkSubscription` (`middleware/auth.js`):
+            *   Verifica el estado (`status`) de la compañía asociada al usuario (Admin/Employee).
+            *   **Comportamiento Actual:**
+                *   Si `status` es `'inactive'`: Bloquea completamente el acceso (devuelve 403).
+                *   Si `status` es `'pending_payment'`: Permite el acceso solo si se usa la opción `{ allowPending: true }` en la ruta (ideal para lectura/asistencia). Sin la opción, bloquea el acceso (devuelve 402).
+                *   Si `status` es `'active'`: Permite el acceso.
+            *   *Nota Futura:* Se podría evaluar permitir un modo "solo lectura" para el estado `'inactive'` en lugar del bloqueo total, aunque esto añadiría complejidad en backend y frontend.
+    3.  **[HECHO] Endpoint de Perfil de Usuario:** Creada ruta `GET /api/v1/auth/me` con controlador y middlewares (`authenticate`, `authorize`, `checkSubscription({ allowPending: true })`).
 
 ---
 
@@ -122,23 +131,41 @@
         *   **[HECHO - Frontend]** Implementar lógica en `AuthContext` y `AppLayout` para leer datos y aplicar tema (logo, lema, variables CSS).
         *   **[HECHO - Frontend]** Configurar Tailwind (`tailwind.config.js`) para usar variables CSS.
         *   **[HECHO - Parcial: Frontend]** Aplicar clases `brand-*` a componentes clave (`Button`, `Input`, `Alert`, `AppLayout`, títulos, tablas, tarjetas de dashboard) como ejemplo. *Refinamiento completo pendiente.*
-    4.  **Integración OpenAI:**
-        *   Implementar endpoint `POST /api/admin/reports/generate`.
-        *   Añadir lógica en `services/reportService.js`: Consultar datos agregados de la BD (puntos, canjes, ranking del último periodo para la empresa).
-        *   Construir prompt detallado para OpenAI API.
-        *   Llamar a la API de OpenAI, manejar respuesta y errores. Considerar operación asíncrona si tarda mucho (devolver un ID de trabajo y otro endpoint para consultar resultado).
-        *   **Frontend:** Añadir botón en dashboard Admin, mostrar estado de generación y resultado.
-    2.  **Implementación Redis Cache:**
-        *   Configurar cliente Redis (`config/redis.js`).
+    4.  **[HECHO - MVP] Integración OpenAI (Reportes y Mensajes):**
+        *   [HECHO] Implementado endpoint `POST /api/v1/reports/generate`.
+        *   [HECHO] Lógica en `services/reportService.js` para consultar datos agregados y llamar a OpenAI API con prompt mejorado (tendencias/insights).
+        *   [HECHO] Implementado endpoint `POST /api/v1/points/generate-message`.
+        *   [HECHO] Lógica en `controllers/pointController.js` para llamar a OpenAI API y generar mensajes de reconocimiento.
+        *   **[HECHO - MVP Frontend]** Añadido botón "Generar Reporte IA" y display básico en `AdminDashboard.jsx`.
+        *   **[HECHO Frontend]** Añadido botón "Generar Mensaje (AI)" y display en modal de `AdminDashboard.jsx`.
+    5.  **[PENDIENTE] Implementación Redis Cache:**
+        *   [PENDIENTE] Configurar cliente Redis (`config/redis.js`).
         *   Identificar endpoints de lectura frecuente candidatos para caché (Rankings, Catálogo Recompensas, Stats Dashboards).
-        *   Implementar lógica de caché (ej. en un middleware o servicio): Intentar leer de Redis, si no existe, leer de BD, guardar en Redis con TTL, devolver resultado.
-        *   Implementar invalidación de caché: Al modificar datos relevantes (asignar puntos -> invalidar ranking cache; editar recompensa -> invalidar catálogo cache).
-    3.  **Jobs Programados (node-cron):**
-        *   Crear `jobs/scheduledJobs.js`.
-        *   Implementar Job 1 (Diario): Lógica para verificar estado de suscripción (si se implementa modelo/lógica de pagos/suscripciones).
-        *   Implementar Job 2 (Anual - 1 Enero): Lógica para resetear/archivar puntos anuales según se defina la regla de negocio.
-        *   Configurar `node-cron` en `server.js` para ejecutar estos jobs.
-    4.  **Validación de Entrada Robusta:** Implementar validación detallada para todos los inputs de la API usando librerías como `express-validator` o `joi`.
+        *   [PENDIENTE] Implementar lógica de caché (ej. en un middleware o servicio): Intentar leer de Redis, si no existe, leer de BD, guardar en Redis con TTL, devolver resultado.
+        *   [PENDIENTE] Implementar invalidación de caché: Al modificar datos relevantes (asignar puntos -> invalidar ranking cache; editar recompensa -> invalidar catálogo cache).
+    6.  **[HECHO - MVP] Jobs Programados (node-cron):**
+        *   [HECHO] Instalado `node-cron`.
+        *   [HECHO] Creado `services/anomalyDetectionService.js` con lógica de detección básica.
+        *   [HECHO] Configurado `node-cron` en `server.js` para ejecutar `checkAnomalies` diariamente (revisando día anterior).
+        *   [PENDIENTE] Implementar Job para verificar estado de suscripción.
+        *   [PENDIENTE] Implementar Job para resetear/archivar puntos anuales.
+    7.  **[PENDIENTE] Validación de Entrada Robusta:** Implementar validación detallada para todos los inputs de la API usando librerías como `express-validator` o `joi`.
+    8.  **[HECHO - MVP] Funcionalidades Adicionales IA Backend:**
+        *   [HECHO] Endpoint y lógica para sugerencias de puntos (`GET /api/v1/points/suggestions/justification/:id`).
+        *   [HECHO] Endpoint y lógica para guardar y consultar anomalías (`Anomalies` model/migration, `anomalyController`, `anomalyRoutes`).
+        *   [HECHO] Endpoint y lógica para calcular score de engagement (`engagementService`, `engagementController`, `engagementRoutes`).
+    9.  **[HECHO] Funcionalidades de Engagement Adicionales (Backend):**
+        *   [HECHO] Modelos `User` y `Reward` actualizados (phoneNumber, interests, tags, likes, dislikes).
+        *   [HECHO] Nuevos modelos `RewardVote` y `RewardRequest` creados con migraciones.
+        *   [HECHO] API Perfil Usuario (`GET /auth/me`, `PUT /auth/profile`) actualizada.
+        *   [HECHO] API Gestión Recompensas (`POST /rewards`, `PUT /rewards/:id`) actualizada para tags.
+        *   [HECHO] API Votación (`POST /rewards/:rewardId/vote`) implementada.
+        *   [HECHO] API Solicitudes (`POST /rewards/requests`, `GET /rewards/requests`, `PATCH /rewards/requests/:id`) implementada.
+        *   [HECHO] API Estadísticas (`GET /stats/.../common-interest`, `GET /stats/.../top-reward-requests`) implementada.
+    10. **[HECHO - Parcial] Lógica de Negocio Engagement:**
+        *   [HECHO] Lógica de cálculo de estadísticas implementada en `statsController`.
+        *   [HECHO] Lógica de recomendación mejorada (intereses, votos) implementada en `rewardController`.
+        *   **[PENDIENTE]** Refactorizar a servicios dedicados si es necesario.
 
 ---
 
@@ -181,8 +208,8 @@
         *   **Pasos:** Checkout -> Setup Node -> Install Deps (Frontend & Backend) -> Lint -> Test (Frontend & Backend) -> Build Frontend -> Build Backend Docker Image -> Push Docker Image (ECR) -> Deploy Frontend (Sync to S3) -> Deploy Backend (Actualizar servicio ECS/Fargate o desplegar en EC2).
         *   Considerar paso para ejecutar migraciones de BD (`npx sequelize-cli db:migrate`) de forma segura durante el despliegue.
 
----
 
+---
 ## Fase 7: Documentación Final y Entrega
 
 *   **Objetivo:** Consolidar toda la documentación necesaria para el mantenimiento y futuro desarrollo de la aplicación.

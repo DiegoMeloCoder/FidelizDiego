@@ -15,6 +15,8 @@ import ManagerDashboard from './pages/manager/ManagerDashboard';
 import ManageCompanies from './pages/manager/ManageCompanies';
 import ManageAdmins from './pages/manager/ManageAdmins';
 import GlobalRedemptionHistory from './pages/manager/history/GlobalRedemptionHistory'; // Import Manager History page
+import ManageAnomalies from './pages/manager/ManageAnomalies'; // Import Anomaly Management page
+import ManageRewardRequests from './pages/manager/ManageRewardRequests'; // Import Reward Requests page
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageEmployees from './pages/admin/ManageEmployees';
 import ManageRewards from './pages/admin/ManageRewards';
@@ -24,7 +26,9 @@ import RedemptionHistoryAdmin from './pages/admin/history/RedemptionHistoryAdmin
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import AvailableRewards from './pages/employee/AvailableRewards';
 import HistoryEmployee from './pages/employee/history/HistoryEmployee';
+import ProfilePage from './pages/employee/ProfilePage'; // Import Profile Page
 import RankingPage from './pages/shared/RankingPage'; // Import Ranking Page
+import HomePage from './pages/HomePage'; // Import the new HomePage
 
 function App() {
   const { currentUser, userData, loading } = useAuth();
@@ -88,6 +92,10 @@ function App() {
           {/* Add route for Manager to access Reward Management (Global Rewards) */}
           {/* Note: Points to the same component as admin, but protected for Manager */}
           <Route path="rewards" element={<ManageRewards />} />
+          {/* Add route for Manager Anomaly Management */}
+          <Route path="anomalies" element={<ManageAnomalies />} />
+          {/* Add route for Manager Reward Request Management */}
+          <Route path="reward-requests" element={<ManageRewardRequests />} />
         </Route>
 
         <Route
@@ -119,12 +127,21 @@ function App() {
           <Route index element={<EmployeeDashboard />} />
           <Route path="rewards" element={<AvailableRewards />} />
           <Route path="history" element={<HistoryEmployee />} />
+          <Route path="profile" element={<ProfilePage />} /> {/* Add Profile Route */}
           <Route path="ranking" element={<RankingPage />} /> {/* Add Ranking Route */}
           {/* Add more employee routes here */}
         </Route>
 
-        {/* Root Route Redirect Logic */}
-        <Route path="/" element={<RootRedirect />} />
+        {/* Public Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<HomePage />} />
+
+        {/* Intermediate route to handle redirection after login */}
+        <Route path="/post-login-redirect" element={<RootRedirect />} />
+
+        {/* Protected Routes with AppLayout */}
+        {/* ... (Keep existing protected routes for /manager, /admin, /employee) ... */}
+
 
         {/* Optional: Catch-all 404 Route */}
         {/* Consider placing 404 inside AppLayout for logged-in users */}

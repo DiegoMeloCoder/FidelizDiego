@@ -13,6 +13,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "axios": "^1.8.4",
+    "embla-carousel-react": "^8.6.0",
     "firebase": "^11.6.0",
     "papaparse": "^5.5.2",
     "react": "^19.0.0",
