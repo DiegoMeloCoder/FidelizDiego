@@ -27,6 +27,9 @@ module.exports = {
     port: parseInt(process.env.DB_PORT_TEST || '5432', 10),
   },
   production: {
+    // Prioritize DATABASE_URL if it exists (common for PaaS like Render/Heroku with Neon/etc.)
+    use_env_variable: process.env.DATABASE_URL, 
+    // Fallback to individual variables if DATABASE_URL is not set (less common for PaaS)
     username: process.env.DB_USER_PROD,
     password: process.env.DB_PASSWORD_PROD,
     database: process.env.DB_NAME_PROD,
@@ -34,6 +37,7 @@ module.exports = {
     dialect: 'postgres',
     port: parseInt(process.env.DB_PORT_PROD || '5432', 10),
     dialectOptions: {
+      // SSL is typically required for cloud databases like Neon
       ssl: {
         require: true,
         rejectUnauthorized: false, // Ajustar según la configuración SSL requerida

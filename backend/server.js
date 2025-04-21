@@ -12,7 +12,19 @@ const app = express();
 const PORT = process.env.PORT || 5000; // Puerto para el backend
 
 // Middleware
-app.use(cors()); // Habilitar CORS para permitir peticiones desde el frontend
+
+// Configuración CORS
+const corsOptions = {
+  // Usar la variable de entorno para el origen permitido en producción/staging
+  // Permitir todos los orígenes en desarrollo si CORS_ORIGIN no está definido
+  origin: process.env.CORS_ORIGIN || '*', 
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // Permite cookies/headers de autorización
+  optionsSuccessStatus: 204 // Para navegadores antiguos
+};
+console.log(`[CORS] Configured origin: ${corsOptions.origin}`); // Log para depuración
+app.use(cors(corsOptions)); 
+
 app.use(express.json()); // Para parsear application/json
 app.use(express.urlencoded({ extended: true })); // Para parsear application/x-www-form-urlencoded
 
