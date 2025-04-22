@@ -5,7 +5,8 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const process = require('process');
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || 'development';
+// const env = "production"; // <-- REVERTIDO: No forzar producción localmente
+const env = process.env.NODE_ENV || 'development'; // <-- Usar NODE_ENV o default a development
 // Usamos el archivo de configuración JS que carga dotenv
 const config = require(__dirname + '/../config/database.js')[env];
 const db = {};
