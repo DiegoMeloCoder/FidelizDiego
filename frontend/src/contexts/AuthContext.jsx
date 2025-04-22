@@ -69,8 +69,12 @@ export function AuthProvider({ children }) {
       console.log("AuthProvider: onAuthStateChanged triggered. User:", user?.uid || 'null');
       setCurrentUser(user);
       if (user) {
-        // Don't set loading true here, fetchUserProfile handles its own loading cycle if needed
-        await fetchUserProfile(user); // Wait for profile fetch attempt
+        // ---> ADDED: Clear old data and set loading before fetching new profile <---
+        console.log("AuthProvider: User detected, clearing old data and setting loading...");
+        setUserData(null); // Clear previous user data immediately
+        setLoading(true);  // Set loading state while fetching new profile
+        // --------------------------------------------------------------------------
+        await fetchUserProfile(user); // Wait for profile fetch attempt (this will set loading to false)
       } else {
         console.log("AuthProvider: No user logged in.");
         setUserData(null);
