@@ -29,6 +29,7 @@ module.exports = {
   production: {
     // Prioritize DATABASE_URL if it exists (common for PaaS like Render/Heroku with Neon/etc.)
     use_env_variable: 'DATABASE_URL', // <-- CORREGIDO: Debe ser el NOMBRE de la variable
+    schema: 'public', // <-- AÑADIDO: Especificar el schema por defecto
     // Fallback to individual variables if DATABASE_URL is not set (less common for PaaS)
     username: process.env.DB_USER_PROD,
     password: process.env.DB_PASSWORD_PROD,
