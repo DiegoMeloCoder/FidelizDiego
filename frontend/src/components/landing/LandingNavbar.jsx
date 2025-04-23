@@ -1,6 +1,7 @@
 import React, { useState } from 'react'; // Import useState
 import { Link } from 'react-router-dom';
 import fidelizTextLogo from '../../assets/logos/TEXTOFIDELIZ.png'; // Import text logo
+import fidelizLogo from '../../assets/logos/LOGOFIDELIZ.png'; // Import text logo
 
 // Placeholder for Menu icon (e.g., Heroicons)
 const MenuIcon = () => (
@@ -30,7 +31,8 @@ function LandingNavbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/">
+            <Link to="/" className='flex'>
+              <img className="w-8 h-8 self-center" src={fidelizLogo} alt="Fideliz Logo" />
               <img className="h-14 w-auto" src={fidelizTextLogo} alt="Fideliz Logo" /> {/* Increased height further */}
             </Link>
           </div>
