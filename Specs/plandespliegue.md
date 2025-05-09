@@ -19,7 +19,7 @@
     *   Crear un nuevo proyecto.
     *   Crear una base de datos PostgreSQL dentro del proyecto.
     *   Obtener la **URL de conexión** de la base de datos (formato `postgresql://user:password@host:port/dbname`). Guardarla de forma segura.
-    postgresql://neondb_owner:npg_zL7QlBt6FyUS@ep-still-cell-a5bkrhyc-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+    
 
 2.  **Render (Backend):**
     *   Crear cuenta en [Render](https://render.com/) (se recomienda usar la opción "Sign up with GitHub").

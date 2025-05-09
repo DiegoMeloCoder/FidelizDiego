@@ -49,6 +49,19 @@ module.exports = { // Changed to module.exports
           700: '#4338ca',
         },
       },
+      animation: {
+        fadeInUp: 'fadeInUp 0.7s ease-out forwards', // forwards keeps the state of the last keyframe
+        scroll: 'scroll 40s linear infinite', // For the logo marquee
+      },
+      keyframes: {
+        fadeInUp: {
+          'from': { opacity: '0', transform: 'translateY(20px)' },
+          'to': { opacity: '1', transform: 'translateY(0)' },
+        },
+        scroll: { // For the logo marquee
+          'to': { transform: 'translateX(-50%)' },
+        },
+      },
     },
   },
   plugins: [],

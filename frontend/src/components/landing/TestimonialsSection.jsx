@@ -16,13 +16,13 @@ const StarRating = ({ rating = 5 }) => (
 // Placeholder for a single testimonial card
 // TODO: Extract to TestimonialCard.jsx later if needed
 const TestimonialCard = ({ quote, name, title, company, rating }) => (
-  // Added transition and hover effect
-  <div className="bg-white p-6 rounded-lg shadow-md flex flex-col transition duration-300 ease-in-out hover:shadow-xl">
+  // Added transition and hover effect, including scale
+  <div className="bg-white p-6 rounded-lg shadow-md flex flex-col h-full transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-102"> {/* Added h-full for consistent height in carousel and hover:scale-102 */}
     <div className="flex-shrink-0">
       <StarRating rating={rating} />
     </div>
     <blockquote className="mt-4 flex-grow">
-      <p className="text-lg text-gray-700">"{quote}"</p>
+      <p className="text-lg text-gray-700 leading-relaxed">"{quote}"</p> {/* Added leading-relaxed */}
     </blockquote>
     <footer className="mt-6">
       {/* Placeholder for avatar/logo */}
@@ -117,15 +117,16 @@ function TestimonialsSection() {
   ];
 
   return (
-    // Adjusted padding
-    <section className="bg-white py-16 sm:py-20 md:py-24 relative"> {/* Added relative positioning for buttons */}
+    // Adjusted padding and added animation
+    // TODO: Implement true scroll-reveal with Intersection Observer for better performance and UX
+    <section className="bg-white py-16 sm:py-20 md:py-24 relative animate-fadeInUp" style={{ animationDelay: '0.6s' }}> {/* Added animation, delay and relative positioning for buttons */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
          {/* Adjusted text sizes and margins */}
         <div className="text-center mb-12 md:mb-16"> {/* Reduced bottom margin */}
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl lg:text-5xl">
+          <h2 className="text-3xl font-extrabold text-landing-primary sm:text-4xl lg:text-5xl tracking-tight"> {/* Changed text color */}
             ¿Qué dicen nuestros clientes?
           </h2>
-          <p className="mt-4 text-lg text-gray-500 sm:text-xl">
+          <p className="mt-4 text-xl text-gray-600 sm:text-2xl leading-relaxed"> {/* Increased size, changed color */}
             Historias reales de empresas que han mejorado su cultura y resultados con Fideliz.
           </p>
         </div>
@@ -135,8 +136,8 @@ function TestimonialsSection() {
           {/* Container */}
           <div className="flex -ml-4"> {/* Negative margin to counteract padding on slides */}
             {testimonials.map((testimonial, index) => (
-              // Slide
-              <div key={index} className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 pl-4"> {/* Adjust width for different breakpoints */}
+              // Slide - Ensure cards have consistent height for better visual alignment in carousel
+              <div key={index} className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 pl-4 flex"> {/* Adjust width and add flex for h-full on card */}
                 <TestimonialCard {...testimonial} />
               </div>
             ))}

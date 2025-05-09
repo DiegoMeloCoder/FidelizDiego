@@ -19,10 +19,8 @@ const CloseIcon = () => (
 
 function LandingNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu
-  // Placeholder URL for Calendly or contact form
-  const meetingUrl = '#'; // Replace with actual URL later
-  // Placeholder URL/path for Demo page/modal
-  const demoPath = '/#'; // Replace with actual path or logic later
+  const meetingPath = '/agendar-reunion'; // Updated to internal path
+  const demoPath = '/demo'; // Updated to internal path
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
@@ -48,17 +46,15 @@ function LandingNavbar() {
             >
               Ingresar
             </Link>
-            <a
-              href={meetingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-landing-primary text-white hover:bg-landing-primary-dark px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out" // Always show on desktop
+            <Link
+              to={meetingPath} // Changed from <a> to <Link>
+              className="bg-landing-primary text-white hover:bg-landing-primary-dark px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
             >
               Agendar Reunión
-            </a>
+            </Link>
             <Link
               to={demoPath}
-              className="text-landing-primary border border-landing-primary hover:bg-landing-primary hover:text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out" // Always show on desktop
+              className="text-landing-primary border border-landing-primary hover:bg-landing-primary hover:text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
             >
               Ver Demo
             </Link>
@@ -96,14 +92,12 @@ function LandingNavbar() {
             >
               Ver Demo
             </Link>
-             <a
-              href={meetingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to={meetingPath} // Changed from <a> to <Link>
               className="block w-full text-center bg-landing-primary text-white hover:bg-landing-primary-dark px-4 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out"
             >
               Agendar Reunión
-            </a>
+            </Link>
              <Link
               to="/login"
               className="block w-full text-center text-gray-600 hover:bg-gray-50 hover:text-landing-primary px-3 py-2 rounded-md text-base font-medium transition duration-150 ease-in-out"

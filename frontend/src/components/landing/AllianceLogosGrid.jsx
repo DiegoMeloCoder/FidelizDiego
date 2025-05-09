@@ -24,15 +24,16 @@ function AllianceLogosGrid() {
   ];
 
   return (
-    // Adjusted padding
-    <section className="bg-gray-50 py-16 sm:py-20 md:py-24">
+    // Adjusted padding and added animation
+    // TODO: Implement true scroll-reveal with Intersection Observer for better performance and UX
+    <section className="bg-gray-50 py-16 sm:py-20 md:py-24 animate-fadeInUp" style={{ animationDelay: '0.8s' }}> {/* Added animation and delay */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
          {/* Adjusted text sizes and margins */}
         <div className="text-center mb-12 md:mb-16 lg:mb-20">
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl lg:text-5xl">
+          <h2 className="text-3xl font-extrabold text-landing-primary sm:text-4xl lg:text-5xl tracking-tight"> {/* Changed text color */}
             Empresas que ya potencian sus equipos con Fideliz
           </h2>
-          <p className="mt-4 text-lg text-gray-500 sm:text-xl">
+          <p className="mt-4 text-xl text-gray-600 sm:text-2xl leading-relaxed"> {/* Increased size, changed color */}
             Únete a compañías líderes que confían en nuestra plataforma para mejorar la retención y motivación.
           </p>
         </div>
@@ -53,19 +54,24 @@ function AllianceLogosGrid() {
             }}
           >
             {/* Render logos twice for seamless loop */}
-            {/* Render logos twice for seamless loop */}
             {[...logos, ...logos].map((logo, index) => (
-              <div key={`${logo.name}-${index}`} className="flex-shrink-0 px-4 sm:px-6 flex items-center justify-center h-28"> {/* Ensure consistent height */}
+              <div 
+                key={`${logo.name}-${index}`} 
+                className="flex-shrink-0 px-4 sm:px-6 flex items-center justify-center h-28 transition-transform duration-200 ease-in-out hover:scale-110" // Added hover effect
+              >
                 {logo.src ? (
                   // Render actual image if src exists
                   <img
                     src={logo.src}
                     alt={`${logo.name} logo`}
-                    className="max-h-12 w-auto object-contain" // Adjust styling as needed
+                    className="max-h-12 w-auto object-contain" 
                   />
                 ) : (
                   // Render placeholder if src is null
-                  <LogoPlaceholder name={logo.name} />
+                  // Apply hover effect to placeholder wrapper as well if needed, or directly to LogoPlaceholder
+                  <div className="transition-transform duration-200 ease-in-out group-hover:scale-110"> {/* Example if LogoPlaceholder itself doesn't have hover */}
+                    <LogoPlaceholder name={logo.name} />
+                  </div>
                 )}
               </div>
             ))}

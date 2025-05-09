@@ -29,6 +29,10 @@ import HistoryEmployee from './pages/employee/history/HistoryEmployee';
 import ProfilePage from './pages/employee/ProfilePage'; // Import Profile Page
 import RankingPage from './pages/shared/RankingPage'; // Import Ranking Page
 import HomePage from './pages/HomePage'; // Import the new HomePage
+import ScheduleMeetingPage from './pages/landing/ScheduleMeetingPage'; // Import ScheduleMeetingPage
+import ViewDemoPage from './pages/landing/ViewDemoPage'; // Import ViewDemoPage
+import TermsAndConditionsPage from './pages/legal/TermsAndConditionsPage'; // Import TermsAndConditionsPage
+import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage'; // Import PrivacyPolicyPage
 
 function App() {
   const { currentUser, userData, loading } = useAuth();
@@ -135,6 +139,10 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<HomePage />} />
+        <Route path="/agendar-reunion" element={<ScheduleMeetingPage />} />
+        <Route path="/demo" element={<ViewDemoPage />} />
+        <Route path="/terminos-y-condiciones" element={<TermsAndConditionsPage />} />
+        <Route path="/politica-de-privacidad" element={<PrivacyPolicyPage />} />
 
         {/* Intermediate route to handle redirection after login */}
         <Route path="/post-login-redirect" element={<RootRedirect />} />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // Import Link
 import fidelizTextLogo from '../../assets/logos/TEXTOFIDELIZ.png'; // Import text logo
 
 // Placeholder for social media icons
@@ -28,13 +29,13 @@ function LandingFooter() {
           </div>
 
           {/* Links and Social */}
-          <div className="mt-8 md:mt-0 md:order-2 flex justify-center space-x-6">
-             <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+          <div className="mt-8 md:mt-0 md:order-2 flex flex-wrap justify-center items-center gap-x-6 gap-y-4"> {/* Added flex-wrap and gap-y for better wrapping */}
+             <Link to="/politica-de-privacidad" className="text-base text-gray-500 hover:text-gray-900">
                 Política de Privacidad
-             </a>
-             <a href="#" className="text-base text-gray-500 hover:text-gray-900">
+             </Link>
+             <Link to="/terminos-y-condiciones" className="text-base text-gray-500 hover:text-gray-900">
                 Términos y Condiciones
-             </a>
+             </Link>
              {/* Add Social Icons */}
              <div className="flex space-x-4">
                 <SocialIcon platform="Facebook" />
