@@ -19,26 +19,26 @@ export function AuthProvider({ children }) {
   const fetchUserProfile = async (firebaseUser) => {
     console.log("AuthProvider: fetchUserProfile called for UID:", firebaseUser?.uid);
     if (!firebaseUser) {
-        console.warn("AuthProvider: fetchUserProfile called without firebaseUser");
-        setUserData(null);
-        setLoading(false); // No user, stop loading
-        return null;
+      console.warn("AuthProvider: fetchUserProfile called without firebaseUser");
+      setUserData(null);
+      setLoading(false); // No user, stop loading
+      return null;
     }
 
     setAuthError(null); // Clear previous errors on new fetch attempt
 
     // Ensure token is fresh before API call
     try {
-        console.log("AuthProvider: Forcing token refresh before fetching profile...");
-        await firebaseUser.getIdToken(true); // Force refresh
-        console.log("AuthProvider: Token refreshed. Calling /auth/me...");
+      console.log("AuthProvider: Forcing token refresh before fetching profile...");
+      await firebaseUser.getIdToken(true); // Force refresh
+      console.log("AuthProvider: Token refreshed. Calling /auth/me...");
     } catch (tokenError) {
-        console.error("AuthProvider: Error refreshing token:", tokenError);
-        setUserData(null);
-        setAuthError('Failed to refresh authentication token.');
-        setLoading(false); // Stop loading as we can't proceed
-        try { await auth.signOut(); } catch (e) { console.error("Sign out error", e)}
-        return null;
+      console.error("AuthProvider: Error refreshing token:", tokenError);
+      setUserData(null);
+      setAuthError('Failed to refresh authentication token.');
+      setLoading(false); // Stop loading as we can't proceed
+      try { await auth.signOut(); } catch (e) { console.error("Sign out error", e) }
+      return null;
     }
 
     // Proceed with API call
@@ -117,8 +117,15 @@ export function AuthProvider({ children }) {
   // Important: Ensure children are not rendered while loading=true AND no error exists
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
-      {/* Consider adding a global loading indicator or handling loading state within specific routes/components */}
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f0f0f0' }}>
+          {/* Puedes usar tu componente Spinner aquí si lo tienes y es accesible globalmente */}
+          <p style={{ fontSize: '1.2em' }}>Cargando aplicación...</p>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
+
 }
