@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2'; // Import SweetAlert2
 import { useAuth } from '../../contexts/AuthContext.jsx';
 // Firestore imports removed
 import apiClient from '../../services/api'; // Import API client
@@ -37,8 +38,8 @@ function AdminDashboard() {
 
   // State for Assign Points Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [employees, setEmployees] = useState([]);
-  const [justifications, setJustifications] = useState([]);
+  const [employees, setEmployees] = [];
+  const [justifications, setJustifications] = [];
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [selectedJustificationId, setSelectedJustificationId] = useState('');
   const [pointsToAssign, setPointsToAssign] = useState('');
@@ -198,9 +199,17 @@ function AdminDashboard() {
      e.preventDefault();
     const points = parseInt(pointsToAssign, 10);
     if (!selectedEmployeeId || !selectedJustificationId || isNaN(points) || points === 0) {
-      setAssignError('Please select employee, justification, and enter valid points.'); return;
+      setAssignError('Please select employee, justification, and enter valid points.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Please select employee, justification, and enter valid points.',
+        confirmButtonText: 'OK'
+      });
+      return;
     }
-    setAssigning(true); setAssignError('');
+    setAssigning(true);
+    setAssignError('');
     try {
       // Call backend API to assign points
       const response = await apiClient.post('/points/assign', {
@@ -212,7 +221,12 @@ function AdminDashboard() {
       // Optionally update local state or show success based on response
       const assignedData = response.data;
       const employeeName = employees.find(e => e.id === selectedEmployeeId)?.nombre || 'employee';
-      alert(`Successfully assigned ${assignedData.assignment.cantidad} points to ${employeeName}! New balance: ${assignedData.employeeNewBalance}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Points Assigned!',
+        text: `Successfully assigned ${assignedData.assignment.cantidad} points to ${employeeName}! New balance: ${assignedData.employeeNewBalance}`,
+        confirmButtonText: 'OK'
+      });
       closeModal();
     } catch (err) {
       console.error("Error assigning points:", err);
@@ -248,7 +262,12 @@ function AdminDashboard() {
 
   // TODO: Implement PDF export function
   const handleExportReport = () => {
-      alert('PDF export functionality not yet implemented.');
+      Swal.fire({
+        icon: 'info',
+        title: 'Feature In Progress',
+        text: 'PDF export functionality not yet implemented.',
+        confirmButtonText: 'OK'
+      });
       // Use generatedReport.summary and generatedReport.data
       // Library like html2pdf.js or jsPDF could be used here
   };
