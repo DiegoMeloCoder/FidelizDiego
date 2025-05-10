@@ -369,7 +369,7 @@ function ManageRewards() {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
-      <h1 className="text-3xl font-bold text-gray-800">Manage Rewards</h1>
+      <h1 className="text-3xl font-bold text-gray-800">Administrar Recompensas</h1>
 
       {/* Add Reward Form - Improved Layout */}
       <form onSubmit={handleAddReward} className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
@@ -377,22 +377,22 @@ function ManageRewards() {
          {/* Grid for Name, Points, Stock */}
          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            <div>
-             <label htmlFor="new-reward-name" className="block text-sm font-medium text-gray-700 mb-1">Reward Name</label>
-             <Input id="new-reward-name" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} placeholder="e.g., Gift Card" required className="mt-0 w-full"/>
+             <label htmlFor="new-reward-name" className="block text-sm font-medium text-gray-700 mb-1">Nombre de Recompensa</label>
+             <Input id="new-reward-name" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} placeholder="ej: Tarjeta de Regalo" required className="mt-0 w-full"/>
            </div>
            <div>
-             <label htmlFor="new-reward-points" className="block text-sm font-medium text-gray-700 mb-1">Points Required</label>
-             <Input id="new-reward-points" type="number" value={newRewardPoints} onChange={(e) => setNewRewardPoints(e.target.value)} placeholder="e.g., 1000" required min="1" className="mt-0 w-full"/>
+             <label htmlFor="new-reward-points" className="block text-sm font-medium text-gray-700 mb-1">Puntos Requeridos</label>
+             <Input id="new-reward-points" type="number" value={newRewardPoints} onChange={(e) => setNewRewardPoints(e.target.value)} placeholder="ej: 1000" required min="1" className="mt-0 w-full"/>
            </div>
            {/* Add Stock Input */}
            <div>
-             <label htmlFor="new-reward-stock" className="block text-sm font-medium text-gray-700 mb-1">Stock (Optional)</label>
-              <Input id="new-reward-stock" type="number" value={newRewardStock} onChange={(e) => setNewRewardStock(e.target.value)} placeholder="Empty = Infinite" min="0" className="mt-0 w-full"/>
+             <label htmlFor="new-reward-stock" className="block text-sm font-medium text-gray-700 mb-1">Cantidad (Opcional)</label>
+              <Input id="new-reward-stock" type="number" value={newRewardStock} onChange={(e) => setNewRewardStock(e.target.value)} placeholder="Vacio = Infinito" min="0" className="mt-0 w-full"/>
             </div>
          </div>
          {/* Tags Checkboxes */}
          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tags (Optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Etiquetas de Recompensa (Opcional)</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {predefinedTags.map(tag => (
                     <label key={tag} className="flex items-center space-x-2 cursor-pointer">
@@ -409,7 +409,7 @@ function ManageRewards() {
          </div>
          {/* Image Upload Section */}
          <div>
-            <label htmlFor="new-reward-image" className="block text-sm font-medium text-gray-700 mb-1">Reward Image (Optional)</label>
+            <label htmlFor="new-reward-image" className="block text-sm font-medium text-gray-700 mb-1">Imagen de Recompensa (Opcional)</label>
             <Input
                 id="new-reward-image"
                 type="file"
@@ -428,7 +428,7 @@ function ManageRewards() {
          <div className="flex justify-end">
            <Button type="submit" disabled={adding} variant="primary" className="inline-flex items-center">
              {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PlusIcon className="h-5 w-5 mr-1.5"/>}
-             {adding ? 'Adding...' : 'Add Reward'}
+             {adding ? 'Agregando...' : 'Agregar Recompensa'}
            </Button>
          </div>
        </form>
@@ -447,16 +447,16 @@ function ManageRewards() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className={thStyle}>Image</th> {/* Add Image column */}
-                <th className={thStyle}>Name</th>
-                <th className={thStyle}>Points Required</th>
-                <th className={thStyle}>Stock</th>
+                <th className={thStyle}>Imagen</th> {/* Add Image column */}
+                <th className={thStyle}>Nombre</th>
+                <th className={thStyle}>Puntos Requeridos</th>
+                <th className={thStyle}>Cantidad</th>
                 {/* Add Tags Column */}
-                <th className={thStyle}>Tags</th>
+                <th className={thStyle}>Etiquetas</th>
                 {/* Remove Votes Columns */}
                 {/* <th className={thStyle}>Votes (L/D)</th> */}
-                <th className={thStyle}>Status</th>
-                <th className={`${thStyle} text-right pr-6`}>Actions</th>
+                <th className={thStyle}>Estado</th>
+                <th className={`${thStyle} text-right pr-6`}>Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -464,7 +464,7 @@ function ManageRewards() {
                 <tr>
                   {/* Adjust colspan back */}
                   <td colSpan={7} className={`${tdStyle} text-center text-gray-500 py-6`}>
-                    No rewards found for this company.
+                    No se encontraron recompensas para esta empresa.
                   </td>
                 </tr>
               ) : (
@@ -475,7 +475,7 @@ function ManageRewards() {
                       {reward.imageUrl ? (
                         <img src={reward.imageUrl} alt={reward.nombre} className="h-10 w-10 object-cover rounded-md border border-gray-200" />
                       ) : (
-                        <div className="h-10 w-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                        <div className="h-10 w-10 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs">Sin Imagen</div>
                       )}
                     </td>
                     <td className={`${tdStyle} font-medium text-gray-900`}>{reward.nombre}</td>
@@ -494,7 +494,7 @@ function ManageRewards() {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400 italic">None</span>
+                        <span className="text-xs text-gray-400 italic">Ninguno</span>
                       )}
                     </td>
                     {/* Remove Votes Cell */}
@@ -502,7 +502,7 @@ function ManageRewards() {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                         reward.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {reward.isActive ? 'Active' : 'Inactive'}
+                        {reward.isActive ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
                     <td className={`${tdStyle} text-right space-x-2 pr-6`}>
@@ -510,15 +510,15 @@ function ManageRewards() {
                       {(userData?.role === 'Manager' || (userData?.role === 'Admin' && reward.companyId !== null)) && (
                         <>
                           <Button variant="secondary" size="sm" onClick={() => handleEditClick(reward)} className="inline-flex items-center">
-                            <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
+                            <PencilSquareIcon className="h-4 w-4 mr-1" /> Editar
                           </Button>
                           {reward.isActive ? (
                             <Button variant="danger" size="sm" onClick={() => handleDeleteClick(reward.id, reward.nombre)} className="inline-flex items-center">
-                              <ArchiveBoxXMarkIcon className="h-4 w-4 mr-1" /> Set Inactive
+                              <ArchiveBoxXMarkIcon className="h-4 w-4 mr-1" /> Inactivar
                             </Button>
                           ) : (
                             <Button variant="success" size="sm" onClick={() => handleActivateClick(reward.id, reward.nombre)} className="inline-flex items-center">
-                              <ArrowPathIcon className="h-4 w-4 mr-1" /> Set Active
+                              <ArrowPathIcon className="h-4 w-4 mr-1" /> Activar
                             </Button>
                           )}
                         </>
