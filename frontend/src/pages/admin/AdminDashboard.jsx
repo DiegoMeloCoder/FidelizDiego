@@ -38,8 +38,8 @@ function AdminDashboard() {
 
   // State for Assign Points Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [employees, setEmployees] = [];
-  const [justifications, setJustifications] = [];
+  const [employees, setEmployees] = useState([]);
+  const [justifications, setJustifications] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [selectedJustificationId, setSelectedJustificationId] = useState('');
   const [pointsToAssign, setPointsToAssign] = useState('');
