@@ -373,7 +373,7 @@ function ManageRewards() {
 
       {/* Add Reward Form - Improved Layout */}
       <form onSubmit={handleAddReward} className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
-         <h2 className="text-lg font-medium text-gray-700">Add New Reward</h2>
+         <h2 className="text-lg font-medium text-gray-700">Agregar Nueva Recompensa</h2>
          {/* Grid for Name, Points, Stock */}
          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            <div>
