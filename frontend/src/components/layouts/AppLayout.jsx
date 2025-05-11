@@ -241,7 +241,7 @@ function AppLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
-        <header className="md:hidden bg-gray-800 text-white shadow-md sticky top-0 z-10"> {/* Made header sticky */}
+        <header className="md:hidden bg-brand-secondary text-white shadow-md sticky top-0 z-10"> {/* Made header sticky */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center">

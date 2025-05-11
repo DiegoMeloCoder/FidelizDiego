@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
+import Swal from 'sweetalert2';
 // Added HandThumbUpIcon, HandThumbDownIcon
 import { GiftIcon, StarIcon, CheckCircleIcon, SparklesIcon, HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/react/24/outline';
 
@@ -75,41 +76,75 @@ function AvailableRewards() {
 
   // Handle Redeem Reward
   const handleRedeem = async (rewardId, pointsRequired, rewardName) => {
-    setRedeemingId(rewardId); setRedeemError(''); setRedeemSuccess('');
+    setRedeemingId(rewardId); 
+    setRedeemError(''); 
+    setRedeemSuccess('');
 
     if (!currentUser || !userData) {
-        setRedeemError("User data not available."); setRedeemingId(null); clearMessages(); return;
+        setRedeemError("User data not available."); 
+        setRedeemingId(null); 
+        clearMessages(); 
+        return;
     }
     if ((userData.points ?? 0) < pointsRequired) {
-        setRedeemError(`Not enough points to redeem ${rewardName}.`); setRedeemingId(null); clearMessages(); return;
+        setRedeemError(`Not enough points to redeem ${rewardName}.`); 
+        setRedeemingId(null); 
+        clearMessages(); 
+        return;
     }
     // Check stock before confirming (client-side check for immediate feedback)
     const rewardToCheck = rewards.find(r => r.id === rewardId);
     if (rewardToCheck && rewardToCheck.stock === 0) {
-        setRedeemError(`Reward "${rewardName}" is out of stock.`); setRedeemingId(null); clearMessages(); return;
+        setRedeemError(`Reward "${rewardName}" is out of stock.`); 
+        setRedeemingId(null); 
+        clearMessages(); 
+        return;
     }
 
-    if (!window.confirm(`Redeem "${rewardName}" for ${pointsRequired} points?`)) {
-        setRedeemingId(null); return;
+    const result = await Swal.fire({
+        title: `¿Redimir "${rewardName}"?`,
+        text: `Esta recompensa costará ${pointsRequired} puntos`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Redimir',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33'
+    });
+
+    if (!result.isConfirmed) {
+        setRedeemingId(null);
+        return;
     }
 
     try {
-      // Call backend API to redeem reward (handles DB transaction)
-      const response = await apiClient.post(`/redemptions/rewards/${rewardId}/redeem`);
+        // Call backend API to redeem reward (handles DB transaction)
+        const response = await apiClient.post(`/redemptions/rewards/${rewardId}/redeem`);
+        const redeemedData = response.data;
 
-      const redeemedData = response.data;
-      setRedeemSuccess(`Successfully redeemed ${rewardName}! New balance: ${redeemedData.employeeNewBalance}`);
-      // Refresh user data in context to update points balance in UI
-      refreshUserData();
-      // Re-fetch rewards to update stock display
-      fetchRewards(); // Now this call should work
-      clearMessages();
+        // Mostrar mensaje de éxito con SweetAlert2
+        await Swal.fire({
+            title: '¡Redimido con éxito!',
+            text: `Has canjeado ${rewardName}. Nuevo balance: ${redeemedData.employeeNewBalance} puntos`,
+            icon: 'success',
+            confirmButtonColor: '#3085d6'
+        });
+
+        // Refresh user data in context to update points balance in UI
+        refreshUserData();
+        // Re-fetch rewards to update stock display
+        fetchRewards();
     } catch (err) {
-      console.error("Error redeeming reward:", err);
-      setRedeemError(err.message || `Failed to redeem ${rewardName}. Please try again.`);
-      clearMessages(); // Clear error message after delay
+        console.error("Error redeeming reward:", err);
+        // Mostrar error con SweetAlert2
+        await Swal.fire({
+            title: 'Error',
+            text: err.message || `No se pudo redimir ${rewardName}. Por favor intenta de nuevo.`,
+            icon: 'error',
+            confirmButtonColor: '#3085d6'
+        });
     } finally {
-      setRedeemingId(null);
+        setRedeemingId(null);
     }
   };
 
