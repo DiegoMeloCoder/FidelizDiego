@@ -102,13 +102,6 @@ function ManageJustifications() {
     setListError("");
     setSuccessMessage("");
     try {
-      // Add justification using API
-      const response = await apiClient.post("/justifications", {
-        textoJustificacion: newJustificationText.trim(),
-        // companyId is handled by the backend
-      });
-      const addedJustification = response.data; // API returns the created justification
-
       // Add to local state and re-fetch to get the sorted list from backend
       // Or insert and sort client-side if preferred (less accurate if backend sort changes)
       // Let's re-fetch for simplicity and accuracy
