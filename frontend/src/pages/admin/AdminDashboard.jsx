@@ -80,32 +80,26 @@ function AdminDashboard() {
   // Fetch stats - Ahora usa la API
   useEffect(() => {
     const fetchStats = async () => {
-      // Depend on userData being loaded and having a company ID
       if (userData?.company?.id) {
         setLoadingStats(true); // Set loading true before fetch
         setStatsError("");
         try {
-          // Llamar al nuevo endpoint de estadísticas del admin
           const response = await apiClient.get("/stats/admin");
           setStats(response.data); // Guardar los datos recibidos (employeeCount, rewardCount)
         } catch (error) {
           console.error("Error fetching dashboard stats:", error);
           setStatsError(
-            error.message || "Failed to load dashboard statistics."
+            error.message || "No se pudieron cargar las estadísticas."
           );
-          setStats({ employeeCount: "Err", rewardCount: "Err" }); // Indicate error in stats
+          setStats({ employeeCount: "Err", rewardCount: "Err" });
         } finally {
           setLoadingStats(false);
         }
       } else {
-        // Handle case where user data might not have company info yet or failed load
         setLoadingStats(false);
         if (!authLoading) {
-          // Only set error if auth has finished loading
-          setStatsError("User company data not available to fetch stats.");
-          setInterestError(
-            "User company data not available to fetch interest."
-          ); // Also set interest error
+          setStatsError("Los datos de la empresa del usuario no están disponibles para cargar estadísticas.");
+          setInterestError("Los datos de la empresa del usuario no están disponibles para cargar intereses.");
         }
       }
     };
@@ -121,7 +115,9 @@ function AdminDashboard() {
           setCommonInterest(response.data);
         } catch (error) {
           console.error("Error fetching common interest:", error);
-          setInterestError(error.message || "Failed to load common interest.");
+          setInterestError(
+            error.message || "No se pudo cargar el interés principal."
+          );
           setCommonInterest({ mostCommonInterest: "Err", count: 0 });
         } finally {
           setLoadingInterest(false);
@@ -129,9 +125,7 @@ function AdminDashboard() {
       } else {
         setLoadingInterest(false);
         if (!authLoading) {
-          setInterestError(
-            "User company data not available to fetch interest."
-          );
+          setInterestError("Los datos de la empresa del usuario no están disponibles para cargar intereses.");
         }
       }
     };
@@ -139,13 +133,13 @@ function AdminDashboard() {
     // Fetch stats and common interest only if userData is available and not authLoading
     if (userData && !authLoading) {
       fetchStats();
-      fetchCommonInterest(); // Fetch interest data
+      fetchCommonInterest();
     } else if (!authLoading && !userData) {
       // Handle case where user data failed to load in AuthContext
       setLoadingStats(false);
-      setLoadingInterest(false); // Also stop loading interest
-      setStatsError("User data not available to fetch stats.");
-      setInterestError("User data not available to fetch interest.");
+      setLoadingInterest(false);
+      setStatsError("Los datos del usuario no están disponibles para cargar estadísticas.");
+      setInterestError("Los datos del usuario no están disponibles para cargar intereses.");
     }
     // If authLoading is true, we wait for userData
   }, [userData, authLoading]); // Depender de userData y authLoading
@@ -153,16 +147,13 @@ function AdminDashboard() {
   // Fetch employees and justifications when modal is opened
   useEffect(() => {
     const fetchModalData = async () => {
-      // Use nested company ID
       if (isModalOpen && userData?.company?.id) {
         setLoadingModalData(true);
         setAssignError("");
         setEmployees([]);
         setJustifications([]);
         try {
-          // Fetch Employees using API (already filters by company and role)
           const empResponse = await apiClient.get("/employees");
-          // Filter only active employees for selection
           const activeEmpList = empResponse.data.filter(
             (emp) => emp.isActive !== false
           );
@@ -170,7 +161,6 @@ function AdminDashboard() {
           if (activeEmpList.length > 0)
             setSelectedEmployeeId(activeEmpList[0].id);
 
-          // Fetch Justifications using API (backend returns globals + company specific)
           const justResponse = await apiClient.get("/justifications");
           // Filter only active justifications for selection
           const activeJustList = justResponse.data.filter(
@@ -181,7 +171,7 @@ function AdminDashboard() {
             setSelectedJustificationId(activeJustList[0].id);
         } catch (err) {
           console.error("Error fetching modal data:", err);
-          setAssignError(err.message || "Failed to load data for modal.");
+          setAssignError(err.message || "No se pudieron cargar los datos para el modal.");
         } finally {
           setLoadingModalData(false);
         }
@@ -192,7 +182,7 @@ function AdminDashboard() {
     if (isModalOpen) {
       setPointsSuggestion("");
     }
-  }, [isModalOpen, userData?.company?.id]); // Depend on companyId as well
+  }, [isModalOpen, userData?.company?.id]);
 
   // Fetch points suggestion when justification changes
   useEffect(() => {
@@ -200,7 +190,7 @@ function AdminDashboard() {
       if (selectedJustificationId && isModalOpen) {
         // Only fetch if modal is open and justification selected
         setLoadingSuggestion(true);
-        setPointsSuggestion(""); // Clear previous suggestion
+        setPointsSuggestion("");
         try {
           const response = await apiClient.get(
             `/points/suggestions/justification/${selectedJustificationId}`
@@ -209,26 +199,24 @@ function AdminDashboard() {
             // Check if suggestion data exists
             setPointsSuggestion(response.data.message); // Set the suggestion text
           } else {
-            setPointsSuggestion(""); // Clear if no suggestion (e.g., not enough data)
+            setPointsSuggestion("");
           }
         } catch (error) {
           console.error("Error fetching points suggestion:", error);
-          // Optionally show a small error message for suggestion fetching? For now, just log.
-          setPointsSuggestion(""); // Clear on error
+          setPointsSuggestion("");
         } finally {
           setLoadingSuggestion(false);
         }
       } else {
-        setPointsSuggestion(""); // Clear suggestion if no justification selected
+        setPointsSuggestion("");
       }
     };
 
     fetchSuggestion();
-  }, [selectedJustificationId, isModalOpen]); // Re-run when justification changes or modal opens/closes
+  }, [selectedJustificationId, isModalOpen]);
 
   // Handle Assign Points Submission
   const handleAssignPoints = async (e) => {
-    // ... (logic remains the same) ...
     e.preventDefault();
     const points = parseInt(pointsToAssign, 10);
     if (
@@ -238,12 +226,12 @@ function AdminDashboard() {
       points === 0
     ) {
       setAssignError(
-        "Please select employee, justification, and enter valid points."
+        "Por favor selecciona un empleado, una justificación y escribe una cantidad válida de puntos."
       );
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Please select employee, justification, and enter valid points.",
+        text: "Por favor selecciona un empleado, una justificación y escribe una cantidad válida de puntos.",
         confirmButtonText: "OK",
       });
       return;
@@ -262,17 +250,17 @@ function AdminDashboard() {
       const assignedData = response.data;
       const employeeName =
         employees.find((e) => e.id === selectedEmployeeId)?.nombre ||
-        "employee";
+        "empleado";
       Swal.fire({
         icon: "success",
-        title: "Points Assigned!",
-        text: `Successfully assigned ${assignedData.assignment.cantidad} points to ${employeeName}! New balance: ${assignedData.employeeNewBalance}`,
+        title: "¡Puntos Asignados!",
+        text: `Se asignaron exitosamente ${assignedData.assignment.cantidad} puntos a ${employeeName}. Nuevo saldo: ${assignedData.employeeNewBalance}`,
         confirmButtonText: "OK",
       });
       closeModal();
     } catch (err) {
       console.error("Error assigning points:", err);
-      setAssignError(err.message || "Failed to assign points.");
+      setAssignError(err.message || "No se pudieron asignar los puntos.");
     } finally {
       setAssigning(false);
     }
@@ -281,7 +269,7 @@ function AdminDashboard() {
   // Handle AI Report Generation
   const handleGenerateReport = async () => {
     if (!reportStartDate || !reportEndDate) {
-      setReportError("Please select both start and end dates.");
+      setReportError("Por favor selecciona ambas fechas: inicio y fin.");
       return;
     }
     setIsGeneratingReport(true);
@@ -299,18 +287,19 @@ function AdminDashboard() {
       setReportError(
         err.response?.data?.message ||
           err.message ||
-          "Failed to generate report."
+          "No se pudo generar el reporte."
       );
     } finally {
       setIsGeneratingReport(false);
     }
   };
-  // TODO: Implement PDF export function
+
+  // Handle PDF Export
   const handleExportReport = () => {
     Swal.fire({
       icon: "info",
-      title: "Feature In Progress",
-      text: "PDF export functionality not yet implemented.",
+      title: "Funcionalidad en Progreso",
+      text: "La funcionalidad de exportar a PDF aún no está implementada.",
       confirmButtonText: "OK",
     });
     // Use generatedReport.summary and generatedReport.data
@@ -355,7 +344,7 @@ function AdminDashboard() {
 
     if (!employee || !justification || isNaN(points) || points === 0) {
       setMessageGenError(
-        "Please select employee, justification, and enter valid points before generating a message."
+        "Por favor selecciona un empleado, una justificación y escribe una cantidad válida de puntos antes de generar un mensaje."
       );
       setGeneratedMessages([]);
       return;
@@ -377,7 +366,7 @@ function AdminDashboard() {
       setMessageGenError(
         err.response?.data?.message ||
           err.message ||
-          "Failed to generate message."
+          "No se pudo generar el mensaje."
       );
       setGeneratedMessages([]);
     } finally {
