@@ -47,30 +47,23 @@ function ManageJustifications() {
 
   // Fetch justifications
   useEffect(() => {
-    // Depend on the nested company ID from the API response
     if (userData?.company?.id) {
       // Fetch only if ID is available
       fetchJustifications();
     } else if (userData !== null) {
-      // If userData is loaded but no companyId
-      setListError("Admin company information not available.");
+      setListError("La información de la empresa del administrador no está disponible.");
       setLoading(false);
     }
     // If userData is null (still loading initial profile), loading remains true
   }, [userData?.company?.id]); // <-- Use nested ID
 
   const fetchJustifications = async () => {
-    // Check nested company ID (redundant check removed, handled by useEffect dependency)
-    // if (!userData?.company?.id) { // <-- Use nested ID
-    //   setListError("Admin company information not available."); setLoading(false); return;
-    // }
     setLoading(true);
     setListError("");
     setSuccessMessage("");
     try {
       // Fetch justifications using API (backend handles filtering and sorting)
       const response = await apiClient.get("/justifications");
-      // Ensure isActive defaults to true if missing
       const list = response.data.map((j) => ({
         ...j,
         estaActiva: j.estaActiva !== undefined ? j.estaActiva : true,
@@ -78,7 +71,7 @@ function ManageJustifications() {
       setJustifications(list);
     } catch (err) {
       console.error("Error fetching justifications:", err);
-      setListError(err.message || "Failed to load justifications.");
+      setListError(err.message || "No se pudieron cargar las justificaciones.");
       clearMessages();
     } finally {
       setLoading(false);
@@ -89,7 +82,7 @@ function ManageJustifications() {
   const handleAddJustification = async (e) => {
     e.preventDefault();
     if (!newJustificationText.trim()) {
-      setAddError("Justification text cannot be empty.");
+      setAddError("El texto de la justificación no puede estar vacío.");
       clearMessages();
       return;
     }
@@ -102,16 +95,13 @@ function ManageJustifications() {
     setListError("");
     setSuccessMessage("");
     try {
-      // Add to local state and re-fetch to get the sorted list from backend
-      // Or insert and sort client-side if preferred (less accurate if backend sort changes)
-      // Let's re-fetch for simplicity and accuracy
       setNewJustificationText("");
-      setSuccessMessage(`Justification added successfully.`);
-      fetchJustifications(); // Re-fetch the list
+      setSuccessMessage("Justificación agregada exitosamente.");
+      fetchJustifications();
       clearMessages();
     } catch (err) {
       console.error("Error adding justification:", err);
-      setAddError(err.message || "Failed to add justification.");
+      setAddError(err.message || "No se pudo agregar la justificación.");
       clearMessages();
     } finally {
       setAdding(false);
@@ -126,8 +116,7 @@ function ManageJustifications() {
       justification.companyId !== userData?.company?.id ||
       justification.esPredeterminada
     ) {
-      // <-- Use nested ID
-      setEditError("Default or global justifications cannot be edited.");
+      setEditError("No se pueden editar justificaciones predeterminadas o globales.");
       clearMessages();
       return;
     }
@@ -145,19 +134,15 @@ function ManageJustifications() {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editText.trim() || !editingJustification) {
-      setEditError("Justification text cannot be empty.");
+      setEditError("El texto de la justificación no puede estar vacío.");
       clearMessages();
       return;
     }
-    // Backend handles preventing edit of global
-    // We can remove the redundant client-side check here if desired,
-    // but keeping it provides slightly faster feedback.
     if (
       editingJustification.companyId !== userData?.company?.id ||
       editingJustification.esPredeterminada
     ) {
-      // <-- Use nested ID
-      setEditError("Cannot save changes to a default or global justification.");
+      setEditError("No se pueden guardar cambios en una justificación predeterminada o global.");
       clearMessages();
       return;
     }
@@ -166,7 +151,6 @@ function ManageJustifications() {
     setListError("");
     setSuccessMessage("");
     try {
-      // Update justification using API
       const response = await apiClient.put(
         `/justifications/${editingJustification.id}`,
         {
@@ -183,11 +167,11 @@ function ManageJustifications() {
         )
       );
       closeModal();
-      setSuccessMessage(`Justification updated successfully.`);
+      setSuccessMessage("Justificación actualizada exitosamente.");
       clearMessages();
     } catch (err) {
       console.error("Error updating justification:", err);
-      setEditError(err.message || "Failed to update justification.");
+      setEditError(err.message || "No se pudo actualizar la justificación.");
       clearMessages();
     } finally {
       setSaving(false);
@@ -196,46 +180,38 @@ function ManageJustifications() {
 
   // Toggle Active Status (Activate/Deactivate)
   const handleToggleActive = async (justification) => {
-    // Backend handles preventing toggle of global, but keep UI check
     if (
       justification.companyId !== userData?.company?.id ||
       justification.esPredeterminada
     ) {
-      // <-- Use nested ID
-      setListError(
-        "Default or global justifications cannot be activated/deactivated here."
-      );
+      setListError("No se pueden activar/desactivar justificaciones predeterminadas o globales aquí.");
       clearMessages();
       return;
     }
-    const newState = !(justification.estaActiva !== false); // Handle potential undefined
-    const action = newState ? "activate" : "deactivate";
+    const newState = !(justification.estaActiva !== false);
+    const action = newState ? "activar" : "desactivar";
     if (
       window.confirm(
-        `Are you sure you want to ${action} the justification: "${justification.textoJustificacion}"?`
+        `¿Estás seguro de que deseas ${action} la justificación: "${justification.textoJustificacion}"?`
       )
     ) {
       setListError("");
       setSuccessMessage("");
-      // Consider adding a temporary loading state on the specific row/button
       try {
-        // Toggle status using API
         const response = await apiClient.patch(
           `/justifications/${justification.id}/toggle-status`
         );
-        const updatedJustification = response.data.justification; // API returns updated justification
-
-        // Update local state
+        const updatedJustification = response.data.justification;
         setJustifications((prev) =>
           prev.map((j) =>
             j.id === updatedJustification.id ? updatedJustification : j
           )
         );
-        setSuccessMessage(response.data.message); // Use message from API
+        setSuccessMessage(response.data.message);
         clearMessages();
       } catch (err) {
         console.error(`Error ${action}ing justification:`, err);
-        setListError(err.message || `Failed to ${action} justification.`);
+        setListError(err.message || `No se pudo ${action} la justificación.`);
         clearMessages();
       }
     }
