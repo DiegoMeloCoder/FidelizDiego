@@ -41,7 +41,7 @@ jest.mock('../../components/ui/Alert', () => ({ children, type }) => <div role="
 // Mock window.confirm
 global.confirm = jest.fn(() => true); // Default to true (user confirms)
 
-// --- Test Suite ---
+// --- Test Suite --- jacob 
 
 describe('ManageJustifications Component', () => {
   const mockUserData = {
