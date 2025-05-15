@@ -16,7 +16,9 @@ function PointsHistoryAdmin() {
     const fetchHistory = async () => {
       // Use nested company ID check
       if (!userData?.company?.id) {
-        setError("Admin company information not available.");
+        setError(
+          "La información de la empresa del administrador no está disponible."
+        );
         setLoading(false);
         return;
       }
@@ -36,7 +38,10 @@ function PointsHistoryAdmin() {
         setHistory(list);
       } catch (err) {
         console.error("Error fetching points history:", err);
-        setError(err.message || "Failed to load points assignment history.");
+        setError(
+          err.message ||
+            "No se pudo cargar el historial de asignación de puntos."
+        );
       } finally {
         setLoading(false);
       }

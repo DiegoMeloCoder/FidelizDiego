@@ -15,7 +15,9 @@ function RedemptionHistoryAdmin() {
     const fetchHistory = async () => {
       // Check if admin data (including company id) is loaded
       if (!userData?.company?.id) {
-        setError("Admin company information not available.");
+        setError(
+          "La información de la empresa del administrador no está disponible."
+        );
         setLoading(false);
         return;
       }
@@ -31,7 +33,7 @@ function RedemptionHistoryAdmin() {
         setHistory(list);
       } catch (err) {
         console.error("Error fetching redemption history (Admin):", err);
-        setError(err.message || "Failed to load redemption history.");
+        setError(err.message || "No se pudo cargar el historial de canjes.");
       } finally {
         setLoading(false);
       }
@@ -43,9 +45,10 @@ function RedemptionHistoryAdmin() {
     } else {
       // If userData is null but useAuth isn't loading, it means profile fetch failed earlier
       // or user is not an admin with a company. Handle appropriately.
-      // This check might be redundant if ProtectedRoute handles it, but good for clarity.
       setLoading(false);
-      setError("User data not available to fetch history.");
+      setError(
+        "Los datos del usuario no están disponibles para cargar el historial."
+      );
     }
   }, [userData]); // Depend on userData to re-fetch if it changes (e.g., after login)
 
