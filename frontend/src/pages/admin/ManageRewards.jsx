@@ -79,46 +79,41 @@ function ManageRewards() {
   // Fetch rewards - Adjusted for Manager role
   useEffect(() => {
     if (!userData) {
-      // Still waiting for user data
-      setLoading(true); // Keep loading true if userData is not yet available
+      setLoading(true); // Mantener cargando si los datos del usuario aún no están disponibles
       return;
     }
 
     if (userData.role === "Manager") {
-      // Manager fetches global rewards (no companyId needed)
       fetchRewards();
     } else if (userData.role === "Admin") {
-      // Admin fetches company-specific rewards
       if (userData.company?.id) {
         fetchRewards();
       } else {
-        // Admin exists but has no company assigned (edge case?)
-        setListError("Admin user is not assigned to a company.");
+        setListError(
+          "El usuario administrador no está asignado a una empresa."
+        );
         setLoading(false);
       }
     } else {
-      // Should not happen if routing/protection is correct, but handle defensively
-      setListError("Unauthorized role to manage rewards.");
+      setListError("Rol no autorizado para administrar recompensas.");
       setLoading(false);
     }
-  }, [userData]); // Depend on the whole userData object
+  }, [userData]);
 
   const fetchRewards = async () => {
     setLoading(true);
     setListError("");
     setSuccessMessage("");
     try {
-      // Fetch rewards using API (backend filters by company)
       const response = await apiClient.get("/rewards");
-      // Ensure isActive defaults to true if missing
       const list = response.data.map((reward) => ({
         ...reward,
         isActive: reward.isActive !== undefined ? reward.isActive : true,
       }));
       setRewards(list);
     } catch (err) {
-      console.error("Error fetching rewards:", err);
-      setListError(err.message || "Failed to load rewards.");
+      console.error("Error al cargar las recompensas:", err);
+      setListError(err.message || "No se pudieron cargar las recompensas.");
       clearMessages();
     } finally {
       setLoading(false);
@@ -145,12 +140,10 @@ function ManageRewards() {
     );
   };
 
-  // Add Reward
   const handleAddReward = async (e) => {
     e.preventDefault();
     const points = parseInt(newRewardPoints, 10);
-    const stock = newRewardStock === "" ? null : parseInt(newRewardStock, 10); // Convert '' to null
-    // Tags state is already an array
+    const stock = newRewardStock === "" ? null : parseInt(newRewardStock, 10);
     const tagsArray = newRewardTags;
 
     if (!newRewardName.trim() || isNaN(points) || points <= 0) {
