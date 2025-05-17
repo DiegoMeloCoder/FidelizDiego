@@ -51,7 +51,9 @@ function ManageJustifications() {
       // Fetch only if ID is available
       fetchJustifications();
     } else if (userData !== null) {
-      setListError("La información de la empresa del administrador no está disponible.");
+      setListError(
+        "La información de la empresa del administrador no está disponible."
+      );
       setLoading(false);
     }
     // If userData is null (still loading initial profile), loading remains true
@@ -116,7 +118,9 @@ function ManageJustifications() {
       justification.companyId !== userData?.company?.id ||
       justification.esPredeterminada
     ) {
-      setEditError("No se pueden editar justificaciones predeterminadas o globales.");
+      setEditError(
+        "No se pueden editar justificaciones predeterminadas o globales."
+      );
       clearMessages();
       return;
     }
@@ -142,7 +146,9 @@ function ManageJustifications() {
       editingJustification.companyId !== userData?.company?.id ||
       editingJustification.esPredeterminada
     ) {
-      setEditError("No se pueden guardar cambios en una justificación predeterminada o global.");
+      setEditError(
+        "No se pueden guardar cambios en una justificación predeterminada o global."
+      );
       clearMessages();
       return;
     }
@@ -184,7 +190,9 @@ function ManageJustifications() {
       justification.companyId !== userData?.company?.id ||
       justification.esPredeterminada
     ) {
-      setListError("No se pueden activar/desactivar justificaciones predeterminadas o globales aquí.");
+      setListError(
+        "No se pueden activar/desactivar justificaciones predeterminadas o globales aquí."
+      );
       clearMessages();
       return;
     }

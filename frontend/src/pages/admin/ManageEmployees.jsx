@@ -1,38 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 // Firestore and secondary Firebase app imports removed
-import apiClient from '../../services/api'; // Import API client
-import { useAuth } from '../../contexts/AuthContext.jsx'; // Keep useAuth to get admin's companyId
-import Button from '../../components/ui/Button';
-import Papa from 'papaparse'; // Import papaparse
-import Input from '../../components/ui/Input';
-import Modal from '../../components/ui/Modal';
-import Spinner from '../../components/ui/Spinner';
-import Alert from '../../components/ui/Alert';
-import { PlusIcon, PencilSquareIcon, UserMinusIcon, UserPlusIcon, ArrowUpTrayIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'; // Added Icons
+import apiClient from "../../services/api"; // Import API client
+import { useAuth } from "../../contexts/AuthContext.jsx"; // Keep useAuth to get admin's companyId
+import Button from "../../components/ui/Button";
+import Papa from "papaparse"; // Import papaparse
+import Input from "../../components/ui/Input";
+import Modal from "../../components/ui/Modal";
+import Spinner from "../../components/ui/Spinner";
+import Alert from "../../components/ui/Alert";
+import {
+  PlusIcon,
+  PencilSquareIcon,
+  UserMinusIcon,
+  UserPlusIcon,
+  ArrowUpTrayIcon,
+  ArrowDownTrayIcon,
+} from "@heroicons/react/24/outline"; // Added Icons
 
 function ManageEmployees() {
   const { userData: adminUserData } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState('');
-  const [successMessage, setSuccessMessage] = useState(''); // State for success messages
+  const [listError, setListError] = useState("");
+  const [successMessage, setSuccessMessage] = useState(""); // State for success messages
   const [engagementScores, setEngagementScores] = useState({}); // Store scores as { employeeId: score }
   const [loadingScores, setLoadingScores] = useState(false);
 
   // Add Form State
-  const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
-  const [newEmployeePassword, setNewEmployeePassword] = useState('');
+  const [newEmployeeName, setNewEmployeeName] = useState("");
+  const [newEmployeeEmail, setNewEmployeeEmail] = useState("");
+  const [newEmployeePassword, setNewEmployeePassword] = useState("");
   const [adding, setAdding] = useState(false);
-  const [addError, setAddError] = useState('');
+  const [addError, setAddError] = useState("");
 
   // Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState("");
   const [editIsActive, setEditIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editError, setEditError] = useState('');
+  const [editError, setEditError] = useState("");
 
   // Bulk Upload State
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -40,60 +47,71 @@ function ManageEmployees() {
   const [parsedData, setParsedData] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadResults, setUploadResults] = useState({ success: [], errors: [] });
-  const [uploadError, setUploadError] = useState(''); // Error during parsing/validation
+  const [uploadResults, setUploadResults] = useState({
+    success: [],
+    errors: [],
+  });
+  const [uploadError, setUploadError] = useState(""); // Error during parsing/validation
   const [isProcessingComplete, setIsProcessingComplete] = useState(false);
-
 
   // Function to clear messages after a delay
   const clearMessages = () => {
     setTimeout(() => {
-      setAddError('');
-      setListError('');
-      setEditError('');
-      setSuccessMessage('');
+      setAddError("");
+      setListError("");
+      setEditError("");
+      setSuccessMessage("");
     }, 4000);
   };
 
   // Fetch employees
   useEffect(() => {
     if (adminUserData?.company?.id) {
-        fetchEmployees();
+      fetchEmployees();
     } else if (adminUserData !== null) {
-        setListError("La información de la empresa del administrador no está disponible.");
-        setLoading(false);
+      setListError(
+        "La información de la empresa del administrador no está disponible."
+      );
+      setLoading(false);
     }
   }, [adminUserData?.company?.id]);
 
   const fetchEmployees = async () => {
-    setLoading(true); setListError(''); setSuccessMessage('');
+    setLoading(true);
+    setListError("");
+    setSuccessMessage("");
     try {
-      const empResponse = await apiClient.get('/employees');
-      const empList = empResponse.data.map(emp => ({ ...emp, isActive: emp.isActive !== undefined ? emp.isActive : true }));
+      const empResponse = await apiClient.get("/employees");
+      const empList = empResponse.data.map((emp) => ({
+        ...emp,
+        isActive: emp.isActive !== undefined ? emp.isActive : true,
+      }));
       setEmployees(empList);
 
       if (empList.length > 0) {
-          setLoadingScores(true);
-          try {
-              const scoreResponse = await apiClient.get('/engagement/scores');
-              const scoreMap = scoreResponse.data.reduce((acc, scoreData) => {
-                  acc[scoreData.employeeId] = scoreData.engagementScore;
-                  return acc;
-              }, {});
-              setEngagementScores(scoreMap);
-          } catch (scoreErr) {
-               console.error("Error al obtener los puntajes de engagement:", scoreErr);
-               setEngagementScores({});
-          } finally {
-               setLoadingScores(false);
-          }
+        setLoadingScores(true);
+        try {
+          const scoreResponse = await apiClient.get("/engagement/scores");
+          const scoreMap = scoreResponse.data.reduce((acc, scoreData) => {
+            acc[scoreData.employeeId] = scoreData.engagementScore;
+            return acc;
+          }, {});
+          setEngagementScores(scoreMap);
+        } catch (scoreErr) {
+          console.error(
+            "Error al obtener los puntajes de engagement:",
+            scoreErr
+          );
+          setEngagementScores({});
+        } finally {
+          setLoadingScores(false);
+        }
       } else {
-           setEngagementScores({});
+        setEngagementScores({});
       }
-
     } catch (err) {
       console.error("Error al obtener empleados:", err);
-      setListError(err.message || 'No se pudieron cargar los empleados.');
+      setListError(err.message || "No se pudieron cargar los empleados.");
       clearMessages();
     } finally {
       setLoading(false);
@@ -103,28 +121,41 @@ function ManageEmployees() {
   // Add Employee Handler
   const handleAddEmployee = async (e) => {
     e.preventDefault();
-    if (!newEmployeeName.trim() || !newEmployeeEmail.trim() || !newEmployeePassword.trim()) {
-      setAddError('Por favor completa todos los campos.');
+    if (
+      !newEmployeeName.trim() ||
+      !newEmployeeEmail.trim() ||
+      !newEmployeePassword.trim()
+    ) {
+      setAddError("Por favor completa todos los campos.");
       clearMessages();
       return;
     }
 
-    setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
+    setAdding(true);
+    setAddError("");
+    setListError("");
+    setSuccessMessage("");
     try {
-      const response = await apiClient.post('/employees', {
+      const response = await apiClient.post("/employees", {
         email: newEmployeeEmail,
         password: newEmployeePassword,
         nombre: newEmployeeName.trim(),
       });
       const addedEmployee = response.data;
 
-      setEmployees(prev => [...prev, addedEmployee]);
-      setNewEmployeeName(''); setNewEmployeeEmail(''); setNewEmployeePassword('');
-      setSuccessMessage(`Empleado ${addedEmployee.nombre || addedEmployee.email} agregado exitosamente.`);
+      setEmployees((prev) => [...prev, addedEmployee]);
+      setNewEmployeeName("");
+      setNewEmployeeEmail("");
+      setNewEmployeePassword("");
+      setSuccessMessage(
+        `Empleado ${
+          addedEmployee.nombre || addedEmployee.email
+        } agregado exitosamente.`
+      );
       clearMessages();
     } catch (err) {
       console.error("Error al agregar empleado:", err);
-      setAddError(err.message || 'No se pudo agregar el empleado.');
+      setAddError(err.message || "No se pudo agregar el empleado.");
       clearMessages();
     } finally {
       setAdding(false);
@@ -134,9 +165,10 @@ function ManageEmployees() {
   // Edit Employee - Open Modal
   const handleEditClick = (employee) => {
     setEditingEmployee(employee);
-    setEditName(employee.nombre || '');
+    setEditName(employee.nombre || "");
     setEditIsActive(employee.isActive !== undefined ? employee.isActive : true);
-    setEditError(''); setSuccessMessage('');
+    setEditError("");
+    setSuccessMessage("");
     setIsModalOpen(true);
   };
 
@@ -144,11 +176,14 @@ function ManageEmployees() {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editName.trim() || !editingEmployee) {
-      setEditError('El nombre del empleado no puede estar vacío.');
+      setEditError("El nombre del empleado no puede estar vacío.");
       clearMessages();
       return;
     }
-    setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
+    setSaving(true);
+    setEditError("");
+    setListError("");
+    setSuccessMessage("");
     try {
       const response = await apiClient.put(`/employees/${editingEmployee.id}`, {
         nombre: editName.trim(),
@@ -156,13 +191,21 @@ function ManageEmployees() {
       });
       const updatedEmployee = response.data;
 
-      setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === updatedEmployee.id ? updatedEmployee : emp
+        )
+      );
       closeModal();
-      setSuccessMessage(`Empleado "${updatedEmployee.nombre || updatedEmployee.email}" actualizado exitosamente.`);
+      setSuccessMessage(
+        `Empleado "${
+          updatedEmployee.nombre || updatedEmployee.email
+        }" actualizado exitosamente.`
+      );
       clearMessages();
     } catch (err) {
       console.error("Error al actualizar empleado:", err);
-      setEditError(err.message || 'No se pudo actualizar el empleado.');
+      setEditError(err.message || "No se pudo actualizar el empleado.");
       clearMessages();
     } finally {
       setSaving(false);
@@ -171,18 +214,36 @@ function ManageEmployees() {
 
   // Delete Employee (Logical Delete)
   const handleDeleteClick = async (employeeId, employeeName) => {
-    if (window.confirm(`¿Estás seguro de que deseas marcar como inactivo al empleado "${employeeName || 'N/A'}"? No podrá iniciar sesión.`)) {
-      setListError(''); setSuccessMessage('');
+    if (
+      window.confirm(
+        `¿Estás seguro de que deseas marcar como inactivo al empleado "${
+          employeeName || "N/A"
+        }"? No podrá iniciar sesión.`
+      )
+    ) {
+      setListError("");
+      setSuccessMessage("");
       try {
-        const response = await apiClient.patch(`/employees/${employeeId}/toggle-status`);
+        const response = await apiClient.patch(
+          `/employees/${employeeId}/toggle-status`
+        );
         const updatedEmployee = response.data.employee;
 
-        setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
+        setEmployees((prev) =>
+          prev.map((emp) =>
+            emp.id === updatedEmployee.id ? updatedEmployee : emp
+          )
+        );
         setSuccessMessage(response.data.message);
         clearMessages();
       } catch (err) {
         console.error("Error al marcar empleado como inactivo:", err);
-        setListError(err.message || `No se pudo marcar como inactivo al empleado "${employeeName || 'N/A'}".`);
+        setListError(
+          err.message ||
+            `No se pudo marcar como inactivo al empleado "${
+              employeeName || "N/A"
+            }".`
+        );
         clearMessages();
       }
     }
@@ -190,18 +251,36 @@ function ManageEmployees() {
 
   // Activate Employee
   const handleActivateClick = async (employeeId, employeeName) => {
-    if (window.confirm(`¿Estás seguro de que deseas marcar como activo al empleado "${employeeName || 'N/A'}"?`)) {
-      setListError(''); setSuccessMessage('');
+    if (
+      window.confirm(
+        `¿Estás seguro de que deseas marcar como activo al empleado "${
+          employeeName || "N/A"
+        }"?`
+      )
+    ) {
+      setListError("");
+      setSuccessMessage("");
       try {
-        const response = await apiClient.patch(`/employees/${employeeId}/toggle-status`);
+        const response = await apiClient.patch(
+          `/employees/${employeeId}/toggle-status`
+        );
         const updatedEmployee = response.data.employee;
 
-        setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
+        setEmployees((prev) =>
+          prev.map((emp) =>
+            emp.id === updatedEmployee.id ? updatedEmployee : emp
+          )
+        );
         setSuccessMessage(response.data.message);
         clearMessages();
       } catch (err) {
         console.error("Error al marcar empleado como activo:", err);
-        setListError(err.message || `No se pudo marcar como activo al empleado "${employeeName || 'N/A'}".`);
+        setListError(
+          err.message ||
+            `No se pudo marcar como activo al empleado "${
+              employeeName || "N/A"
+            }".`
+        );
         clearMessages();
       }
     }
@@ -210,7 +289,7 @@ function ManageEmployees() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingEmployee(null);
-    setEditName('');
+    setEditName("");
     setEditIsActive(true);
   };
 
@@ -221,67 +300,75 @@ function ManageEmployees() {
     setUploading(false);
     setUploadProgress(0);
     setUploadResults({ success: [], errors: [] });
-    setUploadError('');
+    setUploadError("");
     setIsProcessingComplete(false);
   };
 
   // --- Bulk Upload Handlers ---
 
   const handleFileChange = (event) => {
-    setUploadError('');
+    setUploadError("");
     setParsedData([]);
     setIsProcessingComplete(false);
     setUploadResults({ success: [], errors: [] });
     const file = event.target.files[0];
-    if (file && file.type === 'text/csv') {
+    if (file && file.type === "text/csv") {
       setUploadFile(file);
       parseFile(file);
     } else {
       setUploadFile(null);
-      setUploadError('Por favor selecciona un archivo CSV válido.');
+      setUploadError("Por favor selecciona un archivo CSV válido.");
     }
   };
 
   const parseFile = (file) => {
-     if (!file) return;
-     setUploadError('');
-     Papa.parse(file, {
-       header: true,
-       skipEmptyLines: true,
-       complete: (results) => {
-         if (!results.data || results.data.length === 0) {
-           setUploadError('El archivo CSV está vacío o no se pudo procesar.');
-           setParsedData([]);
-           return;
-         }
-         const headers = Object.keys(results.data[0]);
-         const requiredHeaders = ['Nombre', 'Email'];
-         const hasRequiredHeaders = requiredHeaders.every(h => headers.includes(h));
-         const hasPasswordHeader = headers.some(h => h.toLowerCase() === 'password' || h.toLowerCase() === 'contraseña');
+    if (!file) return;
+    setUploadError("");
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        if (!results.data || results.data.length === 0) {
+          setUploadError("El archivo CSV está vacío o no se pudo procesar.");
+          setParsedData([]);
+          return;
+        }
+        const headers = Object.keys(results.data[0]);
+        const requiredHeaders = ["Nombre", "Email"];
+        const hasRequiredHeaders = requiredHeaders.every((h) =>
+          headers.includes(h)
+        );
+        const hasPasswordHeader = headers.some(
+          (h) =>
+            h.toLowerCase() === "password" || h.toLowerCase() === "contraseña"
+        );
 
-         if (!hasRequiredHeaders) {
-           setUploadError(`El CSV debe contener las columnas: ${requiredHeaders.join(', ')}.`);
-           setParsedData([]);
-           return;
-         }
-         if (hasPasswordHeader) {
-            setUploadError('El archivo CSV NO debe contener una columna de contraseña por seguridad.');
-            setParsedData([]);
-            return;
-         }
+        if (!hasRequiredHeaders) {
+          setUploadError(
+            `El CSV debe contener las columnas: ${requiredHeaders.join(", ")}.`
+          );
+          setParsedData([]);
+          return;
+        }
+        if (hasPasswordHeader) {
+          setUploadError(
+            "El archivo CSV NO debe contener una columna de contraseña por seguridad."
+          );
+          setParsedData([]);
+          return;
+        }
 
-         const validData = results.data.filter(row => row.Email && row.Nombre);
-         if (validData.length !== results.data.length) {
-             setUploadError('Algunas filas no tienen Nombre o Email.');
-         }
-         setParsedData(validData);
-
-       },
-       error: (error) => {
-         setUploadError(`Error al procesar el archivo CSV: ${error.message}`);
-         setParsedData([]);
-       }
-     });
+        const validData = results.data.filter((row) => row.Email && row.Nombre);
+        if (validData.length !== results.data.length) {
+          setUploadError("Algunas filas no tienen Nombre o Email.");
+        }
+        setParsedData(validData);
+      },
+      error: (error) => {
+        setUploadError(`Error al procesar el archivo CSV: ${error.message}`);
+        setParsedData([]);
+      },
+    });
   };
 
   // Simple random password generator (for MVP - consider stronger generation later)
@@ -296,11 +383,13 @@ function ManageEmployees() {
 
   const handleBulkUpload = async () => {
     if (!adminUserData?.company?.id) {
-        setUploadError("No se puede iniciar la carga masiva: falta información de la empresa del administrador.");
-        return;
+      setUploadError(
+        "No se puede iniciar la carga masiva: falta información de la empresa del administrador."
+      );
+      return;
     }
     if (parsedData.length === 0) {
-      setUploadError('No hay datos válidos de empleados para cargar.');
+      setUploadError("No hay datos válidos de empleados para cargar.");
       return;
     }
     setUploading(true);
@@ -308,23 +397,31 @@ function ManageEmployees() {
     setUploadResults({ success: [], errors: [] });
     setIsProcessingComplete(false);
 
-    const employeesToUpload = parsedData.map(row => ({
-        nombre: row.Nombre?.trim(),
-        email: row.Email?.trim(),
+    const employeesToUpload = parsedData.map((row) => ({
+      nombre: row.Nombre?.trim(),
+      email: row.Email?.trim(),
     }));
 
     try {
-        const response = await apiClient.post('/employees/bulk-upload', employeesToUpload);
-        const backendResults = response.data;
-        setUploadResults(backendResults);
+      const response = await apiClient.post(
+        "/employees/bulk-upload",
+        employeesToUpload
+      );
+      const backendResults = response.data;
+      setUploadResults(backendResults);
     } catch (err) {
-        setUploadError(err.message || 'Ocurrió un error inesperado durante la carga masiva.');
-        setUploadResults({ success: [], errors: [{ email: 'N/A', error: err.message || 'Error en la API' }] });
+      setUploadError(
+        err.message || "Ocurrió un error inesperado durante la carga masiva."
+      );
+      setUploadResults({
+        success: [],
+        errors: [{ email: "N/A", error: err.message || "Error en la API" }],
+      });
     } finally {
-        setUploading(false);
-        setIsProcessingComplete(true);
-        setUploadProgress(100);
-        fetchEmployees();
+      setUploading(false);
+      setIsProcessingComplete(true);
+      setUploadProgress(100);
+      fetchEmployees();
     }
   };
 
@@ -334,18 +431,18 @@ function ManageEmployees() {
     let textContent = "Fideliz - Carga Masiva de Empleados\n";
     textContent += "========================================\n\n";
 
-    uploadResults.success.forEach(user => {
+    uploadResults.success.forEach((user) => {
       textContent += `Email: ${user.email}\n`;
       textContent += `Contraseña Temporal: ${user.tempPassword}\n`;
       textContent += `----------------------------------------\n`;
     });
 
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8;' });
+    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", "credenciales_carga_masiva.txt");
-    link.style.visibility = 'hidden';
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
 
     link.click();
@@ -354,48 +451,107 @@ function ManageEmployees() {
     URL.revokeObjectURL(url); // Free up memory
   };
 
-
   // Define Tailwind classes for table cells - Refined
-  const thStyle = "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
+  const thStyle =
+    "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
   const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
-       {/* Header Row */}
-       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-         <h1 className="text-3xl font-bold text-gray-800">Administrar Empleados</h1>
-         <Button onClick={() => setIsBulkModalOpen(true)} variant="secondary" className="w-full sm:w-auto inline-flex items-center justify-center">
-            <ArrowUpTrayIcon className="h-5 w-5 mr-1.5" />
-            Carga Masiva de Empleados
-         </Button>
-       </div>
-
+      {/* Header Row */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Administrar Empleados
+        </h1>
+        <Button
+          onClick={() => setIsBulkModalOpen(true)}
+          variant="secondary"
+          className="w-full sm:w-auto inline-flex items-center justify-center"
+        >
+          <ArrowUpTrayIcon className="h-5 w-5 mr-1.5" />
+          Carga Masiva de Empleados
+        </Button>
+      </div>
 
       {/* Add Employee Form - Improved Layout */}
-      <form onSubmit={handleAddEmployee} className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
-         <h2 className="text-lg font-medium text-gray-700">Agregar Nuevo Empleado</h2>
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-           <div>
-             <label htmlFor="new-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-             <Input id="new-employee-name" type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="Juan Pérez" required className="mt-0 w-full"/>
-           </div>
-           <div>
-             <label htmlFor="new-employee-email" className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-             <Input id="new-employee-email" type="email" value={newEmployeeEmail} onChange={(e) => setNewEmployeeEmail(e.target.value)} placeholder="juan.perez@empresa.com" required className="mt-0 w-full"/>
-           </div>
-           <div>
-             <label htmlFor="new-employee-password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-             <Input id="new-employee-password" type="password" value={newEmployeePassword} onChange={(e) => setNewEmployeePassword(e.target.value)} placeholder="Mín. 6 caracteres" required minLength="6" className="mt-0 w-full"/>
-           </div>
-         </div>
-         {/* Use Alert for add errors */}
-         {addError && <Alert type="error">{addError}</Alert>}
-         <div className="flex justify-end">
-           <Button type="submit" disabled={adding} variant="primary" className="inline-flex items-center">
-             {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PlusIcon className="h-5 w-5 mr-1.5"/>}
-             {adding ? 'Agregando...' : 'Agregar Empleado'}
-           </Button>
-         </div>
+      <form
+        onSubmit={handleAddEmployee}
+        className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4"
+      >
+        <h2 className="text-lg font-medium text-gray-700">
+          Agregar Nuevo Empleado
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label
+              htmlFor="new-employee-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Nombre Completo
+            </label>
+            <Input
+              id="new-employee-name"
+              type="text"
+              value={newEmployeeName}
+              onChange={(e) => setNewEmployeeName(e.target.value)}
+              placeholder="Juan Pérez"
+              required
+              className="mt-0 w-full"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="new-employee-email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Correo Electrónico
+            </label>
+            <Input
+              id="new-employee-email"
+              type="email"
+              value={newEmployeeEmail}
+              onChange={(e) => setNewEmployeeEmail(e.target.value)}
+              placeholder="juan.perez@empresa.com"
+              required
+              className="mt-0 w-full"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="new-employee-password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Contraseña
+            </label>
+            <Input
+              id="new-employee-password"
+              type="password"
+              value={newEmployeePassword}
+              onChange={(e) => setNewEmployeePassword(e.target.value)}
+              placeholder="Mín. 6 caracteres"
+              required
+              minLength="6"
+              className="mt-0 w-full"
+            />
+          </div>
+        </div>
+        {/* Use Alert for add errors */}
+        {addError && <Alert type="error">{addError}</Alert>}
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={adding}
+            variant="primary"
+            className="inline-flex items-center"
+          >
+            {adding ? (
+              <Spinner size="sm" color="text-white" className="mr-2" />
+            ) : (
+              <PlusIcon className="h-5 w-5 mr-1.5" />
+            )}
+            {adding ? "Agregando..." : "Agregar Empleado"}
+          </Button>
+        </div>
       </form>
 
       {/* Display feedback messages */}
@@ -407,7 +563,9 @@ function ManageEmployees() {
       {/* Employees List - Improved Styling */}
       <div className="overflow-x-auto border border-gray-200 rounded-md">
         {loading ? (
-          <div className="flex justify-center items-center p-10"><Spinner size="lg" /></div>
+          <div className="flex justify-center items-center p-10">
+            <Spinner size="lg" />
+          </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
@@ -423,66 +581,90 @@ function ManageEmployees() {
             <tbody className="bg-white divide-y divide-gray-200">
               {employees.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={`${tdStyle} text-center text-gray-500 py-6`}>
+                  <td
+                    colSpan={6}
+                    className={`${tdStyle} text-center text-gray-500 py-6`}
+                  >
                     No se encontraron empleados para esta empresa.
                   </td>
                 </tr>
               ) : (
                 employees.map((employee) => (
-                  <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <tr
+                    key={employee.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                  >
                     <td className={`${tdStyle} font-medium text-gray-900`}>
-                      {employee.nombre || <span className="text-gray-400 italic">Sin Nombre</span>}
+                      {employee.nombre || (
+                        <span className="text-gray-400 italic">Sin Nombre</span>
+                      )}
                     </td>
-                    <td className={`${tdStyle} text-gray-500`}>{employee.email}</td>
+                    <td className={`${tdStyle} text-gray-500`}>
+                      {employee.email}
+                    </td>
                     <td className={`${tdStyle} text-gray-700 font-medium`}>
                       {employee.points ?? 0}
                     </td>
                     <td className={`${tdStyle} text-center`}>
                       {loadingScores ? (
-                        <Spinner size="xs"/>
+                        <Spinner size="xs" />
                       ) : (
-                        <span className={`font-semibold ${
-                          engagementScores[employee.id] >= 2 ? 'text-green-600' :
-                          engagementScores[employee.id] === 1 ? 'text-yellow-600' :
-                          'text-gray-400'
-                        }`}>
-                          {engagementScores[employee.id] ?? '-'}
+                        <span
+                          className={`font-semibold ${
+                            engagementScores[employee.id] >= 2
+                              ? "text-green-600"
+                              : engagementScores[employee.id] === 1
+                              ? "text-yellow-600"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {engagementScores[employee.id] ?? "-"}
                         </span>
                       )}
                     </td>
                     <td className={tdStyle}>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                        employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {employee.isActive ? 'Activo' : 'Inactivo'}
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                          employee.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {employee.isActive ? "Activo" : "Inactivo"}
                       </span>
                     </td>
                     <td className={`${tdStyle} text-right space-x-2 pr-6`}>
-                      <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        onClick={() => handleEditClick(employee)} 
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleEditClick(employee)}
                         className="inline-flex items-center"
                       >
                         <PencilSquareIcon className="h-4 w-4 mr-1" /> Editar
                       </Button>
                       {employee.isActive ? (
-                        <Button 
-                          variant="danger" 
-                          size="sm" 
-                          onClick={() => handleDeleteClick(employee.id, employee.nombre)} 
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() =>
+                            handleDeleteClick(employee.id, employee.nombre)
+                          }
                           className="inline-flex items-center"
                         >
-                          <UserMinusIcon className="h-4 w-4 mr-1" /> Marcar Inactivo
+                          <UserMinusIcon className="h-4 w-4 mr-1" /> Marcar
+                          Inactivo
                         </Button>
                       ) : (
-                        <Button 
-                          variant="success" 
-                          size="sm" 
-                          onClick={() => handleActivateClick(employee.id, employee.nombre)} 
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() =>
+                            handleActivateClick(employee.id, employee.nombre)
+                          }
                           className="inline-flex items-center"
                         >
-                          <UserPlusIcon className="h-4 w-4 mr-1" /> Marcar Activo
+                          <UserPlusIcon className="h-4 w-4 mr-1" /> Marcar
+                          Activo
                         </Button>
                       )}
                     </td>
@@ -494,147 +676,247 @@ function ManageEmployees() {
         )}
       </div>
 
-       {/* Edit Modal - Refined */}
-       {isModalOpen && editingEmployee && (
-         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Editar Empleado: ${editingEmployee.nombre || editingEmployee.email}`}> {/* <-- Corregido */}
-             <form onSubmit={handleSaveEdit} className="space-y-4">
-                 <div>
-                     <label htmlFor="edit-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Nombre del Empleado</label>
-                     <Input id="edit-employee-name" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} required className="mt-0 w-full"/>
-                 </div>
-                 <div>
-                     <label htmlFor="edit-employee-email" className="block text-sm font-medium text-gray-700 mb-1">Correo (Solo lectura)</label>
-                     <Input id="edit-employee-email" type="email" value={editingEmployee.email} readOnly disabled className="bg-gray-100 mt-0 w-full cursor-not-allowed" />
-                 </div>
-                 <div>
-                    <label htmlFor="edit-employee-active" className="flex items-center cursor-pointer">
-                        <input
-                            id="edit-employee-active"
-                            type="checkbox"
-                            checked={editIsActive}
-                            onChange={(e) => setEditIsActive(e.target.checked)}
-                            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">Activo (El usuario puede iniciar sesión)</span>
-                    </label>
-                  </div>
-                  {editError && <Alert type="error">{editError}</Alert>}
-                  <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
-                      <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancelar</Button>
-                      <Button type="submit" variant="primary" disabled={saving} className="inline-flex items-center">
-                        {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PencilSquareIcon className="h-4 w-4 mr-1.5"/>}
-                        {saving ? 'Guardando...' : 'Guardar Cambios'}
-                      </Button>
-                 </div>
-             </form>
-         </Modal>
+      {/* Edit Modal - Refined */}
+      {isModalOpen && editingEmployee && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          title={`Editar Empleado: ${
+            editingEmployee.nombre || editingEmployee.email
+          }`}
+        >
+          {" "}
+          {/* <-- Corregido */}
+          <form onSubmit={handleSaveEdit} className="space-y-4">
+            <div>
+              <label
+                htmlFor="edit-employee-name"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Nombre del Empleado
+              </label>
+              <Input
+                id="edit-employee-name"
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                className="mt-0 w-full"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="edit-employee-email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Correo (Solo lectura)
+              </label>
+              <Input
+                id="edit-employee-email"
+                type="email"
+                value={editingEmployee.email}
+                readOnly
+                disabled
+                className="bg-gray-100 mt-0 w-full cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="edit-employee-active"
+                className="flex items-center cursor-pointer"
+              >
+                <input
+                  id="edit-employee-active"
+                  type="checkbox"
+                  checked={editIsActive}
+                  onChange={(e) => setEditIsActive(e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  Activo (El usuario puede iniciar sesión)
+                </span>
+              </label>
+            </div>
+            {editError && <Alert type="error">{editError}</Alert>}
+            <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={closeModal}
+                disabled={saving}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={saving}
+                className="inline-flex items-center"
+              >
+                {saving ? (
+                  <Spinner size="sm" color="text-white" className="mr-2" />
+                ) : (
+                  <PencilSquareIcon className="h-4 w-4 mr-1.5" />
+                )}
+                {saving ? "Guardando..." : "Guardar Cambios"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
-       {/* Bulk Upload Modal */}
-       <Modal isOpen={isBulkModalOpen} onClose={closeBulkModal} title="Carga Masiva de Empleados (CSV)">
-         <div className="space-y-4">
-           {!uploading && !isProcessingComplete && (
-             <>
-               <p className="text-sm text-gray-600">
-                 Selecciona un archivo CSV con las columnas: <strong>Nombre</strong>, <strong>Email</strong>.
-                 <br />
-                 <strong className="text-red-600">NO</strong> incluyas una columna de contraseña. Las contraseñas temporales serán generadas.
-               </p>
-               <div>
-                 <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Archivo CSV</label>
-                 <input
-                   id="csv-upload"
-                   type="file"
-                   accept=".csv"
-                   onChange={handleFileChange}
-                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                 />
-               </div>
-               {uploadError && <Alert type="error">{uploadError}</Alert>}
-               {parsedData.length > 0 && (
-                 <div className="mt-4 p-3 bg-gray-100 rounded">
-                   <p className="text-sm font-medium text-gray-700">
-                     Se encontraron {parsedData.length} filas de empleados válidas para cargar.
-                   </p>
-                   {/* Optional: Show preview of first few rows */}
-                 </div>
-               )}
-               <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
-                 <Button type="button" variant="secondary" onClick={closeBulkModal}>Cancelar</Button>
-                 <Button
-                   type="button"
-                   variant="primary"
-                   onClick={handleBulkUpload}
-                   disabled={parsedData.length === 0 || uploading}
-                   className="inline-flex items-center"
-                 >
-                   <ArrowUpTrayIcon className="h-5 w-5 mr-1.5" />
-                   Iniciar Carga
-                 </Button>
-               </div>
-             </>
-           )}
-
-           {uploading && (
-             <div className="text-center py-6">
-               <Spinner size="lg" />
-               <p className="mt-3 text-lg font-medium text-gray-700">Cargando empleados...</p>
-               <p className="text-sm text-gray-500">Progreso: {uploadProgress.toFixed(0)}%</p>
-               {/* Progress Bar */}
-               <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                 <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
-               </div>
-             </div>
-           )}
-
-           {isProcessingComplete && (
-             <div>
-               <h3 className="text-lg font-medium text-gray-900 mb-3">Carga Completa</h3>
-               {uploadResults.success.length > 0 && (
-                 <div className="mb-4">
-                   <h4 className="text-md font-semibold text-green-700 mb-2">Creados Exitosamente ({uploadResults.success.length}):</h4>
-                   <div className="max-h-40 overflow-y-auto border rounded p-2 bg-green-50 text-xs space-y-1">
-                     {uploadResults.success.map((s, index) => (
-                       <p key={index}>
-                         <strong>{s.name}</strong> ({s.email}) - Contraseña Temporal: <code className="bg-gray-200 px-1 rounded">{s.tempPassword}</code>
-                       </p>
-                     ))}
-                   </div>
-                    <p className="text-xs text-orange-600 mt-2"><strong>Importante:</strong> Por favor distribuye estas contraseñas temporales de forma segura a los empleados correspondientes.</p>
-                 </div>
-               )}
-               {uploadResults.errors.length > 0 && (
-                 <div className="mb-4">
-                   <h4 className="text-md font-semibold text-red-700 mb-2">Errores ({uploadResults.errors.length}):</h4>
-                   <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
-                     {uploadResults.errors.map((e, index) => (
-                       <li key={index}><strong>{e.email}:</strong> {e.error}</li>
-                     ))}
-                    </ul>
-                  </div>
-                )}
-                 {/* Download Button */}
-                 {uploadResults.success.length > 0 && (
-                    <div className="mt-4">
-                       <Button
-                         type="button"
-                         variant="outline"
-                         onClick={handleDownloadCredentials}
-                         className="inline-flex items-center"
-                       >
-                         <ArrowDownTrayIcon className="h-5 w-5 mr-1.5" />
-                         Descargar Credenciales (.csv)
-                          </Button>
-                      </div>
-                   )}
-                  <div className="pt-4 flex justify-end border-t border-gray-200 mt-4">
-                    <Button type="button" variant="secondary" onClick={closeBulkModal}>Cerrar</Button>
-                  </div>
+      {/* Bulk Upload Modal */}
+      <Modal
+        isOpen={isBulkModalOpen}
+        onClose={closeBulkModal}
+        title="Carga Masiva de Empleados (CSV)"
+      >
+        <div className="space-y-4">
+          {!uploading && !isProcessingComplete && (
+            <>
+              <p className="text-sm text-gray-600">
+                Selecciona un archivo CSV con las columnas:{" "}
+                <strong>Nombre</strong>, <strong>Email</strong>.
+                <br />
+                <strong className="text-red-600">NO</strong> incluyas una
+                columna de contraseña. Las contraseñas temporales serán
+                generadas.
+              </p>
+              <div>
+                <label
+                  htmlFor="csv-upload"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Seleccionar Archivo CSV
+                </label>
+                <input
+                  id="csv-upload"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+              </div>
+              {uploadError && <Alert type="error">{uploadError}</Alert>}
+              {parsedData.length > 0 && (
+                <div className="mt-4 p-3 bg-gray-100 rounded">
+                  <p className="text-sm font-medium text-gray-700">
+                    Se encontraron {parsedData.length} filas de empleados
+                    válidas para cargar.
+                  </p>
+                  {/* Optional: Show preview of first few rows */}
                 </div>
-           )}
-         </div>
-       </Modal>
+              )}
+              <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={closeBulkModal}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleBulkUpload}
+                  disabled={parsedData.length === 0 || uploading}
+                  className="inline-flex items-center"
+                >
+                  <ArrowUpTrayIcon className="h-5 w-5 mr-1.5" />
+                  Iniciar Carga
+                </Button>
+              </div>
+            </>
+          )}
 
+          {uploading && (
+            <div className="text-center py-6">
+              <Spinner size="lg" />
+              <p className="mt-3 text-lg font-medium text-gray-700">
+                Cargando empleados...
+              </p>
+              <p className="text-sm text-gray-500">
+                Progreso: {uploadProgress.toFixed(0)}%
+              </p>
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div
+                  className="bg-indigo-600 h-2.5 rounded-full"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {isProcessingComplete && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">
+                Carga Completa
+              </h3>
+              {uploadResults.success.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-md font-semibold text-green-700 mb-2">
+                    Creados Exitosamente ({uploadResults.success.length}):
+                  </h4>
+                  <div className="max-h-40 overflow-y-auto border rounded p-2 bg-green-50 text-xs space-y-1">
+                    {uploadResults.success.map((s, index) => (
+                      <p key={index}>
+                        <strong>{s.name}</strong> ({s.email}) - Contraseña
+                        Temporal:{" "}
+                        <code className="bg-gray-200 px-1 rounded">
+                          {s.tempPassword}
+                        </code>
+                      </p>
+                    ))}
+                  </div>
+                  <p className="text-xs text-orange-600 mt-2">
+                    <strong>Importante:</strong> Por favor distribuye estas
+                    contraseñas temporales de forma segura a los empleados
+                    correspondientes.
+                  </p>
+                </div>
+              )}
+              {uploadResults.errors.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-md font-semibold text-red-700 mb-2">
+                    Errores ({uploadResults.errors.length}):
+                  </h4>
+                  <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
+                    {uploadResults.errors.map((e, index) => (
+                      <li key={index}>
+                        <strong>{e.email}:</strong> {e.error}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {/* Download Button */}
+              {uploadResults.success.length > 0 && (
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleDownloadCredentials}
+                    className="inline-flex items-center"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5 mr-1.5" />
+                    Descargar Credenciales (.csv)
+                  </Button>
+                </div>
+              )}
+              <div className="pt-4 flex justify-end border-t border-gray-200 mt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={closeBulkModal}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

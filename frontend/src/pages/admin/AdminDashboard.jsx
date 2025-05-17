@@ -98,8 +98,12 @@ function AdminDashboard() {
       } else {
         setLoadingStats(false);
         if (!authLoading) {
-          setStatsError("Los datos de la empresa del usuario no están disponibles para cargar estadísticas.");
-          setInterestError("Los datos de la empresa del usuario no están disponibles para cargar intereses.");
+          setStatsError(
+            "Los datos de la empresa del usuario no están disponibles para cargar estadísticas."
+          );
+          setInterestError(
+            "Los datos de la empresa del usuario no están disponibles para cargar intereses."
+          );
         }
       }
     };
@@ -125,7 +129,9 @@ function AdminDashboard() {
       } else {
         setLoadingInterest(false);
         if (!authLoading) {
-          setInterestError("Los datos de la empresa del usuario no están disponibles para cargar intereses.");
+          setInterestError(
+            "Los datos de la empresa del usuario no están disponibles para cargar intereses."
+          );
         }
       }
     };
@@ -138,8 +144,12 @@ function AdminDashboard() {
       // Handle case where user data failed to load in AuthContext
       setLoadingStats(false);
       setLoadingInterest(false);
-      setStatsError("Los datos del usuario no están disponibles para cargar estadísticas.");
-      setInterestError("Los datos del usuario no están disponibles para cargar intereses.");
+      setStatsError(
+        "Los datos del usuario no están disponibles para cargar estadísticas."
+      );
+      setInterestError(
+        "Los datos del usuario no están disponibles para cargar intereses."
+      );
     }
     // If authLoading is true, we wait for userData
   }, [userData, authLoading]); // Depender de userData y authLoading
@@ -171,7 +181,9 @@ function AdminDashboard() {
             setSelectedJustificationId(activeJustList[0].id);
         } catch (err) {
           console.error("Error fetching modal data:", err);
-          setAssignError(err.message || "No se pudieron cargar los datos para el modal.");
+          setAssignError(
+            err.message || "No se pudieron cargar los datos para el modal."
+          );
         } finally {
           setLoadingModalData(false);
         }
