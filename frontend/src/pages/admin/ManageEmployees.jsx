@@ -406,29 +406,29 @@ function ManageEmployees() {
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
        {/* Header Row */}
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-         <h1 className="text-3xl font-bold text-gray-800">Manage Employees</h1>
+         <h1 className="text-3xl font-bold text-gray-800">Administrar Empleados</h1>
          <Button onClick={() => setIsBulkModalOpen(true)} variant="secondary" className="w-full sm:w-auto inline-flex items-center justify-center">
             <ArrowUpTrayIcon className="h-5 w-5 mr-1.5" />
-            Bulk Upload Employees
+            Carga Masiva de Empleados
          </Button>
        </div>
 
 
       {/* Add Employee Form - Improved Layout */}
       <form onSubmit={handleAddEmployee} className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4">
-         <h2 className="text-lg font-medium text-gray-700">Add New Employee</h2>
+         <h2 className="text-lg font-medium text-gray-700">Agregar Nuevo Empleado</h2>
          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            <div>
-             <label htmlFor="new-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-             <Input id="new-employee-name" type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="John Doe" required className="mt-0 w-full"/>
+             <label htmlFor="new-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+             <Input id="new-employee-name" type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="Juan Pérez" required className="mt-0 w-full"/>
            </div>
            <div>
-             <label htmlFor="new-employee-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-             <Input id="new-employee-email" type="email" value={newEmployeeEmail} onChange={(e) => setNewEmployeeEmail(e.target.value)} placeholder="john.doe@company.com" required className="mt-0 w-full"/>
+             <label htmlFor="new-employee-email" className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+             <Input id="new-employee-email" type="email" value={newEmployeeEmail} onChange={(e) => setNewEmployeeEmail(e.target.value)} placeholder="juan.perez@empresa.com" required className="mt-0 w-full"/>
            </div>
            <div>
-             <label htmlFor="new-employee-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-             <Input id="new-employee-password" type="password" value={newEmployeePassword} onChange={(e) => setNewEmployeePassword(e.target.value)} placeholder="Min. 6 characters" required minLength="6" className="mt-0 w-full"/>
+             <label htmlFor="new-employee-password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+             <Input id="new-employee-password" type="password" value={newEmployeePassword} onChange={(e) => setNewEmployeePassword(e.target.value)} placeholder="Mín. 6 caracteres" required minLength="6" className="mt-0 w-full"/>
            </div>
          </div>
          {/* Use Alert for add errors */}
@@ -436,7 +436,7 @@ function ManageEmployees() {
          <div className="flex justify-end">
            <Button type="submit" disabled={adding} variant="primary" className="inline-flex items-center">
              {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PlusIcon className="h-5 w-5 mr-1.5"/>}
-             {adding ? 'Adding...' : 'Add Single Employee'}
+             {adding ? 'Agregando...' : 'Agregar Empleado'}
            </Button>
          </div>
       </form>
@@ -455,26 +455,26 @@ function ManageEmployees() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className={thStyle}>Name</th>
-                <th className={thStyle}>Email</th>
-                <th className={thStyle}>Points</th>
-                <th className={thStyle}>Engagement Score</th> {/* New Column */}
-                <th className={thStyle}>Status</th>
-                <th className={`${thStyle} text-right pr-6`}>Actions</th>
+                <th className={thStyle}>Nombre</th>
+                <th className={thStyle}>Correo</th>
+                <th className={thStyle}>Puntos</th>
+                <th className={thStyle}>Puntaje de Enganche</th>
+                <th className={thStyle}>Estado</th>
+                <th className={`${thStyle} text-right pr-6`}>Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {employees.length === 0 ? (
                 <tr>
                   <td colSpan={6} className={`${tdStyle} text-center text-gray-500 py-6`}>
-                    No employees found for this company.
+                    No se encontraron empleados para esta empresa.
                   </td>
                 </tr>
               ) : (
                 employees.map((employee) => (
                   <tr key={employee.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className={`${tdStyle} font-medium text-gray-900`}>
-                      {employee.nombre || <span className="text-gray-400 italic">No Name</span>}
+                      {employee.nombre || <span className="text-gray-400 italic">Sin Nombre</span>}
                     </td>
                     <td className={`${tdStyle} text-gray-500`}>{employee.email}</td>
                     <td className={`${tdStyle} text-gray-700 font-medium`}>
@@ -497,7 +497,7 @@ function ManageEmployees() {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                         employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {employee.isActive ? 'Active' : 'Inactive'}
+                        {employee.isActive ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
                     <td className={`${tdStyle} text-right space-x-2 pr-6`}>
@@ -507,7 +507,7 @@ function ManageEmployees() {
                         onClick={() => handleEditClick(employee)} 
                         className="inline-flex items-center"
                       >
-                        <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
+                        <PencilSquareIcon className="h-4 w-4 mr-1" /> Editar
                       </Button>
                       {employee.isActive ? (
                         <Button 
@@ -516,7 +516,7 @@ function ManageEmployees() {
                           onClick={() => handleDeleteClick(employee.id, employee.nombre)} 
                           className="inline-flex items-center"
                         >
-                          <UserMinusIcon className="h-4 w-4 mr-1" /> Set Inactive
+                          <UserMinusIcon className="h-4 w-4 mr-1" /> Marcar Inactivo
                         </Button>
                       ) : (
                         <Button 
@@ -525,7 +525,7 @@ function ManageEmployees() {
                           onClick={() => handleActivateClick(employee.id, employee.nombre)} 
                           className="inline-flex items-center"
                         >
-                          <UserPlusIcon className="h-4 w-4 mr-1" /> Set Active
+                          <UserPlusIcon className="h-4 w-4 mr-1" /> Marcar Activo
                         </Button>
                       )}
                     </td>
@@ -539,14 +539,14 @@ function ManageEmployees() {
 
        {/* Edit Modal - Refined */}
        {isModalOpen && editingEmployee && (
-         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Edit Employee: ${editingEmployee.nombre || editingEmployee.email}`}> {/* <-- Corregido */}
+         <Modal isOpen={isModalOpen} onClose={closeModal} title={`Editar Empleado: ${editingEmployee.nombre || editingEmployee.email}`}> {/* <-- Corregido */}
              <form onSubmit={handleSaveEdit} className="space-y-4">
                  <div>
-                     <label htmlFor="edit-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
+                     <label htmlFor="edit-employee-name" className="block text-sm font-medium text-gray-700 mb-1">Nombre del Empleado</label>
                      <Input id="edit-employee-name" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} required className="mt-0 w-full"/>
                  </div>
                  <div>
-                     <label htmlFor="edit-employee-email" className="block text-sm font-medium text-gray-700 mb-1">Email (Read-only)</label>
+                     <label htmlFor="edit-employee-email" className="block text-sm font-medium text-gray-700 mb-1">Correo (Solo lectura)</label>
                      <Input id="edit-employee-email" type="email" value={editingEmployee.email} readOnly disabled className="bg-gray-100 mt-0 w-full cursor-not-allowed" />
                  </div>
                  <div>
@@ -558,15 +558,15 @@ function ManageEmployees() {
                             onChange={(e) => setEditIsActive(e.target.checked)}
                             className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Active (User can log in)</span>
+                        <span className="ml-2 text-sm text-gray-700">Activo (El usuario puede iniciar sesión)</span>
                     </label>
                   </div>
                   {editError && <Alert type="error">{editError}</Alert>}
                   <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
-                      <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancel</Button>
+                      <Button type="button" variant="secondary" onClick={closeModal} disabled={saving}>Cancelar</Button>
                       <Button type="submit" variant="primary" disabled={saving} className="inline-flex items-center">
                         {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PencilSquareIcon className="h-4 w-4 mr-1.5"/>}
-                        {saving ? 'Saving...' : 'Save Changes'}
+                        {saving ? 'Guardando...' : 'Guardar Cambios'}
                       </Button>
                  </div>
              </form>
@@ -574,17 +574,17 @@ function ManageEmployees() {
       )}
 
        {/* Bulk Upload Modal */}
-       <Modal isOpen={isBulkModalOpen} onClose={closeBulkModal} title="Bulk Upload Employees (CSV)">
+       <Modal isOpen={isBulkModalOpen} onClose={closeBulkModal} title="Carga Masiva de Empleados (CSV)">
          <div className="space-y-4">
            {!uploading && !isProcessingComplete && (
              <>
                <p className="text-sm text-gray-600">
-                 Select a CSV file with columns: <strong>Nombre</strong>, <strong>Email</strong>.
+                 Selecciona un archivo CSV con las columnas: <strong>Nombre</strong>, <strong>Email</strong>.
                  <br />
-                 Do <strong className="text-red-600">NOT</strong> include a password column. Temporary passwords will be generated.
+                 <strong className="text-red-600">NO</strong> incluyas una columna de contraseña. Las contraseñas temporales serán generadas.
                </p>
                <div>
-                 <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700 mb-1">Select CSV File</label>
+                 <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Archivo CSV</label>
                  <input
                    id="csv-upload"
                    type="file"
@@ -597,13 +597,13 @@ function ManageEmployees() {
                {parsedData.length > 0 && (
                  <div className="mt-4 p-3 bg-gray-100 rounded">
                    <p className="text-sm font-medium text-gray-700">
-                     Found {parsedData.length} valid employee rows to upload.
+                     Se encontraron {parsedData.length} filas de empleados válidas para cargar.
                    </p>
                    {/* Optional: Show preview of first few rows */}
                  </div>
                )}
                <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
-                 <Button type="button" variant="secondary" onClick={closeBulkModal}>Cancel</Button>
+                 <Button type="button" variant="secondary" onClick={closeBulkModal}>Cancelar</Button>
                  <Button
                    type="button"
                    variant="primary"
@@ -612,7 +612,7 @@ function ManageEmployees() {
                    className="inline-flex items-center"
                  >
                    <ArrowUpTrayIcon className="h-5 w-5 mr-1.5" />
-                   Start Upload
+                   Iniciar Carga
                  </Button>
                </div>
              </>
@@ -621,8 +621,8 @@ function ManageEmployees() {
            {uploading && (
              <div className="text-center py-6">
                <Spinner size="lg" />
-               <p className="mt-3 text-lg font-medium text-gray-700">Uploading Employees...</p>
-               <p className="text-sm text-gray-500">Progress: {uploadProgress.toFixed(0)}%</p>
+               <p className="mt-3 text-lg font-medium text-gray-700">Cargando empleados...</p>
+               <p className="text-sm text-gray-500">Progreso: {uploadProgress.toFixed(0)}%</p>
                {/* Progress Bar */}
                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                  <div className="bg-indigo-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
@@ -632,23 +632,23 @@ function ManageEmployees() {
 
            {isProcessingComplete && (
              <div>
-               <h3 className="text-lg font-medium text-gray-900 mb-3">Upload Complete</h3>
+               <h3 className="text-lg font-medium text-gray-900 mb-3">Carga Completa</h3>
                {uploadResults.success.length > 0 && (
                  <div className="mb-4">
-                   <h4 className="text-md font-semibold text-green-700 mb-2">Successfully Created ({uploadResults.success.length}):</h4>
+                   <h4 className="text-md font-semibold text-green-700 mb-2">Creados Exitosamente ({uploadResults.success.length}):</h4>
                    <div className="max-h-40 overflow-y-auto border rounded p-2 bg-green-50 text-xs space-y-1">
                      {uploadResults.success.map((s, index) => (
                        <p key={index}>
-                         <strong>{s.name}</strong> ({s.email}) - Temp Password: <code className="bg-gray-200 px-1 rounded">{s.tempPassword}</code>
+                         <strong>{s.name}</strong> ({s.email}) - Contraseña Temporal: <code className="bg-gray-200 px-1 rounded">{s.tempPassword}</code>
                        </p>
                      ))}
                    </div>
-                    <p className="text-xs text-orange-600 mt-2"><strong>Important:</strong> Please securely distribute these temporary passwords to the respective employees.</p>
+                    <p className="text-xs text-orange-600 mt-2"><strong>Importante:</strong> Por favor distribuye estas contraseñas temporales de forma segura a los empleados correspondientes.</p>
                  </div>
                )}
                {uploadResults.errors.length > 0 && (
                  <div className="mb-4">
-                   <h4 className="text-md font-semibold text-red-700 mb-2">Errors ({uploadResults.errors.length}):</h4>
+                   <h4 className="text-md font-semibold text-red-700 mb-2">Errores ({uploadResults.errors.length}):</h4>
                    <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
                      {uploadResults.errors.map((e, index) => (
                        <li key={index}><strong>{e.email}:</strong> {e.error}</li>
@@ -666,12 +666,12 @@ function ManageEmployees() {
                          className="inline-flex items-center"
                        >
                          <ArrowDownTrayIcon className="h-5 w-5 mr-1.5" />
-                         Download Credentials (.csv)
+                         Descargar Credenciales (.csv)
                           </Button>
                       </div>
                    )}
                   <div className="pt-4 flex justify-end border-t border-gray-200 mt-4">
-                    <Button type="button" variant="secondary" onClick={closeBulkModal}>Close</Button>
+                    <Button type="button" variant="secondary" onClick={closeBulkModal}>Cerrar</Button>
                   </div>
                 </div>
            )}
