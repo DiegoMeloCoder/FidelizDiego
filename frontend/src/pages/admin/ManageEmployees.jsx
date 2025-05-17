@@ -57,89 +57,74 @@ function ManageEmployees() {
 
   // Fetch employees
   useEffect(() => {
-    // Depend on the nested company ID from the API response
-    if (adminUserData?.company?.id) { // Fetch only if ID is available
+    if (adminUserData?.company?.id) {
         fetchEmployees();
-    } else if (adminUserData !== null) { // If userData is loaded but no companyId
-        setListError("Admin company information not available.");
+    } else if (adminUserData !== null) {
+        setListError("La información de la empresa del administrador no está disponible.");
         setLoading(false);
     }
-    // If adminUserData is null (still loading initial profile), loading remains true
-  }, [adminUserData?.company?.id]); // <-- Use nested ID
+  }, [adminUserData?.company?.id]);
 
   const fetchEmployees = async () => {
-     // Check the nested company ID (redundant check removed, handled by useEffect dependency)
-     // if (!adminUserData?.company?.id) {
-     //    setListError("Admin company information not available."); setLoading(false); return;
-     // }
-      setLoading(true); setListError(''); setSuccessMessage('');
-      try {
-        // Fetch employees first
-        const empResponse = await apiClient.get('/employees');
-        const empList = empResponse.data.map(emp => ({ ...emp, isActive: emp.isActive !== undefined ? emp.isActive : true }));
-        setEmployees(empList);
+    setLoading(true); setListError(''); setSuccessMessage('');
+    try {
+      const empResponse = await apiClient.get('/employees');
+      const empList = empResponse.data.map(emp => ({ ...emp, isActive: emp.isActive !== undefined ? emp.isActive : true }));
+      setEmployees(empList);
 
-        // Then fetch engagement scores
-        if (empList.length > 0) {
-            setLoadingScores(true);
-            try {
-                const scoreResponse = await apiClient.get('/engagement/scores'); // Uses admin's companyId implicitly
-                // Convert array to map for easy lookup
-                const scoreMap = scoreResponse.data.reduce((acc, scoreData) => {
-                    acc[scoreData.employeeId] = scoreData.engagementScore;
-                    return acc;
-                }, {});
-                setEngagementScores(scoreMap);
-            } catch (scoreErr) {
-                 console.error("Error fetching engagement scores:", scoreErr);
-                 // Don't overwrite listError, maybe show a separate score error? For now, just log.
-                 setEngagementScores({}); // Clear scores on error
-            } finally {
-                 setLoadingScores(false);
-            }
-        } else {
-             setEngagementScores({}); // No employees, no scores
-        }
-
-      } catch (err) {
-        console.error("Error fetching employees:", err);
-        setListError(err.message || 'Failed to load employees.');
-        clearMessages();
-      } finally {
-        setLoading(false);
+      if (empList.length > 0) {
+          setLoadingScores(true);
+          try {
+              const scoreResponse = await apiClient.get('/engagement/scores');
+              const scoreMap = scoreResponse.data.reduce((acc, scoreData) => {
+                  acc[scoreData.employeeId] = scoreData.engagementScore;
+                  return acc;
+              }, {});
+              setEngagementScores(scoreMap);
+          } catch (scoreErr) {
+               console.error("Error al obtener los puntajes de engagement:", scoreErr);
+               setEngagementScores({});
+          } finally {
+               setLoadingScores(false);
+          }
+      } else {
+           setEngagementScores({});
       }
+
+    } catch (err) {
+      console.error("Error al obtener empleados:", err);
+      setListError(err.message || 'No se pudieron cargar los empleados.');
+      clearMessages();
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Add Employee Handler
   const handleAddEmployee = async (e) => {
-     e.preventDefault();
+    e.preventDefault();
     if (!newEmployeeName.trim() || !newEmployeeEmail.trim() || !newEmployeePassword.trim()) {
-      setAddError('Please fill in all fields.'); clearMessages(); return;
+      setAddError('Por favor completa todos los campos.');
+      clearMessages();
+      return;
     }
-    // Backend uses the authenticated admin's company ID, no need to check here explicitly
-    // if (!adminUserData?.company?.id) {
-    //   setAddError("Cannot add employee: Admin's company ID is missing."); clearMessages(); return;
-    // }
 
     setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
     try {
-      // Call backend API to create employee (handles Auth and DB)
       const response = await apiClient.post('/employees', {
         email: newEmployeeEmail,
         password: newEmployeePassword,
         nombre: newEmployeeName.trim(),
-        // companyId is implicitly taken from the authenticated Admin user on the backend
       });
-      const addedEmployee = response.data; // API returns the created employee profile
+      const addedEmployee = response.data;
 
-      // Update local state
       setEmployees(prev => [...prev, addedEmployee]);
       setNewEmployeeName(''); setNewEmployeeEmail(''); setNewEmployeePassword('');
-      setSuccessMessage(`Employee ${addedEmployee.nombre || addedEmployee.email} added successfully.`);
+      setSuccessMessage(`Empleado ${addedEmployee.nombre || addedEmployee.email} agregado exitosamente.`);
       clearMessages();
     } catch (err) {
-      console.error("Error adding employee:", err);
-      setAddError(err.message || 'Failed to add employee. Check console for details.');
+      console.error("Error al agregar empleado:", err);
+      setAddError(err.message || 'No se pudo agregar el empleado.');
       clearMessages();
     } finally {
       setAdding(false);
@@ -149,7 +134,7 @@ function ManageEmployees() {
   // Edit Employee - Open Modal
   const handleEditClick = (employee) => {
     setEditingEmployee(employee);
-    setEditName(employee.nombre || ''); // <-- Corregido
+    setEditName(employee.nombre || '');
     setEditIsActive(employee.isActive !== undefined ? employee.isActive : true);
     setEditError(''); setSuccessMessage('');
     setIsModalOpen(true);
@@ -159,25 +144,25 @@ function ManageEmployees() {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editName.trim() || !editingEmployee) {
-      setEditError('Employee name cannot be empty.'); clearMessages(); return;
+      setEditError('El nombre del empleado no puede estar vacío.');
+      clearMessages();
+      return;
     }
     setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
     try {
-      // Call backend API to update employee (handles Auth and DB)
       const response = await apiClient.put(`/employees/${editingEmployee.id}`, {
         nombre: editName.trim(),
         isActive: editIsActive,
       });
-      const updatedEmployee = response.data; // API returns updated profile
+      const updatedEmployee = response.data;
 
-      // Update local state
       setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
       closeModal();
-      setSuccessMessage(`Employee "${updatedEmployee.nombre || updatedEmployee.email}" updated successfully.`);
+      setSuccessMessage(`Empleado "${updatedEmployee.nombre || updatedEmployee.email}" actualizado exitosamente.`);
       clearMessages();
     } catch (err) {
-      console.error("Error updating employee:", err);
-      setEditError(err.message || 'Failed to update employee.');
+      console.error("Error al actualizar empleado:", err);
+      setEditError(err.message || 'No se pudo actualizar el empleado.');
       clearMessages();
     } finally {
       setSaving(false);
@@ -186,45 +171,37 @@ function ManageEmployees() {
 
   // Delete Employee (Logical Delete)
   const handleDeleteClick = async (employeeId, employeeName) => {
-    // Use nombre for confirmation message
-    if (window.confirm(`Are you sure you want to set employee "${employeeName || 'N/A'}" to inactive? They won't be able to log in.`)) {
+    if (window.confirm(`¿Estás seguro de que deseas marcar como inactivo al empleado "${employeeName || 'N/A'}"? No podrá iniciar sesión.`)) {
       setListError(''); setSuccessMessage('');
-      // TODO: Add button loading state
       try {
-        // Call backend API to toggle status
         const response = await apiClient.patch(`/employees/${employeeId}/toggle-status`);
-        const updatedEmployee = response.data.employee; // API returns updated employee
+        const updatedEmployee = response.data.employee;
 
-        // Update local state
         setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
-        setSuccessMessage(response.data.message); // Use message from API
+        setSuccessMessage(response.data.message);
         clearMessages();
       } catch (err) {
-        console.error("Error setting employee inactive:", err);
-        setListError(err.message || `Failed to set employee "${employeeName || 'N/A'}" to inactive.`);
+        console.error("Error al marcar empleado como inactivo:", err);
+        setListError(err.message || `No se pudo marcar como inactivo al empleado "${employeeName || 'N/A'}".`);
         clearMessages();
       }
     }
   };
 
-   // Activate Employee
-   const handleActivateClick = async (employeeId, employeeName) => {
-    // Use nombre for confirmation message
-    if (window.confirm(`Are you sure you want to set employee "${employeeName || 'N/A'}" to active?`)) {
+  // Activate Employee
+  const handleActivateClick = async (employeeId, employeeName) => {
+    if (window.confirm(`¿Estás seguro de que deseas marcar como activo al empleado "${employeeName || 'N/A'}"?`)) {
       setListError(''); setSuccessMessage('');
-       // TODO: Add button loading state
       try {
-        // Call backend API to toggle status
         const response = await apiClient.patch(`/employees/${employeeId}/toggle-status`);
-        const updatedEmployee = response.data.employee; // API returns updated employee
+        const updatedEmployee = response.data.employee;
 
-        // Update local state
         setEmployees(prev => prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp));
-        setSuccessMessage(response.data.message); // Use message from API
+        setSuccessMessage(response.data.message);
         clearMessages();
       } catch (err) {
-        console.error("Error setting employee active:", err);
-        setListError(err.message || `Failed to set employee "${employeeName || 'N/A'}" to active.`);
+        console.error("Error al marcar empleado como activo:", err);
+        setListError(err.message || `No se pudo marcar como activo al empleado "${employeeName || 'N/A'}".`);
         clearMessages();
       }
     }
@@ -256,13 +233,12 @@ function ManageEmployees() {
     setIsProcessingComplete(false);
     setUploadResults({ success: [], errors: [] });
     const file = event.target.files[0];
-    if (file && file.type === 'text/csv') { // Basic type check
+    if (file && file.type === 'text/csv') {
       setUploadFile(file);
-      // Optionally parse immediately for preview
       parseFile(file);
     } else {
       setUploadFile(null);
-      setUploadError('Please select a valid CSV file.');
+      setUploadError('Por favor selecciona un archivo CSV válido.');
     }
   };
 
@@ -273,42 +249,36 @@ function ManageEmployees() {
        header: true,
        skipEmptyLines: true,
        complete: (results) => {
-         console.log("Parsed CSV Data:", results.data);
-         // Basic Validation
          if (!results.data || results.data.length === 0) {
-           setUploadError('CSV file is empty or could not be parsed.');
+           setUploadError('El archivo CSV está vacío o no se pudo procesar.');
            setParsedData([]);
            return;
          }
          const headers = Object.keys(results.data[0]);
-         const requiredHeaders = ['Nombre', 'Email']; // Case-sensitive for now
+         const requiredHeaders = ['Nombre', 'Email'];
          const hasRequiredHeaders = requiredHeaders.every(h => headers.includes(h));
          const hasPasswordHeader = headers.some(h => h.toLowerCase() === 'password' || h.toLowerCase() === 'contraseña');
 
          if (!hasRequiredHeaders) {
-           setUploadError(`CSV must contain columns: ${requiredHeaders.join(', ')}.`);
+           setUploadError(`El CSV debe contener las columnas: ${requiredHeaders.join(', ')}.`);
            setParsedData([]);
            return;
          }
          if (hasPasswordHeader) {
-            setUploadError('CSV file must NOT contain a Password/Contraseña column for security reasons.');
+            setUploadError('El archivo CSV NO debe contener una columna de contraseña por seguridad.');
             setParsedData([]);
             return;
          }
 
-         // Further validation per row (e.g., valid email format) can be added here or during processing
-         const validData = results.data.filter(row => row.Email && row.Nombre); // Basic check
+         const validData = results.data.filter(row => row.Email && row.Nombre);
          if (validData.length !== results.data.length) {
-             setUploadError('Some rows are missing required Name or Email values.');
-             // Still set parsedData to allow processing valid rows? Or reject whole file?
-             // Let's allow processing valid rows for now.
+             setUploadError('Algunas filas no tienen Nombre o Email.');
          }
          setParsedData(validData);
 
        },
        error: (error) => {
-         console.error("Error parsing CSV:", error);
-         setUploadError(`Error parsing CSV file: ${error.message}`);
+         setUploadError(`Error al procesar el archivo CSV: ${error.message}`);
          setParsedData([]);
        }
      });
@@ -324,47 +294,36 @@ function ManageEmployees() {
     return password;
   } */
 
-   const handleBulkUpload = async () => {
-    // Check admin company ID before starting bulk upload
+  const handleBulkUpload = async () => {
     if (!adminUserData?.company?.id) {
-        setUploadError("Cannot start bulk upload: Admin's company information is missing.");
+        setUploadError("No se puede iniciar la carga masiva: falta información de la empresa del administrador.");
         return;
     }
     if (parsedData.length === 0) {
-      setUploadError('No valid employee data to upload.');
+      setUploadError('No hay datos válidos de empleados para cargar.');
       return;
     }
     setUploading(true);
-    setUploadProgress(0); // Reset progress for API call
+    setUploadProgress(0);
     setUploadResults({ success: [], errors: [] });
     setIsProcessingComplete(false);
 
-    // Prepare data in the format expected by the backend endpoint
     const employeesToUpload = parsedData.map(row => ({
         nombre: row.Nombre?.trim(),
         email: row.Email?.trim(),
     }));
 
     try {
-        console.log(`Sending ${employeesToUpload.length} employees to bulk upload endpoint...`);
-        // Call the dedicated backend endpoint
         const response = await apiClient.post('/employees/bulk-upload', employeesToUpload);
-
-        // Process results from the backend
-        const backendResults = response.data; // Expects { success: [...], errors: [...] }
+        const backendResults = response.data;
         setUploadResults(backendResults);
-        console.log("Bulk upload results:", backendResults);
-
     } catch (err) {
-        console.error("Error during bulk upload API call:", err);
-        setUploadError(err.message || 'An unexpected error occurred during bulk upload.');
-        // Set results to empty if the whole call failed
-        setUploadResults({ success: [], errors: [{ email: 'N/A', error: err.message || 'API Call Failed' }] });
+        setUploadError(err.message || 'Ocurrió un error inesperado durante la carga masiva.');
+        setUploadResults({ success: [], errors: [{ email: 'N/A', error: err.message || 'Error en la API' }] });
     } finally {
         setUploading(false);
         setIsProcessingComplete(true);
-        setUploadProgress(100); // Mark as complete
-        // Fetch updated employee list after bulk add attempt
+        setUploadProgress(100);
         fetchEmployees();
     }
   };
@@ -372,26 +331,24 @@ function ManageEmployees() {
   const handleDownloadCredentials = () => {
     if (uploadResults.success.length === 0) return;
 
-    // Generate plain text content
-    let textContent = "Fideliz - Bulk Employee Upload Credentials\n";
+    let textContent = "Fideliz - Carga Masiva de Empleados\n";
     textContent += "========================================\n\n";
 
     uploadResults.success.forEach(user => {
       textContent += `Email: ${user.email}\n`;
-      textContent += `Temporary Password: ${user.tempPassword}\n`;
+      textContent += `Contraseña Temporal: ${user.tempPassword}\n`;
       textContent += `----------------------------------------\n`;
     });
 
-    // Create Blob and download link
     const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "bulk_upload_credentials.txt"); // Change extension to .txt
+    link.setAttribute("download", "credenciales_carga_masiva.txt");
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
 
-    link.click(); // Trigger download
+    link.click();
 
     document.body.removeChild(link); // Clean up
     URL.revokeObjectURL(url); // Free up memory
