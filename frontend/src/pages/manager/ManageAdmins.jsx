@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 // Firestore and secondary Firebase app imports removed
-import apiClient from '../../services/api'; // Import API client
+import apiClient from "../../services/api"; // Import API client
 // useAuth might not be needed if manager role is confirmed by backend middleware
 // import { useAuth } from '../../contexts/AuthContext.jsx';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import Modal from '../../components/ui/Modal';
-import Spinner from '../../components/ui/Spinner';
-import Alert from '../../components/ui/Alert';
-import { PlusIcon, PencilSquareIcon, UserMinusIcon, UserPlusIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'; // Icons
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import Modal from "../../components/ui/Modal";
+import Spinner from "../../components/ui/Spinner";
+import Alert from "../../components/ui/Alert";
+import {
+  PlusIcon,
+  PencilSquareIcon,
+  UserMinusIcon,
+  UserPlusIcon,
+  BuildingOfficeIcon,
+} from "@heroicons/react/24/outline"; // Icons
 
 function ManageAdmins() {
   // const { currentUser } = useAuth(); // Might not be needed
@@ -16,32 +22,35 @@ function ManageAdmins() {
   const [companies, setCompanies] = useState([]); // Need companies to assign admins
   const [companyMap, setCompanyMap] = useState({}); // For easy lookup of company names
   const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [listError, setListError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Add Form State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newAdminName, setNewAdminName] = useState('');
-  const [newAdminEmail, setNewAdminEmail] = useState('');
-  const [newAdminPassword, setNewAdminPassword] = useState('');
-  const [selectedCompanyId, setSelectedCompanyId] = useState(''); // Company to assign admin to
+  const [newAdminName, setNewAdminName] = useState("");
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState(""); // Company to assign admin to
   const [adding, setAdding] = useState(false);
-  const [addError, setAddError] = useState('');
+  const [addError, setAddError] = useState("");
 
   // Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState("");
   const [editIsActive, setEditIsActive] = useState(true);
   // Maybe add company change later if needed
   // const [editCompanyId, setEditCompanyId] = useState('');
   const [saving, setSaving] = useState(false);
-  const [editError, setEditError] = useState('');
+  const [editError, setEditError] = useState("");
 
   // Function to clear messages
   const clearMessages = () => {
     setTimeout(() => {
-      setAddError(''); setListError(''); setEditError(''); setSuccessMessage('');
+      setAddError("");
+      setListError("");
+      setEditError("");
+      setSuccessMessage("");
     }, 4000);
   };
 
@@ -49,11 +58,11 @@ function ManageAdmins() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      setListError('');
-      setSuccessMessage('');
+      setListError("");
+      setSuccessMessage("");
       try {
         // Fetch Companies using API
-        const companyResponse = await apiClient.get('/companies');
+        const companyResponse = await apiClient.get("/companies");
         const companyList = companyResponse.data;
         setCompanies(companyList);
         const cMap = companyList.reduce((map, company) => {
@@ -62,21 +71,20 @@ function ManageAdmins() {
         }, {});
         setCompanyMap(cMap);
         if (companyList.length > 0) {
-            setSelectedCompanyId(companyList[0].id);
+          setSelectedCompanyId(companyList[0].id);
         }
 
         // Fetch Admins using API
-        const adminResponse = await apiClient.get('/admins');
+        const adminResponse = await apiClient.get("/admins");
         // Ensure isActive defaults to true if missing (though backend should provide it)
-        const adminList = adminResponse.data.map(admin => ({
-            ...admin,
-            isActive: admin.isActive !== undefined ? admin.isActive : true,
+        const adminList = adminResponse.data.map((admin) => ({
+          ...admin,
+          isActive: admin.isActive !== undefined ? admin.isActive : true,
         }));
         setAdmins(adminList);
-
       } catch (err) {
         console.error("Error fetching data:", err);
-        setListError(err.message || 'Failed to load admins or companies.');
+        setListError(err.message || "Failed to load admins or companies.");
         clearMessages();
       } finally {
         setLoading(false);
@@ -87,17 +95,27 @@ function ManageAdmins() {
 
   // --- Handlers for Add/Edit/Toggle ---
 
-   // Add Admin Handler
-   const handleAddAdmin = async (e) => {
+  // Add Admin Handler
+  const handleAddAdmin = async (e) => {
     e.preventDefault();
-    if (!newAdminName.trim() || !newAdminEmail.trim() || !newAdminPassword.trim() || !selectedCompanyId) {
-      setAddError('Please fill in all fields and select a company.'); clearMessages(); return;
+    if (
+      !newAdminName.trim() ||
+      !newAdminEmail.trim() ||
+      !newAdminPassword.trim() ||
+      !selectedCompanyId
+    ) {
+      setAddError("Please fill in all fields and select a company.");
+      clearMessages();
+      return;
     }
-    setAdding(true); setAddError(''); setListError(''); setSuccessMessage('');
+    setAdding(true);
+    setAddError("");
+    setListError("");
+    setSuccessMessage("");
 
     try {
       // Call backend API to create admin (handles both Auth and DB)
-      const response = await apiClient.post('/admins', {
+      const response = await apiClient.post("/admins", {
         email: newAdminEmail,
         password: newAdminPassword,
         nombre: newAdminName.trim(),
@@ -106,17 +124,24 @@ function ManageAdmins() {
       const addedAdmin = response.data; // API returns the created admin profile
 
       // Update local state
-      setAdmins(prev => [...prev, addedAdmin]);
-      setNewAdminName(''); setNewAdminEmail(''); setNewAdminPassword('');
-      setSelectedCompanyId(companies.length > 0 ? companies[0].id : '');
+      setAdmins((prev) => [...prev, addedAdmin]);
+      setNewAdminName("");
+      setNewAdminEmail("");
+      setNewAdminPassword("");
+      setSelectedCompanyId(companies.length > 0 ? companies[0].id : "");
       closeAddModal();
-      setSuccessMessage(`Admin ${addedAdmin.nombre || addedAdmin.email} added successfully and assigned to ${companyMap[selectedCompanyId]}.`);
+      setSuccessMessage(
+        `Admin ${
+          addedAdmin.nombre || addedAdmin.email
+        } added successfully and assigned to ${companyMap[selectedCompanyId]}.`
+      );
       clearMessages();
-
     } catch (err) {
       console.error("Error adding admin:", err);
       // Use error message from API response if available
-      setAddError(err.message || 'Failed to add admin. Check console for details.');
+      setAddError(
+        err.message || "Failed to add admin. Check console for details."
+      );
       clearMessages();
     } finally {
       setAdding(false);
@@ -126,10 +151,11 @@ function ManageAdmins() {
   // Edit Admin - Open Modal
   const handleEditClick = (admin) => {
     setEditingAdmin(admin);
-    setEditName(admin.nombre || ''); // <--- Corregido
+    setEditName(admin.nombre || ""); // <--- Corregido
     setEditIsActive(admin.isActive);
     // setEditCompanyId(admin.companyId); // For company change later
-    setEditError(''); setSuccessMessage('');
+    setEditError("");
+    setSuccessMessage("");
     setIsEditModalOpen(true);
   };
 
@@ -137,9 +163,14 @@ function ManageAdmins() {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editName.trim() || !editingAdmin) {
-      setEditError('Admin name cannot be empty.'); clearMessages(); return;
+      setEditError("Admin name cannot be empty.");
+      clearMessages();
+      return;
     }
-    setSaving(true); setEditError(''); setListError(''); setSuccessMessage('');
+    setSaving(true);
+    setEditError("");
+    setListError("");
+    setSuccessMessage("");
     try {
       // Call backend API to update admin (handles both Auth and DB)
       const response = await apiClient.put(`/admins/${editingAdmin.id}`, {
@@ -150,33 +181,56 @@ function ManageAdmins() {
 
       // Update local state
       // Asegurarse de que el objeto actualizado tenga 'nombre'
-      const finalUpdatedAdmin = { ...updatedAdmin, nombre: updatedAdmin.nombre || '' };
-      setAdmins(prev => prev.map(adm => adm.id === finalUpdatedAdmin.id ? finalUpdatedAdmin : adm));
+      const finalUpdatedAdmin = {
+        ...updatedAdmin,
+        nombre: updatedAdmin.nombre || "",
+      };
+      setAdmins((prev) =>
+        prev.map((adm) =>
+          adm.id === finalUpdatedAdmin.id ? finalUpdatedAdmin : adm
+        )
+      );
       closeEditModal();
-      setSuccessMessage(`Admin "${finalUpdatedAdmin.nombre || finalUpdatedAdmin.email}" updated successfully.`);
+      setSuccessMessage(
+        `Admin "${
+          finalUpdatedAdmin.nombre || finalUpdatedAdmin.email
+        }" updated successfully.`
+      );
       clearMessages();
     } catch (err) {
       console.error("Error updating admin:", err);
-      setEditError(err.message || 'Failed to update admin.');
+      setEditError(err.message || "Failed to update admin.");
       clearMessages();
     } finally {
       setSaving(false);
     }
   };
 
-   // Toggle Active Status
-   const handleToggleActive = async (admin) => {
+  // Toggle Active Status
+  const handleToggleActive = async (admin) => {
     const newState = !admin.isActive;
-    const action = newState ? 'activate' : 'deactivate';
-    if (window.confirm(`Are you sure you want to ${action} admin "${admin.nombre || admin.email}"?`)) { // <--- Corregido
-      setListError(''); setSuccessMessage('');
+    const action = newState ? "activate" : "deactivate";
+    if (
+      window.confirm(
+        `Are you sure you want to ${action} admin "${
+          admin.nombre || admin.email
+        }"?`
+      )
+    ) {
+      // <--- Corregido
+      setListError("");
+      setSuccessMessage("");
       try {
         // Call backend API to toggle status (handles both Auth and DB)
-        const response = await apiClient.patch(`/admins/${admin.id}/toggle-status`);
+        const response = await apiClient.patch(
+          `/admins/${admin.id}/toggle-status`
+        );
         const updatedAdmin = response.data.admin; // API returns the updated admin
 
         // Update local state
-        setAdmins(prev => prev.map(adm => adm.id === updatedAdmin.id ? updatedAdmin : adm));
+        setAdmins((prev) =>
+          prev.map((adm) => (adm.id === updatedAdmin.id ? updatedAdmin : adm))
+        );
         setSuccessMessage(response.data.message); // Use message from API
         clearMessages();
       } catch (err) {
@@ -192,19 +246,24 @@ function ManageAdmins() {
   const closeEditModal = () => {
     setIsEditModalOpen(false);
     setEditingAdmin(null);
-    setEditName('');
+    setEditName("");
     setEditIsActive(true);
   };
 
   // --- Render Logic ---
-  const thStyle = "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
+  const thStyle =
+    "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
   const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold text-gray-800">Manage Admins</h1>
-        <Button onClick={() => setIsAddModalOpen(true)} variant="primary" className="w-full sm:w-auto inline-flex items-center justify-center">
+        <Button
+          onClick={() => setIsAddModalOpen(true)}
+          variant="primary"
+          className="w-full sm:w-auto inline-flex items-center justify-center"
+        >
           <PlusIcon className="h-5 w-5 mr-1.5" />
           Add New Admin
         </Button>
@@ -219,7 +278,9 @@ function ManageAdmins() {
       {/* Admins List */}
       <div className="overflow-x-auto border border-gray-200 rounded-md">
         {loading ? (
-          <div className="flex justify-center items-center p-10"><Spinner size="lg" /></div>
+          <div className="flex justify-center items-center p-10">
+            <Spinner size="lg" />
+          </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
@@ -233,34 +294,72 @@ function ManageAdmins() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {admins.length === 0 ? (
-                <tr><td colSpan="5" className={`${tdStyle} text-center text-gray-500 py-6`}>No Admins found.</td></tr>
+                <tr>
+                  <td
+                    colSpan="5"
+                    className={`${tdStyle} text-center text-gray-500 py-6`}
+                  >
+                    No Admins found.
+                  </td>
+                </tr>
               ) : (
                 admins.map((admin) => (
-                  <tr key={admin.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className={`${tdStyle} font-medium text-gray-900`}>{admin.nombre || <span className="text-gray-400 italic">No Name</span>}</td> {/* <--- Corregido */}
-                    <td className={`${tdStyle} text-gray-500`}>{admin.email}</td>
+                  <tr
+                    key={admin.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    <td className={`${tdStyle} font-medium text-gray-900`}>
+                      {admin.nombre || (
+                        <span className="text-gray-400 italic">No Name</span>
+                      )}
+                    </td>{" "}
+                    {/* <--- Corregido */}
                     <td className={`${tdStyle} text-gray-500`}>
-                      {companyMap[admin.companyId] || <span className="text-gray-400 italic">Unassigned</span>}
+                      {admin.email}
+                    </td>
+                    <td className={`${tdStyle} text-gray-500`}>
+                      {companyMap[admin.companyId] || (
+                        <span className="text-gray-400 italic">Unassigned</span>
+                      )}
                     </td>
                     <td className={tdStyle}>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                        admin.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {admin.isActive ? 'Active' : 'Inactive'}
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                          admin.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {admin.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className={`${tdStyle} text-right space-x-2 pr-6`}>
-                      <Button variant="secondary" size="sm" onClick={() => handleEditClick(admin)} className="inline-flex items-center">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleEditClick(admin)}
+                        className="inline-flex items-center"
+                      >
                         <PencilSquareIcon className="h-4 w-4 mr-1" /> Edit
                       </Button>
                       {admin.isActive ? (
-                         <Button variant="danger" size="sm" onClick={() => handleToggleActive(admin)} className="inline-flex items-center">
-                           <UserMinusIcon className="h-4 w-4 mr-1" /> Deactivate
-                         </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleToggleActive(admin)}
+                          className="inline-flex items-center"
+                        >
+                          <UserMinusIcon className="h-4 w-4 mr-1" /> Deactivate
+                        </Button>
                       ) : (
-                         <Button variant="success" size="sm" onClick={() => handleToggleActive(admin)} className="inline-flex items-center">
-                           <UserPlusIcon className="h-4 w-4 mr-1" /> Activate
-                         </Button>
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => handleToggleActive(admin)}
+                          className="inline-flex items-center"
+                        >
+                          <UserPlusIcon className="h-4 w-4 mr-1" /> Activate
+                        </Button>
                       )}
                     </td>
                   </tr>
@@ -272,22 +371,68 @@ function ManageAdmins() {
       </div>
 
       {/* Add Admin Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={closeAddModal} title="Add New Admin">
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={closeAddModal}
+        title="Add New Admin"
+      >
         <form onSubmit={handleAddAdmin} className="space-y-4">
           <div>
-            <label htmlFor="new-admin-name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <Input id="new-admin-name" type="text" value={newAdminName} onChange={(e) => setNewAdminName(e.target.value)} required className="mt-0 w-full"/>
+            <label
+              htmlFor="new-admin-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Full Name
+            </label>
+            <Input
+              id="new-admin-name"
+              type="text"
+              value={newAdminName}
+              onChange={(e) => setNewAdminName(e.target.value)}
+              required
+              className="mt-0 w-full"
+            />
           </div>
           <div>
-            <label htmlFor="new-admin-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <Input id="new-admin-email" type="email" value={newAdminEmail} onChange={(e) => setNewAdminEmail(e.target.value)} required className="mt-0 w-full"/>
+            <label
+              htmlFor="new-admin-email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Email Address
+            </label>
+            <Input
+              id="new-admin-email"
+              type="email"
+              value={newAdminEmail}
+              onChange={(e) => setNewAdminEmail(e.target.value)}
+              required
+              className="mt-0 w-full"
+            />
           </div>
           <div>
-            <label htmlFor="new-admin-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <Input id="new-admin-password" type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} required minLength="6" className="mt-0 w-full"/>
+            <label
+              htmlFor="new-admin-password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Password
+            </label>
+            <Input
+              id="new-admin-password"
+              type="password"
+              value={newAdminPassword}
+              onChange={(e) => setNewAdminPassword(e.target.value)}
+              required
+              minLength="6"
+              className="mt-0 w-full"
+            />
           </div>
           <div>
-            <label htmlFor="assign-company" className="block text-sm font-medium text-gray-700 mb-1">Assign to Company</label>
+            <label
+              htmlFor="assign-company"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Assign to Company
+            </label>
             <select
               id="assign-company"
               value={selectedCompanyId}
@@ -295,18 +440,40 @@ function ManageAdmins() {
               required
               className="block w-full px-3 py-2 mt-1 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             >
-              {companies.length === 0 && <option value="" disabled>No companies available</option>}
-              {companies.map(comp => (
-                <option key={comp.id} value={comp.id}>{comp.nombre}</option> // <--- Corregido
+              {companies.length === 0 && (
+                <option value="" disabled>
+                  No companies available
+                </option>
+              )}
+              {companies.map((comp) => (
+                <option key={comp.id} value={comp.id}>
+                  {comp.nombre}
+                </option> // <--- Corregido
               ))}
             </select>
           </div>
           {addError && <Alert type="error">{addError}</Alert>}
           <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
-            <Button type="button" variant="secondary" onClick={closeAddModal} disabled={adding}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={adding || companies.length === 0} className="inline-flex items-center">
-              {adding ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PlusIcon className="h-5 w-5 mr-1.5"/>}
-              {adding ? 'Adding...' : 'Add Admin'}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={closeAddModal}
+              disabled={adding}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={adding || companies.length === 0}
+              className="inline-flex items-center"
+            >
+              {adding ? (
+                <Spinner size="sm" color="text-white" className="mr-2" />
+              ) : (
+                <PlusIcon className="h-5 w-5 mr-1.5" />
+              )}
+              {adding ? "Adding..." : "Add Admin"}
             </Button>
           </div>
         </form>
@@ -314,39 +481,90 @@ function ManageAdmins() {
 
       {/* Edit Admin Modal */}
       {isEditModalOpen && editingAdmin && (
-         <Modal isOpen={isEditModalOpen} onClose={closeEditModal} title={`Edit Admin: ${editingAdmin.nombre || editingAdmin.email}`}> {/* <--- Corregido */}
-             <form onSubmit={handleSaveEdit} className="space-y-4">
-                 <div>
-                     <label htmlFor="edit-admin-name" className="block text-sm font-medium text-gray-700 mb-1">Admin Name</label>
-                     <Input id="edit-admin-name" type="text" value={editName} onChange={(e) => setEditName(e.target.value)} required className="mt-0 w-full"/>
-                 </div>
-                 <div>
-                     <label htmlFor="edit-admin-email" className="block text-sm font-medium text-gray-700 mb-1">Email (Read-only)</label>
-                     <Input id="edit-admin-email" type="email" value={editingAdmin.email} readOnly disabled className="bg-gray-100 mt-0 w-full cursor-not-allowed" />
-                 </div>
-                 {/* TODO: Add Company Change Dropdown if needed */}
-                 <div>
-                    <label htmlFor="edit-admin-active" className="flex items-center cursor-pointer">
-                        <input
-                            id="edit-admin-active"
-                            type="checkbox"
-                            checked={editIsActive}
-                            onChange={(e) => setEditIsActive(e.target.checked)}
-                            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
-                        />
-                        <span className="ml-2 text-sm text-gray-700">Active (User can log in)</span>
-                    </label>
-                 </div>
-                 {editError && <Alert type="error">{editError}</Alert>}
-                 <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
-                     <Button type="button" variant="secondary" onClick={closeEditModal} disabled={saving}>Cancel</Button>
-                     <Button type="submit" variant="primary" disabled={saving} className="inline-flex items-center">
-                       {saving ? <Spinner size="sm" color="text-white" className="mr-2"/> : <PencilSquareIcon className="h-4 w-4 mr-1.5"/>}
-                       {saving ? 'Saving...' : 'Save Changes'}
-                     </Button>
-                 </div>
-             </form>
-         </Modal>
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={closeEditModal}
+          title={`Edit Admin: ${editingAdmin.nombre || editingAdmin.email}`}
+        >
+          {" "}
+          {/* <--- Corregido */}
+          <form onSubmit={handleSaveEdit} className="space-y-4">
+            <div>
+              <label
+                htmlFor="edit-admin-name"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Admin Name
+              </label>
+              <Input
+                id="edit-admin-name"
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+                className="mt-0 w-full"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="edit-admin-email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Email (Read-only)
+              </label>
+              <Input
+                id="edit-admin-email"
+                type="email"
+                value={editingAdmin.email}
+                readOnly
+                disabled
+                className="bg-gray-100 mt-0 w-full cursor-not-allowed"
+              />
+            </div>
+            {/* TODO: Add Company Change Dropdown if needed */}
+            <div>
+              <label
+                htmlFor="edit-admin-active"
+                className="flex items-center cursor-pointer"
+              >
+                <input
+                  id="edit-admin-active"
+                  type="checkbox"
+                  checked={editIsActive}
+                  onChange={(e) => setEditIsActive(e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  Active (User can log in)
+                </span>
+              </label>
+            </div>
+            {editError && <Alert type="error">{editError}</Alert>}
+            <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={closeEditModal}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={saving}
+                className="inline-flex items-center"
+              >
+                {saving ? (
+                  <Spinner size="sm" color="text-white" className="mr-2" />
+                ) : (
+                  <PencilSquareIcon className="h-4 w-4 mr-1.5" />
+                )}
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

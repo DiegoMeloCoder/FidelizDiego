@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import apiClient from '../../../services/api'; // Ajusta la ruta si es necesario
 import Spinner from '../../../components/ui/Spinner';
 import Alert from '../../../components/ui/Alert';
