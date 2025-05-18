@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from "react";
 
 // Reusable Modal component
 // Props:
@@ -8,30 +8,30 @@ import React, { useEffect } from 'react';
 // - children: Content to render inside the modal body
 // - size: 'sm', 'md', 'lg' (defaults to md)
 
-function Modal({ isOpen, onClose, title, children, size = 'md' }) {
+function Modal({ isOpen, onClose, title, children, size = "md" }) {
   // Handle Escape key press to close modal
   useEffect(() => {
     const handleEscape = (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         onClose();
       }
     };
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
+      document.addEventListener("keydown", handleEscape);
     }
     // Cleanup listener on unmount or when modal closes
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   // Determine size class
-  let sizeClass = 'max-w-md'; // Default md
-  if (size === 'sm') sizeClass = 'max-w-sm';
-  if (size === 'lg') sizeClass = 'max-w-lg';
-  if (size === 'xl') sizeClass = 'max-w-xl'; // Added xl
+  let sizeClass = "max-w-md"; // Default md
+  if (size === "sm") sizeClass = "max-w-sm";
+  if (size === "lg") sizeClass = "max-w-lg";
+  if (size === "xl") sizeClass = "max-w-xl"; // Added xl
 
   return (
     // Backdrop
@@ -45,8 +45,13 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal content
       >
         {/* Header - Apply brand colors */}
-        <div className="flex justify-between items-center p-4 border-b border-brand-tertiary"> {/* Use brand-tertiary for border */}
-          <h2 className="text-lg font-semibold text-brand-secondary">{title}</h2> {/* Use brand-secondary for title */}
+        <div className="flex justify-between items-center p-4 border-b border-brand-tertiary">
+          {" "}
+          {/* Use brand-tertiary for border */}
+          <h2 className="text-lg font-semibold text-brand-secondary">
+            {title}
+          </h2>{" "}
+          {/* Use brand-secondary for title */}
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-2xl leading-none focus:outline-none"
@@ -56,9 +61,7 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
           </button>
         </div>
         {/* Body */}
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="p-6">{children}</div>
         {/* Optional Footer (can be added via children if needed) */}
         {/* <div className="p-4 border-t border-gray-200 flex justify-end"> ... </div> */}
       </div>

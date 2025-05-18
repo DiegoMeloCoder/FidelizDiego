@@ -1,5 +1,3 @@
-import React from 'react';
-
 // Basic Input component with Tailwind classes
 // Props:
 // - type: Input type (text, email, password, number, etc.), defaults to 'text'
@@ -12,17 +10,18 @@ import React from 'react';
 // - otherProps: Any other standard input attributes (e.g., name, id, minLength, min, max)
 
 function Input({
-  type = 'text',
+  type = "text",
   value,
   onChange,
   placeholder,
   disabled = false,
   required = false,
-  className = '',
+  className = "",
   ...otherProps
 }) {
   // Base styles - Using brand-primary for focus state
-  const baseStyles = 'block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles =
+    "block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed";
 
   // Merge classes
   const mergedClassName = `${baseStyles} ${className}`;

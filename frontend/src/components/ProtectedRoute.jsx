@@ -1,6 +1,5 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.jsx'; // Updated extension
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext.jsx"; // Updated extension
 
 // Props:
 // - allowedRoles: Array of roles allowed to access the route (e.g., ['Admin', 'Manager'])
@@ -10,8 +9,8 @@ function ProtectedRoute({ allowedRoles, children }) {
   const { currentUser, userData, loading } = useAuth();
 
   if (loading) {
-    // Optional: Show a loading spinner or skeleton screen while auth state is loading
-    return <div>Loading...</div>;
+    // Opcional: Muestra un spinner de carga o una pantalla de espera mientras se carga el estado de autenticación
+    return <div>Cargando...</div>;
   }
 
   // 1. Check if user is authenticated
@@ -27,7 +26,11 @@ function ProtectedRoute({ allowedRoles, children }) {
       // Logged in, but doesn't have the required role
       // Redirect to a generic dashboard or an 'unauthorized' page
       // For MVP, redirecting back to login might be simplest, or to a base route '/'
-      console.warn(`User role '${userData?.role}' not in allowed roles: ${allowedRoles.join(', ')}`);
+      console.warn(
+        `El rol del usuario '${
+          userData?.role
+        }' no está en los roles permitidos: ${allowedRoles.join(", ")}`
+      );
       // Decide where to redirect unauthorized users. Let's redirect to login for now.
       // In a real app, you might redirect to their specific dashboard or an unauthorized page.
       return <Navigate to="/login" replace />; // Or potentially navigate based on role later

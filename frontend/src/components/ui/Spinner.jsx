@@ -1,15 +1,13 @@
-import React from 'react';
-
 // Simple SVG Spinner component
 // Props:
 // - size: 'sm', 'md', 'lg' (defaults to 'md') for width/height
 // - color: Tailwind text color class (e.g., 'text-indigo-600'), defaults to primary color
 // - className: Additional classes
 
-function Spinner({ size = 'md', color = 'text-indigo-600', className = '' }) {
-  let sizeClass = 'w-6 h-6'; // Default md
-  if (size === 'sm') sizeClass = 'w-4 h-4';
-  if (size === 'lg') sizeClass = 'w-8 h-8';
+function Spinner({ size = "md", color = "text-indigo-600", className = "" }) {
+  let sizeClass = "w-6 h-6"; // Default md
+  if (size === "sm") sizeClass = "w-4 h-4";
+  if (size === "lg") sizeClass = "w-8 h-8";
 
   const mergedClassName = `animate-spin ${sizeClass} ${color} ${className}`;
 
