@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // Import useState
+import { useState } from 'react'; // Import useState
 import { Link } from 'react-router-dom';
 import fidelizTextLogo from '../../assets/logos/TEXTOFIDELIZ.png'; // Import text logo
 import fidelizLogo from '../../assets/logos/LOGOFIDELIZ.png'; // Import text logo
@@ -29,9 +29,9 @@ function LandingNavbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className='flex'>
-              <img className="w-8 h-8 self-center" src={fidelizLogo} alt="Fideliz Logo" />
-              <img className="h-14 w-auto" src={fidelizTextLogo} alt="Fideliz Logo" /> {/* Increased height further */}
+            <Link to="/" className='flex items-center gap-1'>
+              <img className="w-8 h-auto self-center" src={fidelizLogo} alt="Fideliz Logo" />
+              <img className="h-6 w-auto" src={fidelizTextLogo} alt="Fideliz Logo" /> {/* Increased height further */}
             </Link>
           </div>
 

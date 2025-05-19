@@ -53,11 +53,11 @@ function LoginPage() {
     // Use a light gray background consistent with landing page sections
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
       {/* Logo */}
-      <div className="mb-8">
-        <Link to="/">
+      <div className="p-4">
+        <Link to="/" className="flex items-center">
           {/* Use img tag with imported logo */}
           <img
-            className="h-auto w-20 mx-auto"
+            className="h-7 w-auto"
             src={fidelizTextLogo}
             alt="Logo de Fideliz"
           />
