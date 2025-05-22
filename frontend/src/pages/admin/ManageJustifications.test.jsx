@@ -285,7 +285,7 @@ describe('ManageJustifications Component', () => {
     // Check confirmation was called
     expect(global.confirm).toHaveBeenCalledTimes(1);
 
-    // Check updateDoc was called
+   
     await waitFor(() => {
         expect(updateDoc).toHaveBeenCalledTimes(1);
         expect(updateDoc).toHaveBeenCalledWith(expect.anything(), { estaActiva: true });
