@@ -52,7 +52,7 @@ function App() {
       // Otherwise, show loading indicator while waiting for user/userData
       return (
         <div className="flex justify-center items-center h-screen">
-          Loading User Data...
+          Cargando información de usuario...
         </div>
       );
     }
@@ -65,9 +65,10 @@ function App() {
         "RootRedirect: currentUser exists, but userData is not yet available or missing."
       );
       // Optionally show a different loading/error state or redirect to login as a fallback
+      //Verificación de rol
       return (
         <div className="flex justify-center items-center h-screen">
-          Verifying Role...
+          Verificando Información...
         </div>
       ); // Or redirect to login
     }
