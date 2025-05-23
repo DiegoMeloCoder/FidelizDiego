@@ -475,7 +475,6 @@ function ManageRewards() {
         Administrar Recompensas
       </h1>
 
-      {/* Add Reward Form - Improved Layout */}
       <form
         onSubmit={handleAddReward}
         className="p-4 border border-gray-200 rounded-md bg-gray-50 space-y-4"
@@ -483,7 +482,6 @@ function ManageRewards() {
         <h2 className="text-lg font-medium text-gray-700">
           Agregar Nueva Recompensa
         </h2>
-        {/* Grid for Name, Points, Stock */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label
@@ -520,7 +518,6 @@ function ManageRewards() {
               className="mt-0 w-full"
             />
           </div>
-          {/* Add Stock Input */}
           <div>
             <label
               htmlFor="new-reward-stock"
@@ -539,7 +536,6 @@ function ManageRewards() {
             />
           </div>
         </div>
-        {/* Tags Checkboxes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Etiquetas de Recompensa (Opcional)
@@ -561,7 +557,6 @@ function ManageRewards() {
             ))}
           </div>
         </div>
-        {/* Image Upload Section */}
         <div>
           <label
             htmlFor="new-reward-image"
@@ -576,7 +571,6 @@ function ManageRewards() {
             onChange={handleNewImageChange}
             className="mt-0 w-full file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
           />
-          {/* Image Preview */}
           {newRewardPreview && (
             <div className="mt-2">
               <img
@@ -605,13 +599,11 @@ function ManageRewards() {
         </div>
       </form>
 
-      {/* Display feedback messages */}
       <div className="space-y-3">
         {listError && <Alert type="error">{listError}</Alert>}
         {successMessage && <Alert type="success">{successMessage}</Alert>}
       </div>
 
-      {/* Rewards List - Improved Styling */}
       <div className="overflow-x-auto border border-gray-200 rounded-md">
         {loading ? (
           <div className="flex justify-center items-center p-10">
@@ -621,14 +613,11 @@ function ManageRewards() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                <th className={thStyle}>Imagen</th> {/* Add Image column */}
+                <th className={thStyle}>Imagen</th>
                 <th className={thStyle}>Nombre</th>
                 <th className={thStyle}>Puntos Requeridos</th>
                 <th className={thStyle}>Cantidad</th>
-                {/* Add Tags Column */}
                 <th className={thStyle}>Etiquetas</th>
-                {/* Remove Votes Columns */}
-                {/* <th className={thStyle}>Votes (L/D)</th> */}
                 <th className={thStyle}>Estado</th>
                 <th className={`${thStyle} text-right pr-6`}>Acciones</th>
               </tr>
@@ -636,7 +625,6 @@ function ManageRewards() {
             <tbody className="bg-white divide-y divide-gray-200">
               {rewards.length === 0 ? (
                 <tr>
-                  {/* Adjust colspan back */}
                   <td
                     colSpan={7}
                     className={`${tdStyle} text-center text-gray-500 py-6`}
@@ -650,7 +638,6 @@ function ManageRewards() {
                     key={reward.id}
                     className="hover:bg-gray-50 transition-colors duration-150"
                   >
-                    {/* Image Cell */}
                     <td className={tdStyle}>
                       {reward.imageUrl ? (
                         <img
@@ -673,7 +660,6 @@ function ManageRewards() {
                     <td className={`${tdStyle} text-gray-700`}>
                       {reward.stock === null ? "Infinite" : reward.stock}
                     </td>
-                    {/* Tags Cell */}
                     <td className={tdStyle}>
                       {Array.isArray(reward.tags) && reward.tags.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
@@ -692,7 +678,6 @@ function ManageRewards() {
                         </span>
                       )}
                     </td>
-                    {/* Remove Votes Cell */}
                     <td className={tdStyle}>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
@@ -705,7 +690,6 @@ function ManageRewards() {
                       </span>
                     </td>
                     <td className={`${tdStyle} text-right space-x-2 pr-6`}>
-                      {/* Show buttons only if Manager OR if Admin AND reward is not global */}
                       {(userData?.role === "Manager" ||
                         (userData?.role === "Admin" &&
                           reward.companyId !== null)) && (
@@ -744,7 +728,6 @@ function ManageRewards() {
                           )}
                         </>
                       )}
-                      {/* Optional: Show a placeholder or nothing if Admin and reward is global */}
                       {userData?.role === "Admin" &&
                         reward.companyId === null && (
                           <span className="text-xs text-gray-400 italic">
@@ -760,15 +743,12 @@ function ManageRewards() {
         )}
       </div>
 
-      {/* Edit Modal - Refined */}
       {isModalOpen && editingReward && (
         <Modal
           isOpen={isModalOpen}
           onClose={closeModal}
           title={`Editar Recompensa: ${editingReward.nombre}`}
         >
-          {" "}
-          {/* <-- Use nombre */}
           <form onSubmit={handleSaveEdit} className="space-y-4">
             <div>
               <label
@@ -803,7 +783,6 @@ function ManageRewards() {
                 className="mt-0 w-full"
               />
             </div>
-            {/* Add Stock Edit Input */}
             <div>
               <label
                 htmlFor="edit-reward-stock"
@@ -821,7 +800,6 @@ function ManageRewards() {
                 className="mt-0 w-full"
               />
             </div>
-            {/* Edit Tags Checkboxes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Etiquetas (Opcional)
@@ -843,7 +821,6 @@ function ManageRewards() {
                 ))}
               </div>
             </div>
-            {/* Edit Image Section */}
             <div>
               <label
                 htmlFor="edit-reward-image"
@@ -852,7 +829,6 @@ function ManageRewards() {
                 Imagen de la Recompensa (Opcional)
               </label>
               <div className="flex items-center space-x-4">
-                {/* Current Image or New Preview */}
                 {editRewardPreview ? (
                   <img
                     src={editRewardPreview}
@@ -878,7 +854,6 @@ function ManageRewards() {
                     onChange={handleEditImageChange}
                     className="mt-0 w-full file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                   />
-                  {/* Remove Image Button */}
                   {(editingReward.imageUrl || editRewardPreview) &&
                     !removeCurrentImage && (
                       <Button
@@ -899,7 +874,6 @@ function ManageRewards() {
                 </div>
               </div>
             </div>
-            {/* Active Checkbox */}
             <div>
               <label
                 htmlFor="edit-reward-active"
