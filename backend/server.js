@@ -14,15 +14,24 @@ const PORT = process.env.PORT || 5000; // Puerto para el backend
 // Middleware
 
 // Configuración CORS
+const allowedOrigins = [process.env.CORS_ORIGIN]; // URL de frontend
+if (process.env.NODE_ENV === 'development') {
+    allowedOrigins.push('http://localhost:3000'); // O el puerto de tu frontend
+}
 const corsOptions = {
-  // Usar la variable de entorno para el origen permitido en producción/staging
-  // Permitir todos los orígenes en desarrollo si CORS_ORIGIN no está definido
-  origin: process.env.CORS_ORIGIN || '*', 
+  origin: (origin, callback) => {
+    // Permite solicitudes sin 'origin' (como las de Postman o apps móviles) o si el origen está en la lista blanca
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true, // Permite cookies/headers de autorización
   optionsSuccessStatus: 204 // Para navegadores antiguos
 };
-console.log(`[CORS] Configured origin: ${corsOptions.origin}`); // Log para depuración
+console.log(`[CORS] Configured origin: ${allowedOrigins}`); // Log para depuración
 app.use(cors(corsOptions)); 
 
 app.use(express.json()); // Para parsear application/json

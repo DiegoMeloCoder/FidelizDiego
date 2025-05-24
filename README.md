@@ -156,6 +156,10 @@ Sigue estos pasos para configurar y ejecutar el proyecto en tu máquina local.
 *   `.env.example`: Ejemplo de las variables de entorno requeridas.
 *   `README.md`: Este archivo.
 
+## .env a tener en cuenta:
+- .env (backend): PORT=5002, NODE_ENV=production, CORS_ORIGIN=http://localhost:5173
+- .env (frontend): VITE_API_BASE_URL=http://localhost:5002/api/v1
+
 ---
 
 ¡Contribuciones son bienvenidas! Por favor, sigue las guías de estilo y crea Pull Requests para nuevas funcionalidades o correcciones.
