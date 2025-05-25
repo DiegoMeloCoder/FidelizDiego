@@ -44,7 +44,12 @@ module.exports = {
         rejectUnauthorized: false, // Ajustar según la configuración SSL requerida
       },
     },
-    // Considerar añadir configuración de pool para producción
-    // pool: { max: 5, min: 0, acquire: 30000, idle: 10000 }
+    // MEJORAR RENDIMIENTO Y ESTABILIDAD:
+    pool: {
+      max: 5, // Máximo de conexiones en el pool
+      min: 0, // Mínimo de conexiones en el pool
+      acquire: 30000, // Tiempo máximo (ms) para obtener una conexión
+      idle: 10000, // Tiempo máximo (ms) que una conexión puede estar inactiva
+    },
   },
 };

@@ -1,18 +1,9 @@
 const admin = require('firebase-admin');
 const path = require('path');
 
-// Cargar dotenv para asegurarnos de que GOOGLE_APPLICATION_CREDENTIALS esté disponible desde el .env de la raíz
-// Hacemos esto aquí también por si este módulo se carga antes que server.js en algún flujo
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
-
-// Necesitas descargar el archivo JSON de la clave de cuenta de servicio
-// desde tu consola de Firebase:
-// Proyecto -> Configuración del proyecto -> Cuentas de servicio -> Generar nueva clave privada
-// Guarda ese archivo JSON de forma segura (NO lo subas a Git)
-// Priorizar la variable que contiene el JSON completo (ideal para PaaS como Render)
 const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-// Variable con la ruta al archivo (útil para desarrollo local)
 const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
 let initialized = false;
@@ -22,8 +13,6 @@ if (serviceAccountJson) {
     const serviceAccount = JSON.parse(serviceAccountJson);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      // Opcional: Especifica el databaseURL si usas Realtime Database
-      // databaseURL: "https://<TU_PROYECTO>.firebaseio.com"
     });
     console.log('[Firebase Admin] SDK inicializado correctamente usando JSON desde variable de entorno.');
     initialized = true;
@@ -43,8 +32,6 @@ if (!initialized && serviceAccountPath) {
 
     admin.initializeApp({
       credential: admin.credential.cert(absolutePath),
-      // Opcional: Especifica el databaseURL si usas Realtime Database
-      // databaseURL: "https://<TU_PROYECTO>.firebaseio.com"
     });
     console.log('[Firebase Admin] SDK inicializado correctamente usando archivo de credenciales desde ruta.');
     initialized = true;
