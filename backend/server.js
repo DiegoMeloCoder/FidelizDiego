@@ -5,11 +5,10 @@ console.log('[Server Start] Root .env loaded for server.');
 
 const express = require('express');
 const cors = require('cors');
-const cron = require('node-cron');
-const anomalyDetectionService = require('./services/anomalyDetectionService');
-const apiRoutes = require('./routes/index'); // <-- 1. IMPORTACIÓN CENTRALIZADA
+const apiRoutes = require('./routes/index'); // IMPORTACIÓN CENTRALIZADA
 const AppError = require('./utils/AppError');
 const globalErrorHandler = require('./middleware/errorHandler');
+const { scheduleAnomalyDetection } = require('./jobs/anomalyDetector'); // IMPORTAR EL SCHEDULER
 
 const app = express();
 const PORT = process.env.PORT || 5000; // Puerto para el backend
@@ -55,7 +54,7 @@ app.use(API_PREFIX, apiRoutes); // <-- 2. USO DEL ENRUTADOR PRINCIPAL
 
 // Manejo de rutas no encontradas (404)
 // Se activa para cualquier ruta que no haya sido manejada por el enrutador anterior.
-app.all('/*splat', (req, res, next) => {
+app.use((req, res, next) => {
   next(
     new AppError(
       `No se puede encontrar la ruta ${req.originalUrl} en este servidor.`,
@@ -65,55 +64,14 @@ app.all('/*splat', (req, res, next) => {
 });
 
 // --- MANEJO DE ERRORES GLOBAL ---
-app.use(globalErrorHandler); // <-- 3. USO DEL NUEVO MANEJADOR DE ERRORES
+app.use(globalErrorHandler); // USO DEL NUEVO MANEJADOR DE ERRORES
 
 app.listen(PORT, () => {
   console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
   console.log(`Entorno actual: ${process.env.NODE_ENV || 'development'}`);
 
-  // --- TAREAS PROGRAMADAS (CRON JOBS) ---
-  cron.schedule(
-    '0 2 * * *',
-    async () => {
-      console.log('[Cron Job] Ejecutando verificación diaria de anomalías...');
-
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
-
-      const checkEndTime = new Date(yesterday);
-      checkEndTime.setDate(yesterday.getDate() + 1);
-
-      try {
-        const anomalies = await anomalyDetectionService.checkAnomalies(
-          yesterday,
-          checkEndTime
-        );
-        if (anomalies.length > 0) {
-          console.warn(
-            '[Cron Job] Se encontraron posibles anomalías:',
-            JSON.stringify(anomalies, null, 2)
-          );
-          // TODO: Implementar mecanismo de alerta (ej. email, guardar en BD).
-        } else {
-          console.log('[Cron Job] No se detectaron anomalías.');
-        }
-      } catch (error) {
-        console.error(
-          '[Cron Job] Error ejecutando la verificación de anomalías:',
-          error
-        );
-      }
-    },
-    {
-      scheduled: true,
-      timezone: 'America/Bogota',
-    }
-  );
-  console.log(
-    '[Cron Job] Tarea de detección de anomalías programada para las 2:00 AM (America/Bogota).'
-  );
+  // --- INICIAR TAREAS PROGRAMADAS ---
+  scheduleAnomalyDetection(); // <-- 2. EJECUTAR LA FUNCIÓN
 });
 
 module.exports = app; // Exportar para posibles pruebas
