@@ -32,7 +32,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Factory Function para crear configuraciones de almacenamiento
-/* enfoque es más DRY. Si necesitas subir avatares de usuario, solo tienes que añadir createS3Storage('avatars'). */
+/* Enfoque más DRY. Si necesitas subir avatares de usuario, solo tienes que añadir createS3Storage('avatars'). */
 const createS3Storage = (folderName) => {
   return multerS3({
     s3: s3Client,
