@@ -1,106 +1,136 @@
-const { User, Company } = require('../models'); // Importar modelos necesarios
+const { User, Company } = require('../models');
+const AppError = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+const { PREDEFINED_INTERESTS } = require('../utils/constants');
 
-// Obtener perfil del usuario autenticado
-const getMyProfile = async (req, res) => {
-  // Asume que authenticate y authorize ya se ejecutaron y adjuntaron req.dbUser
-  if (!req.dbUser) {
-    return res.status(401).send({ message: 'Usuario no autenticado o no encontrado en DB.' });
-  }
-
-  try {
-    // Volver a buscar al usuario para incluir asociaciones si es necesario o más detalles
-    // O simplemente devolver la información ya adjunta en req.dbUser si es suficiente
-    const userProfile = await User.findByPk(req.dbUser.id, {
-      // Include new fields: phoneNumber and interests
-      attributes: ['id', 'email', 'nombre', 'role', 'points', 'isActive', 'createdAt', 'phoneNumber', 'interests'],
-      include: [
-        {
-          model: Company,
-          as: 'company', // Usar el alias definido en la asociación User.belongsTo(Company)
-          // Include branding fields from the company
-          attributes: [
-            'id',
-            'nombre',
-            'status',
-            'logoUrl',
-            'motto',
-            'primaryColor',
-            'secondaryColor',
-            'tertiaryColor'
-          ],
-        },
-      ],
-    });
-
-    if (!userProfile) {
-      // Esto no debería pasar si authorize funcionó, pero por seguridad
-      return res.status(404).send({ message: 'Perfil de usuario no encontrado.' });
-    }
-
-    res.status(200).json(userProfile);
-
-  } catch (error) {
-    console.error('Error al obtener el perfil del usuario:', error);
-    res.status(500).send({ message: 'Error interno al obtener el perfil.' });
-  }
+// --- LÓGICA REUTILIZABLE DE CONSULTA ---
+// Esta función centraliza la forma en que obtenemos un perfil de usuario completo.
+// A futuro, podría vivir en un archivo de servicio como `services/userService.js`.
+const findUserForProfile = (userId) => {
+  return User.findByPk(userId, {
+    attributes: [
+      'id',
+      'email',
+      'nombre',
+      'role',
+      'points',
+      'isActive',
+      'createdAt',
+      'phoneNumber',
+      'interests',
+    ],
+    include: [
+      {
+        model: Company,
+        as: 'company',
+        attributes: [
+          'id',
+          'nombre',
+          'status',
+          'logoUrl',
+          'motto',
+          'primaryColor',
+          'secondaryColor',
+          'tertiaryColor',
+        ],
+      },
+    ],
+  });
 };
 
-// Actualizar perfil del usuario autenticado
-const updateMyProfile = async (req, res) => {
-  if (!req.dbUser) {
-    return res.status(401).send({ message: 'Usuario no autenticado o no encontrado en DB.' });
+// --- CONTROLADORES REFACTORIZADOS ---
+
+/**
+ * Obtiene el perfil completo del usuario actualmente autenticado.
+ */
+const getMyProfile = catchAsync(async (req, res, next) => {
+  // La comprobación de 'req.dbUser' ya no es necesaria aquí.
+  // El middleware 'authorize' que se ejecuta antes ya lo ha validado.
+
+  const userProfile = await findUserForProfile(req.dbUser.id);
+
+  // Esta comprobación es una última barrera de seguridad, aunque es poco probable que falle
+  // si el middleware 'authorize' funcionó correctamente.
+  if (!userProfile) {
+    return next(
+      new AppError(
+        'No se pudo encontrar el perfil del usuario asociado a su token.',
+        404
+      )
+    );
   }
 
-  const { phoneNumber, interests } = req.body; // Obtener los campos actualizables del body
+  // Enviamos una respuesta estandarizada (formato JSend).
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: userProfile,
+    },
+  });
+});
+
+/**
+ * Actualiza el perfil (campos limitados) del usuario actualmente autenticado.
+ */
+const updateMyProfile = catchAsync(async (req, res, next) => {
+  const { phoneNumber, interests } = req.body;
   const userId = req.dbUser.id;
 
-  // TODO: Añadir validación para phoneNumber e interests (ej. que interests sea un array de strings válidos)
-  // Lista predefinida (debería estar en un config o constante)
-  const predefinedInterests = ['Deportes', 'Tecnología', 'Viajes', 'Hogar', 'Gastronomía', 'Moda', 'Bienestar', 'Lectura', 'Música', 'Cine/Series', 'Mascotas', 'Videojuegos', 'Arte/Cultura', 'Aire Libre'];
-  if (interests && !Array.isArray(interests)) {
-     return res.status(400).send({ message: 'Interests debe ser un array.' });
-  }
-  if (interests && interests.some(interest => !predefinedInterests.includes(interest))) {
-     return res.status(400).send({ message: 'Uno o más intereses no son válidos.' });
-  }
-  // Podría añadirse validación para phoneNumber (formato, longitud)
+  // --- Sección de Validación ---
+  // Nota: Idealmente, esta lógica debería estar en un middleware de validación
+  // que se ejecute ANTES del controlador, para mantener este archivo limpio.
 
-  try {
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).send({ message: 'Usuario no encontrado.' });
+  if (Object.keys(req.body).length === 0) {
+    return next(
+      new AppError(
+        'No se proporcionaron datos para actualizar. Por favor, envíe al menos un campo.',
+        400
+      )
+    );
+  }
+
+  if (interests) {
+    if (!Array.isArray(interests)) {
+      return next(
+        new AppError('El campo de intereses debe ser un array.', 400)
+      );
     }
-
-    // Actualizar solo los campos proporcionados
-    const fieldsToUpdate = {};
-    if (phoneNumber !== undefined) fieldsToUpdate.phoneNumber = phoneNumber; // Permitir string vacío para borrar
-    if (interests !== undefined) fieldsToUpdate.interests = interests;
-
-    if (Object.keys(fieldsToUpdate).length === 0) {
-       return res.status(400).send({ message: 'No se proporcionaron campos para actualizar.' });
+    if (
+      interests.some((interest) => !PREDEFINED_INTERESTS.includes(interest))
+    ) {
+      return next(
+        new AppError(
+          'Uno o más de los intereses proporcionados no son válidos.',
+          400
+        )
+      );
     }
-
-    await user.update(fieldsToUpdate);
-
-    // Devolver el perfil actualizado (opcional, pero bueno para el frontend)
-    // Re-usar la lógica de getMyProfile podría ser una opción, o seleccionar campos aquí
-    const updatedUserProfile = await User.findByPk(userId, {
-       attributes: ['id', 'email', 'nombre', 'role', 'points', 'isActive', 'createdAt', 'phoneNumber', 'interests'],
-       include: [{ model: Company, as: 'company', attributes: ['id', 'nombre', 'status', 'logoUrl', 'motto', 'primaryColor', 'secondaryColor', 'tertiaryColor'] }],
-    });
-
-
-    res.status(200).json(updatedUserProfile);
-
-  } catch (error) {
-    console.error('Error al actualizar el perfil del usuario:', error);
-    // Considerar manejo de errores de validación específicos si se añaden
-    res.status(500).send({ message: 'Error interno al actualizar el perfil.' });
   }
-};
+  // Aquí se podría añadir validación para el formato de 'phoneNumber'.
 
+  // --- Fin de la Validación ---
+
+  // Buscamos el usuario para actualizarlo.
+  const user = await User.findByPk(userId);
+
+  // Actualizar solo los campos permitidos que fueron proporcionados.
+  if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+  if (interests !== undefined) user.interests = interests;
+
+  await user.save(); // Usamos save() para ejecutar hooks de Sequelize si los hubiera.
+
+  // Devolvemos el perfil completo y actualizado usando nuestra función reutilizable.
+  const updatedUserProfile = await findUserForProfile(userId);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: updatedUserProfile,
+    },
+  });
+});
 
 module.exports = {
   getMyProfile,
-  updateMyProfile, // Exportar la nueva función
+  updateMyProfile,
 };

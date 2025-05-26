@@ -1,15 +1,19 @@
 const express = require('express');
 const authController = require('../controllers/authController');
-const { authenticate, authorize, checkSubscription } = require('../middleware/auth'); // Importar middlewares
+const {
+  authenticate,
+  authorize,
+  checkSubscription,
+} = require('../middleware/auth'); // Importar middlewares
 
 const router = express.Router();
 
 // Ruta para obtener el perfil del usuario autenticado
 // Se aplica authenticate, authorize (verifica user.isActive), y checkSubscription (verifica company.status)
 router.get(
-  '/me', 
-  authenticate, 
-  authorize(), 
+  '/me',
+  authenticate,
+  authorize(),
   checkSubscription({ allowPending: true }), // Permitir si activa o pendiente
   authController.getMyProfile
 );
@@ -20,12 +24,11 @@ router.get(
 // Ruta para actualizar el perfil del usuario autenticado
 // Requiere autenticación, que el usuario exista y compañía activa/pendiente
 router.put(
-  '/profile', 
-  authenticate, 
-  authorize(), 
+  '/profile',
+  authenticate,
+  authorize(),
   checkSubscription({ allowPending: true }), // Permitir si activa o pendiente
   authController.updateMyProfile
 );
-
 
 module.exports = router;
