@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../firebase/config';
-import apiClient from '../services/api';
+import { createContext, useContext, useState, useEffect } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase/config";
+import apiClient from "../services/api";
 
 const AuthContext = createContext();
 
@@ -17,9 +17,14 @@ export function AuthProvider({ children }) {
 
   // Function to fetch user profile data from API
   const fetchUserProfile = async (firebaseUser) => {
-    console.log("AuthProvider: fetchUserProfile called for UID:", firebaseUser?.uid);
+    console.log(
+      "AuthProvider: fetchUserProfile called for UID:",
+      firebaseUser?.uid
+    );
     if (!firebaseUser) {
-      console.warn("AuthProvider: fetchUserProfile called without firebaseUser");
+      console.warn(
+        "AuthProvider: fetchUserProfile called without firebaseUser"
+      );
       setUserData(null);
       setLoading(false); // No user, stop loading
       return null;
@@ -29,33 +34,51 @@ export function AuthProvider({ children }) {
 
     // Ensure token is fresh before API call
     try {
-      console.log("AuthProvider: Forcing token refresh before fetching profile...");
+      console.log(
+        "AuthProvider: Forcing token refresh before fetching profile..."
+      );
       await firebaseUser.getIdToken(true); // Force refresh
       console.log("AuthProvider: Token refreshed. Calling /auth/me...");
     } catch (tokenError) {
       console.error("AuthProvider: Error refreshing token:", tokenError);
       setUserData(null);
-      setAuthError('Failed to refresh authentication token.');
+      setAuthError("Failed to refresh authentication token.");
       setLoading(false); // Stop loading as we can't proceed
-      try { await auth.signOut(); } catch (e) { console.error("Sign out error", e) }
+      try {
+        await auth.signOut();
+      } catch (e) {
+        console.error("Sign out error", e);
+      }
       return null;
     }
 
     // Proceed with API call
     try {
-      const response = await apiClient.get('/auth/me');
+      const response = await apiClient.get("/auth/me");
       const fetchedData = response.data.data.user;
       console.log("AuthProvider: API profile data fetched:", fetchedData);
       setUserData(fetchedData);
       setLoading(false); // <--- Set loading false AFTER successful fetch
       return fetchedData;
     } catch (error) {
-      console.error("AuthProvider: Error fetching user profile from API:", error);
+      console.error(
+        "AuthProvider: Error fetching user profile from API:",
+        error
+      );
       setUserData(null);
-      setAuthError(error.message || 'Failed to fetch user profile.');
+      setAuthError(error.message || "Failed to fetch user profile.");
       if (error?.status === 401 || error?.status === 403) {
-        console.warn(`AuthProvider: Error ${error.status} fetching profile. Forcing Firebase sign out.`);
-        try { await auth.signOut(); } catch (signOutError) { console.error("AuthProvider: Error during forced sign out:", signOutError); }
+        console.warn(
+          `AuthProvider: Error ${error.status} fetching profile. Forcing Firebase sign out.`
+        );
+        try {
+          await auth.signOut();
+        } catch (signOutError) {
+          console.error(
+            "AuthProvider: Error during forced sign out:",
+            signOutError
+          );
+        }
       }
       setLoading(false); // <--- Set loading false AFTER failed fetch
       return null;
@@ -66,13 +89,18 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     console.log("AuthProvider: useEffect triggered");
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("AuthProvider: onAuthStateChanged triggered. User:", user?.uid || 'null');
+      console.log(
+        "AuthProvider: onAuthStateChanged triggered. User:",
+        user?.uid || "null"
+      );
       setCurrentUser(user);
       if (user) {
         // ---> ADDED: Clear old data and set loading before fetching new profile <---
-        console.log("AuthProvider: User detected, clearing old data and setting loading...");
+        console.log(
+          "AuthProvider: User detected, clearing old data and setting loading..."
+        );
         setUserData(null); // Clear previous user data immediately
-        setLoading(true);  // Set loading state while fetching new profile
+        setLoading(true); // Set loading state while fetching new profile
         // --------------------------------------------------------------------------
         await fetchUserProfile(user); // Wait for profile fetch attempt (this will set loading to false)
       } else {
@@ -88,7 +116,7 @@ export function AuthProvider({ children }) {
     return () => {
       console.log("AuthProvider: Unsubscribing from onAuthStateChanged.");
       unsubscribe();
-    }
+    };
   }, []); // Empty dependency array ensures this runs only once on mount
 
   // Function to manually refresh user data
@@ -99,7 +127,9 @@ export function AuthProvider({ children }) {
       await fetchUserProfile(currentUser); // Re-fetch profile
       // setLoading(false); // Loading is handled within fetchUserProfile
     } else {
-      console.warn("AuthProvider: refreshUserData called without a current user.");
+      console.warn(
+        "AuthProvider: refreshUserData called without a current user."
+      );
     }
   };
 
@@ -118,14 +148,21 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={value}>
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f0f0f0' }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            backgroundColor: "#f0f0f0",
+          }}
+        >
           {/* Puedes usar tu componente Spinner aquí si lo tienes y es accesible globalmente */}
-          <p style={{ fontSize: '1.2em' }}>Cargando aplicación...</p>
+          <p style={{ fontSize: "1.2em" }}>Cargando aplicación...</p>
         </div>
       ) : (
         children
       )}
     </AuthContext.Provider>
   );
-
 }

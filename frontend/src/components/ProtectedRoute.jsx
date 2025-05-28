@@ -35,7 +35,6 @@ function ProtectedRoute({ allowedRoles, children }) {
   if (allowedRoles && allowedRoles.length > 0) {
     if (!allowedRoles.includes(userData.role)) {
       // El usuario está logueado pero no tiene el rol correcto para esta ruta.
-      console.log(userData.data.user.role)
       console.warn(
         `Acceso denegado para el rol '${
           userData.role
