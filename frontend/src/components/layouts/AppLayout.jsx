@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react"; // Keep this one with useEffect
-import { Outlet, Link, useNavigate, useLocation } from "react-router-dom"; // Keep the first import
-import { signOut } from "firebase/auth"; // Keep the first import
-import { auth } from "../../firebase/config"; // Keep the first import
+import { useState, useEffect } from "react";
+import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase/config";
 import { useAuth } from "../../contexts/AuthContext.jsx";
-// Removed the duplicate imports below this line
+import logger from "../../utils/logger.js";
 import Button from "../ui/Button";
-// Import Heroicons (assuming you'll install @heroicons/react)
 import {
   HomeIcon, // Dashboard
   UserCircleIcon, // Profile
@@ -38,7 +37,7 @@ function AppLayout() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      console.log("User signed out successfully.");
+      logger.log("User signed out successfully.");
       navigate("/login");
     } catch (error) {
       console.error("Failed to sign out:", error);
@@ -89,7 +88,7 @@ function AppLayout() {
     };
 
     if (primary || secondary || tertiary) {
-      console.log("Applying theme colors:", { primary, secondary, tertiary });
+      logger.log("Applying theme colors:", { primary, secondary, tertiary });
       // Apply colors if they exist
       if (primary) root.style.setProperty("--color-primary", primary);
       if (secondary) root.style.setProperty("--color-secondary", secondary);

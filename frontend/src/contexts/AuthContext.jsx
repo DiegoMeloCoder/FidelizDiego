@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/config";
 import apiClient from "../services/api";
+import logger from "../utils/logger";
 
 const AuthContext = createContext();
 
@@ -17,7 +18,7 @@ export function AuthProvider({ children }) {
 
   // Function to fetch user profile data from API
   const fetchUserProfile = async (firebaseUser) => {
-    console.log(
+    logger.log(
       "AuthProvider: fetchUserProfile called for UID:",
       firebaseUser?.uid
     );
@@ -34,11 +35,11 @@ export function AuthProvider({ children }) {
 
     // Ensure token is fresh before API call
     try {
-      console.log(
+      logger.log(
         "AuthProvider: Forcing token refresh before fetching profile..."
       );
       await firebaseUser.getIdToken(true); // Force refresh
-      console.log("AuthProvider: Token refreshed. Calling /auth/me...");
+      logger.log("AuthProvider: Token refreshed. Calling /auth/me...");
     } catch (tokenError) {
       console.error("AuthProvider: Error refreshing token:", tokenError);
       setUserData(null);
@@ -56,7 +57,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await apiClient.get("/auth/me");
       const fetchedData = response.data.data.user;
-      console.log("AuthProvider: API profile data fetched:", fetchedData);
+      logger.log("AuthProvider: API profile data fetched:", fetchedData);
       setUserData(fetchedData);
       setLoading(false); // <--- Set loading false AFTER successful fetch
       return fetchedData;
@@ -87,16 +88,16 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    console.log("AuthProvider: useEffect triggered");
+    logger.log("AuthProvider: useEffect triggered");
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log(
+      logger.log(
         "AuthProvider: onAuthStateChanged triggered. User:",
         user?.uid || "null"
       );
       setCurrentUser(user);
       if (user) {
         // ---> ADDED: Clear old data and set loading before fetching new profile <---
-        console.log(
+        logger.log(
           "AuthProvider: User detected, clearing old data and setting loading..."
         );
         setUserData(null); // Clear previous user data immediately
@@ -104,7 +105,7 @@ export function AuthProvider({ children }) {
         // --------------------------------------------------------------------------
         await fetchUserProfile(user); // Wait for profile fetch attempt (this will set loading to false)
       } else {
-        console.log("AuthProvider: No user logged in.");
+        logger.log("AuthProvider: No user logged in.");
         setUserData(null);
         setAuthError(null); // Clear errors on logout
         setLoading(false); // No user, definitely stop loading
@@ -114,7 +115,7 @@ export function AuthProvider({ children }) {
 
     // Cleanup subscription on unmount
     return () => {
-      console.log("AuthProvider: Unsubscribing from onAuthStateChanged.");
+      logger.log("AuthProvider: Unsubscribing from onAuthStateChanged.");
       unsubscribe();
     };
   }, []); // Empty dependency array ensures this runs only once on mount
@@ -122,7 +123,7 @@ export function AuthProvider({ children }) {
   // Function to manually refresh user data
   const refreshUserData = async () => {
     if (currentUser) {
-      console.log("AuthProvider: refreshUserData called.");
+      logger.log("AuthProvider: refreshUserData called.");
       // setLoading(true); // Set loading true for manual refresh
       await fetchUserProfile(currentUser); // Re-fetch profile
       // setLoading(false); // Loading is handled within fetchUserProfile

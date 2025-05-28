@@ -7,6 +7,9 @@ import {
 import { useAuth } from "./contexts/AuthContext.jsx";
 import "./App.css";
 
+// Import logger
+import logger from "./utils/logger.js";
+
 // Import Layouts
 import AppLayout from "./components/layouts/AppLayout";
 
@@ -61,7 +64,7 @@ function RootRedirect() {
   }
 
   // 3. Si llegamos aquí, tenemos toda la información necesaria. Redirigimos según el rol.
-  console.log("RootRedirect: Redirigiendo basado en el rol:", userData.role);
+  logger.log("RootRedirect: Redirigiendo basado en el rol:", userData.role);
   switch (userData.role) {
     case "Manager":
       return <Navigate to="/manager" replace />;
