@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import apiClient from '../services/api';
@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
     // Proceed with API call
     try {
       const response = await apiClient.get('/auth/me');
-      const fetchedData = response.data;
+      const fetchedData = response.data.data.user;
       console.log("AuthProvider: API profile data fetched:", fetchedData);
       setUserData(fetchedData);
       setLoading(false); // <--- Set loading false AFTER successful fetch
