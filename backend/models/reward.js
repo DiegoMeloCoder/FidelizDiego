@@ -9,11 +9,10 @@ module.exports = (sequelize) => {
      * The `models/index.js` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
       Reward.belongsTo(models.Company, {
         foreignKey: 'companyId',
         as: 'company',
-        allowNull: true, // Allow association to be nullable for global rewards
+        allowNull: true,
       });
       Reward.hasMany(models.Redemption, {
         foreignKey: 'recompensaId',
@@ -59,41 +58,47 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true, // null = infinito
         validate: {
-          min: 0 // El stock no puede ser negativo
-        }
+          min: 0, // El stock no puede ser negativo
+        },
       },
-      imageUrl: { // Add the new field for image URL
+      imageUrl: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      tags: { // Nuevo campo para tags/categorías
+      tags: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true,
         defaultValue: [],
       },
-      likes: { // Nuevo campo para contador de likes
+      likes: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
         validate: {
-          min: 0
-        }
+          min: 0,
+        },
       },
-      dislikes: { // Nuevo campo para contador de dislikes
+      dislikes: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
         validate: {
-          min: 0
-        }
+          min: 0,
+        },
       },
-      // createdAt y updatedAt son añadidos automáticamente
     },
     {
       sequelize,
       modelName: 'Reward',
-      // tableName: 'Rewards'
       timestamps: true,
+      // Definición explícita de índices
+      indexes: [
+        { fields: ['companyId'] }, // Índice en 'companyId' (importante para filtrar globales vs. específicos)
+        { fields: ['isActive'] }, // Índice en 'isActive'
+        // Podrías considerar un índice en 'tags' si haces búsquedas frecuentes por tags,
+        // aunque los índices en campos ARRAY son más complejos y dependen del SGBD.
+        // Por ahora, lo dejamos así.
+      ],
     }
   );
   return Reward;

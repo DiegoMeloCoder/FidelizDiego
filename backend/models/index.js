@@ -5,8 +5,7 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const process = require('process');
 const basename = path.basename(__filename);
-// const env = "production"; // <-- REVERTIDO: No forzar producción localmente
-const env = process.env.NODE_ENV || 'development'; // <-- Usar NODE_ENV o default a development
+const env = process.env.NODE_ENV || 'development';
 // Usamos el archivo de configuración JS que carga dotenv
 const config = require(__dirname + '/../config/database.js')[env];
 const db = {};
@@ -16,14 +15,20 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(process.env[config.use_env_variable], config);
 } else {
   // Log para verificar la contraseña justo antes de usarla
-  console.log(`[Sequelize Init] Initializing with DB: ${config.database}, User: ${config.username}, Host: ${config.host}, Password type: ${typeof config.password}, Password length: ${config.password?.length ?? 'N/A'}`);
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
+  console.log(
+    `[Sequelize Init] Initializing with DB: ${config.database}, User: ${config.username}, Host: ${config.host}, Password type: ${typeof config.password}, Password length: ${config.password?.length ?? 'N/A'}`
+  );
+  sequelize = new Sequelize(
+    config.database,
+    config.username,
+    config.password,
+    config
+  );
 }
 
 // Cargar todos los modelos de la carpeta actual
-fs
-  .readdirSync(__dirname)
-  .filter(file => {
+fs.readdirSync(__dirname)
+  .filter((file) => {
     return (
       file.indexOf('.') !== 0 &&
       file !== basename &&
@@ -31,14 +36,17 @@ fs
       file.indexOf('.test.js') === -1
     );
   })
-  .forEach(file => {
+  .forEach((file) => {
     // Los modelos ahora exportan una función que recibe sequelize
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+    const model = require(path.join(__dirname, file))(
+      sequelize,
+      Sequelize.DataTypes
+    );
     db[model.name] = model;
   });
 
 // Ejecutar las asociaciones si existen
-Object.keys(db).forEach(modelName => {
+Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
     db[modelName].associate(db);
   }

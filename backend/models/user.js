@@ -1,7 +1,7 @@
 'use strict';
 const { Model, DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => { // Modificado para exportar una función que recibe sequelize
+module.exports = (sequelize) => {
   class User extends Model {
     /**
      * Helper method for defining associations.
@@ -9,10 +9,9 @@ module.exports = (sequelize) => { // Modificado para exportar una función que r
      * The `models/index.js` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
       User.belongsTo(models.Company, {
         foreignKey: 'companyId',
-        as: 'company', // Alias para la asociación
+        as: 'company',
         allowNull: true, // Permitir nulo para Managers
       });
       // Asociaciones inversas (opcional pero útil definirlas aquí o en el otro modelo)
@@ -28,7 +27,8 @@ module.exports = (sequelize) => { // Modificado para exportar una función que r
   }
   User.init(
     {
-      id: { // Usaremos el UID de Firebase Auth como ID principal
+      id: {
+        // Usaremos el UID de Firebase Auth como ID principal
         type: DataTypes.STRING,
         primaryKey: true,
         allowNull: false,
@@ -43,14 +43,14 @@ module.exports = (sequelize) => { // Modificado para exportar una función que r
       },
       nombre: {
         type: DataTypes.STRING,
-        allowNull: true, // Nombre puede ser opcional inicialmente
+        allowNull: true,
       },
       role: {
         type: DataTypes.ENUM('Manager', 'Admin', 'Employee'),
         allowNull: false,
       },
       companyId: {
-        type: DataTypes.INTEGER, // Asumiendo que Company.id será INTEGER
+        type: DataTypes.INTEGER,
         allowNull: true, // Managers no pertenecen a una compañía específica
         references: {
           model: 'Companies', // Nombre de la tabla (pluralizado por defecto por Sequelize)
@@ -69,23 +69,27 @@ module.exports = (sequelize) => { // Modificado para exportar una función que r
         allowNull: false,
         defaultValue: true,
       },
-      phoneNumber: { // Nuevo campo para teléfono
+      phoneNumber: {
         type: DataTypes.STRING,
-        allowNull: true, // Hacerlo opcional
-        // Se podría añadir validación de formato aquí si es necesario
+        allowNull: true,
       },
-      interests: { // Nuevo campo para intereses
+      interests: {
         type: DataTypes.ARRAY(DataTypes.STRING),
-        allowNull: true, // Hacerlo opcional
-        defaultValue: [], // Valor por defecto un array vacío
+        allowNull: true,
+        defaultValue: [],
       },
-      // createdAt y updatedAt son añadidos automáticamente por Sequelize
     },
     {
       sequelize,
       modelName: 'User',
-      // tableName: 'users' // Opcional: Sequelize pluraliza por defecto
-      timestamps: true, // Habilitar createdAt y updatedAt
+      timestamps: true,
+      // Definición explícita de índices para columnas consultadas frecuentemente
+      indexes: [
+        { fields: ['role'] }, // Índice en la columna 'role'
+        { fields: ['companyId'] }, // Índice en la clave foránea 'companyId'
+        { fields: ['isActive'] }, // Índice en la columna 'isActive'
+        // 'email' ya tiene un índice único debido a la restricción 'unique: true'
+      ],
     }
   );
   return User;
