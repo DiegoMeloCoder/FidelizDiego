@@ -68,7 +68,7 @@ function ManageCompanies() {
     setSuccessMessage("");
     try {
       const response = await apiClient.get("/companies");
-      setCompanies(response.data);
+      setCompanies(response.data.data.companies);
     } catch (err) {
       console.error("Error fetching companies:", err);
       setListError(err.message || "Failed to load companies.");
@@ -119,7 +119,7 @@ function ManageCompanies() {
 
       // 3. Call API to create company
       const response = await apiClient.post("/companies", payload);
-      const addedCompany = response.data; // API returns the created company
+      const addedCompany = response.data.data; // API returns the created company
 
       // 4. Update state and reset form
       setCompanies((prev) => [...prev, addedCompany]);
@@ -212,7 +212,7 @@ function ManageCompanies() {
         `/companies/${editingCompany.id}`,
         updatePayload
       );
-      const updatedCompany = response.data; // API returns the updated company
+      const updatedCompany = response.data.data; // API returns the updated company
 
       // 5. Update state and close modal
       setCompanies((prev) =>
@@ -247,11 +247,11 @@ function ManageCompanies() {
         const response = await apiClient.patch(
           `/companies/${companyId}/toggle-status`
         );
-        const updatedCompany = response.data.company;
+        const updatedCompany = response.data.data.company;
         setCompanies((prev) =>
           prev.map((c) => (c.id === updatedCompany.id ? updatedCompany : c))
         );
-        setSuccessMessage(response.data.message);
+        setSuccessMessage(response.data.data.message);
         clearMessages();
       } catch (err) {
         console.error("Error setting company inactive:", err);
@@ -277,11 +277,11 @@ function ManageCompanies() {
         const response = await apiClient.patch(
           `/companies/${companyId}/toggle-status`
         );
-        const updatedCompany = response.data.company;
+        const updatedCompany = response.data.data.company;
         setCompanies((prev) =>
           prev.map((c) => (c.id === updatedCompany.id ? updatedCompany : c))
         );
-        setSuccessMessage(response.data.message);
+        setSuccessMessage(response.data.data.message);
         clearMessages();
       } catch (err) {
         console.error("Error setting company active:", err);
@@ -512,8 +512,6 @@ function ManageCompanies() {
           </div>
         ) : (
           <table className="min-w-full divide-y divide-brand-tertiary">
-            {" "}
-            {/* Use brand-tertiary for divider */}
             <thead>
               <tr>
                 <th className={thStyle}>Logo</th>
@@ -539,7 +537,6 @@ function ManageCompanies() {
                     key={company.id}
                     className="hover:bg-gray-50 transition-colors duration-150"
                   >
-                    {/* Logo Cell */}
                     <td className={tdStyle}>
                       {company.logoUrl ? (
                         <img

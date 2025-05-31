@@ -63,7 +63,7 @@ function ManageAdmins() {
       try {
         // Fetch Companies using API
         const companyResponse = await apiClient.get("/companies");
-        const companyList = companyResponse.data;
+        const companyList = companyResponse.data.data.companies;
         setCompanies(companyList);
         const cMap = companyList.reduce((map, company) => {
           map[company.id] = company.nombre; // Use 'nombre' from backend model
@@ -312,8 +312,7 @@ function ManageAdmins() {
                       {admin.nombre || (
                         <span className="text-gray-400 italic">No Name</span>
                       )}
-                    </td>{" "}
-                    {/* <--- Corregido */}
+                    </td>
                     <td className={`${tdStyle} text-gray-500`}>
                       {admin.email}
                     </td>

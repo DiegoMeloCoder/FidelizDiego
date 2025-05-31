@@ -53,7 +53,7 @@ function ManagerDashboard() {
       try {
         // Fetch company list for the filter dropdown
         const companiesResponse = await apiClient.get("/companies"); // Assuming this endpoint exists and returns [{id, nombre}]
-        setCompanies(companiesResponse.data || []);
+        setCompanies(companiesResponse.data.data.companies || []);
       } catch (err) {
         console.error("Error fetching companies:", err);
         // Handle company fetch error separately if needed
