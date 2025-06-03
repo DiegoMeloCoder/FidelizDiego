@@ -1,4 +1,3 @@
-// backend/services/rewardService.js
 const {
   Reward,
   Company,
