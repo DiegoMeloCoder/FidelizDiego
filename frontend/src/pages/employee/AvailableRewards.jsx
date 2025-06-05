@@ -60,7 +60,7 @@ function AvailableRewards() {
       // Fetch rewards using API (backend filters by company, frontend filters active)
       const response = await apiClient.get("/rewards");
       // Ensure isActive defaults to true if missing
-      const list = response.data.map((reward) => ({
+      const list = response.data.data.rewards.map((reward) => ({
         ...reward,
         isActive: reward.isActive !== undefined ? reward.isActive : true,
       }));
@@ -179,7 +179,7 @@ function AvailableRewards() {
       const response = await apiClient.post(`/rewards/${rewardId}/vote`, {
         voteType,
       });
-      const updatedReward = response.data.reward; // Get updated reward with counts
+      const updatedReward = response.data.data.reward; // Get updated reward with counts
 
       // Update the specific reward in the local state
       setRewards((prevRewards) =>

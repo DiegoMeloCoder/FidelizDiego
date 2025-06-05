@@ -106,7 +106,7 @@ function ManageRewards() {
     setSuccessMessage("");
     try {
       const response = await apiClient.get("/rewards");
-      const list = response.data.map((reward) => ({
+      const list = response.data.data.rewards.map((reward) => ({
         ...reward,
         isActive: reward.isActive !== undefined ? reward.isActive : true,
       }));
@@ -357,13 +357,13 @@ function ManageRewards() {
         const response = await apiClient.patch(
           `/rewards/${rewardId}/toggle-status`
         );
-        const updatedReward = response.data.reward; // API returns updated reward
+        const updatedReward = response.data.data.reward; // API returns updated reward
 
         // Update local state
         setRewards((prev) =>
           prev.map((r) => (r.id === updatedReward.id ? updatedReward : r))
         );
-        setSuccessMessage(response.data.message); // Use message from API
+        setSuccessMessage(response.data.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error("Error setting reward inactive:", err);
@@ -390,13 +390,13 @@ function ManageRewards() {
         const response = await apiClient.patch(
           `/rewards/${rewardId}/toggle-status`
         );
-        const updatedReward = response.data.reward; // API returns updated reward
+        const updatedReward = response.data.data.reward; // API returns updated reward
 
         // Update local state
         setRewards((prev) =>
           prev.map((r) => (r.id === updatedReward.id ? updatedReward : r))
         );
-        setSuccessMessage(response.data.message); // Use message from API
+        setSuccessMessage(response.data.data.message); // Use message from API
         clearMessages();
       } catch (err) {
         console.error("Error setting reward active:", err);
