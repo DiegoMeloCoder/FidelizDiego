@@ -138,7 +138,7 @@ function AvailableRewards() {
       const response = await apiClient.post(
         `/redemptions/rewards/${rewardId}/redeem`
       );
-      const redeemedData = response.data;
+      const redeemedData = response.data.data;
 
       // Mostrar mensaje de éxito con SweetAlert2
       await Swal.fire({
