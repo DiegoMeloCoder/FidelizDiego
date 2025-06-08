@@ -15,6 +15,12 @@ const PREDEFINED_INTERESTS = [
   'Aire Libre',
 ];
 
+const POINT_ASSIGNMENT_LIMITS = {
+  MAX: 1000,
+  MIN: -500,
+};
+
 module.exports = {
   PREDEFINED_INTERESTS,
+  POINT_ASSIGNMENT_LIMITS,
 };
