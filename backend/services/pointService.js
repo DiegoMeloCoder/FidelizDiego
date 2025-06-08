@@ -137,7 +137,7 @@ const getSuggestionService = async (adminCompanyId, justificationId) => {
   const min = Math.min(...amounts);
   const max = Math.max(...amounts);
 
-  const suggestionText = `Para esta justificación, usualmente se asignan entre ${min} y ${max} puntos (promedio: ${average}, mediana: ${median}).`;
+  const suggestionText = `Para esta justificación, usualmente se asignan entre ${min} y ${max} puntos.`;
 
   return {
     message: suggestionText,
@@ -162,15 +162,15 @@ const generateRecognitionMessageService = async (messageData) => {
 
   const openai = new OpenAI({ apiKey });
   const prompt = `
-Eres un asistente de RRHH experto en escribir mensajes de reconocimiento positivos y motivadores en español latinoamericano.
-Genera 2-3 opciones de mensajes cortos y alentadores para un empleado llamado "${employeeName}" que ha recibido ${points} puntos por el siguiente motivo: "${justificationText}".
-Los mensajes deben ser adecuados para un entorno laboral profesional pero cercano. Varía ligeramente el tono y enfoque entre las opciones. No uses emojis. No incluyas la cantidad de puntos en el mensaje final.
+    Eres un asistente de RRHH experto en escribir mensajes de reconocimiento positivos y motivadores en español latinoamericano.
+    Genera 2-3 opciones de mensajes cortos y alentadores para un empleado llamado "${employeeName}" que ha recibido ${points} puntos por el siguiente motivo: "${justificationText}".
+    Los mensajes deben ser adecuados para un entorno laboral profesional pero cercano. Varía ligeramente el tono y enfoque entre las opciones. No uses emojis. No incluyas la cantidad de puntos en el mensaje final.
 
-Formato de Salida Esperado (SOLO los mensajes, cada uno en una nueva línea, sin numeración ni guiones):
-[Mensaje opción 1]
-[Mensaje opción 2]
-[Mensaje opción 3]
-`;
+    Formato de Salida Esperado (SOLO los mensajes, cada uno en una nueva línea, sin numeración ni guiones):
+    [Mensaje opción 1]
+    [Mensaje opción 2]
+    [Mensaje opción 3]
+    `;
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',

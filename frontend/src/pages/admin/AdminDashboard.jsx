@@ -207,9 +207,9 @@ function AdminDashboard() {
           const response = await apiClient.get(
             `/points/suggestions/justification/${selectedJustificationId}`
           );
-          if (response.data?.suggestion) {
+          if (response.data?.data.suggestion) {
             // Check if suggestion data exists
-            setPointsSuggestion(response.data.message); // Set the suggestion text
+            setPointsSuggestion(response.data.data.message); // Set the suggestion text
           } else {
             setPointsSuggestion("");
           }
@@ -259,7 +259,7 @@ function AdminDashboard() {
       });
 
       // Optionally update local state or show success based on response
-      const assignedData = response.data;
+      const assignedData = response.data.data;
       const employeeName =
         employees.find((e) => e.id === selectedEmployeeId)?.nombre ||
         "empleado";
