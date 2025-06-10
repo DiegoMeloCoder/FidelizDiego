@@ -173,7 +173,7 @@ function AdminDashboard() {
 
           const justResponse = await apiClient.get("/justifications");
           // Filter only active justifications for selection
-          const activeJustList = justResponse.data.filter(
+          const activeJustList = justResponse.data.data.justifications.filter(
             (jus) => jus.estaActiva !== false
           );
           setJustifications(activeJustList);

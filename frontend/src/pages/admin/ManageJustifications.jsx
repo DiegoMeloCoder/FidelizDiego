@@ -66,7 +66,7 @@ function ManageJustifications() {
     try {
       // Fetch justifications using API (backend handles filtering and sorting)
       const response = await apiClient.get("/justifications");
-      const list = response.data.map((j) => ({
+      const list = response.data.data.justifications.map((j) => ({
         ...j,
         estaActiva: j.estaActiva !== undefined ? j.estaActiva : true,
       }));
@@ -164,7 +164,7 @@ function ManageJustifications() {
           estaActiva: editIsActive,
         }
       );
-      const updatedJustification = response.data; // API returns updated justification
+      const updatedJustification = response.data.data.justification; // API returns updated justification
 
       // Update local state
       setJustifications((prev) =>
@@ -209,7 +209,7 @@ function ManageJustifications() {
         const response = await apiClient.patch(
           `/justifications/${justification.id}/toggle-status`
         );
-        const updatedJustification = response.data.justification;
+        const updatedJustification = response.data.data.justification;
         setJustifications((prev) =>
           prev.map((j) =>
             j.id === updatedJustification.id ? updatedJustification : j
