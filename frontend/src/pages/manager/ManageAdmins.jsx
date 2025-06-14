@@ -77,7 +77,7 @@ function ManageAdmins() {
         // Fetch Admins using API
         const adminResponse = await apiClient.get("/admins");
         // Ensure isActive defaults to true if missing (though backend should provide it)
-        const adminList = adminResponse.data.map((admin) => ({
+        const adminList = adminResponse.data.data.admins.map((admin) => ({
           ...admin,
           isActive: admin.isActive !== undefined ? admin.isActive : true,
         }));
@@ -121,7 +121,8 @@ function ManageAdmins() {
         nombre: newAdminName.trim(),
         companyId: selectedCompanyId,
       });
-      const addedAdmin = response.data; // API returns the created admin profile
+      console.log(response.data.data.user);
+      const addedAdmin = response.data.data.user; // API returns the created admin profile
 
       // Update local state
       setAdmins((prev) => [...prev, addedAdmin]);
@@ -177,7 +178,8 @@ function ManageAdmins() {
         nombre: editName.trim(),
         isActive: editIsActive,
       });
-      const updatedAdmin = response.data; // API returns the updated admin profile
+      console.log(response.data.data.user);
+      const updatedAdmin = response.data.data.user; // API returns the updated admin profile
 
       // Update local state
       // Asegurarse de que el objeto actualizado tenga 'nombre'
@@ -225,7 +227,7 @@ function ManageAdmins() {
         const response = await apiClient.patch(
           `/admins/${admin.id}/toggle-status`
         );
-        const updatedAdmin = response.data.admin; // API returns the updated admin
+        const updatedAdmin = response.data.data.admin; // API returns the updated admin
 
         // Update local state
         setAdmins((prev) =>
