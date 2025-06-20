@@ -62,16 +62,16 @@ function ManageAnomalies() {
 
       try {
         const response = await apiClient.get("/anomalies", { params });
-        setAnomalies(response.data.anomalies);
+        setAnomalies(response.data.data.anomalies);
         setPagination({
-          totalItems: response.data.totalItems,
-          totalPages: response.data.totalPages,
-          currentPage: response.data.currentPage,
+          totalItems: response.data.data.totalItems,
+          totalPages: response.data.data.totalPages,
+          currentPage: response.data.data.currentPage,
         });
       } catch (err) {
         console.error("Error fetching anomalies:", err);
         setError(
-          err.response?.data?.message ||
+          err.response?.data?.data.message ||
             err.message ||
             "Failed to load anomalies."
         );
@@ -99,7 +99,9 @@ function ManageAnomalies() {
     } catch (err) {
       console.error(`Error updating status for anomaly ${anomalyId}:`, err);
       setError(
-        err.response?.data?.message || err.message || "Failed to update status."
+        err.response?.data?.data.message ||
+          err.message ||
+          "Failed to update status."
       );
     } finally {
       setUpdatingStatus(null);
