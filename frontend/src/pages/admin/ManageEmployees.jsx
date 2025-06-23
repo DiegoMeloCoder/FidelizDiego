@@ -82,7 +82,7 @@ function ManageEmployees() {
     setSuccessMessage("");
     try {
       const empResponse = await apiClient.get("/employees");
-      const empList = empResponse.data.map((emp) => ({
+      const empList = empResponse.data.data.employees.map((emp) => ({
         ...emp,
         isActive: emp.isActive !== undefined ? emp.isActive : true,
       }));
@@ -141,7 +141,7 @@ function ManageEmployees() {
         password: newEmployeePassword,
         nombre: newEmployeeName.trim(),
       });
-      const addedEmployee = response.data;
+      const addedEmployee = response.data.data.user;
 
       setEmployees((prev) => [...prev, addedEmployee]);
       setNewEmployeeName("");
@@ -189,7 +189,7 @@ function ManageEmployees() {
         nombre: editName.trim(),
         isActive: editIsActive,
       });
-      const updatedEmployee = response.data;
+      const updatedEmployee = response.data.data.user;
 
       setEmployees((prev) =>
         prev.map((emp) =>
@@ -227,7 +227,7 @@ function ManageEmployees() {
         const response = await apiClient.patch(
           `/employees/${employeeId}/toggle-status`
         );
-        const updatedEmployee = response.data.employee;
+        const updatedEmployee = response.data.data.employee;
 
         setEmployees((prev) =>
           prev.map((emp) =>
@@ -264,7 +264,7 @@ function ManageEmployees() {
         const response = await apiClient.patch(
           `/employees/${employeeId}/toggle-status`
         );
-        const updatedEmployee = response.data.employee;
+        const updatedEmployee = response.data.data.employee;
 
         setEmployees((prev) =>
           prev.map((emp) =>
@@ -407,7 +407,7 @@ function ManageEmployees() {
         "/employees/bulk-upload",
         employeesToUpload
       );
-      const backendResults = response.data;
+      const backendResults = response.data.data;
       setUploadResults(backendResults);
     } catch (err) {
       setUploadError(

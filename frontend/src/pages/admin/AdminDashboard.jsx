@@ -164,7 +164,7 @@ function AdminDashboard() {
         setJustifications([]);
         try {
           const empResponse = await apiClient.get("/employees");
-          const activeEmpList = empResponse.data.filter(
+          const activeEmpList = empResponse.data.data.employees.filter(
             (emp) => emp.isActive !== false
           );
           setEmployees(activeEmpList);
