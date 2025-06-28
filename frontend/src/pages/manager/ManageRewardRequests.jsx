@@ -38,7 +38,7 @@ function ManageRewardRequests() {
     try {
       // TODO: Añadir query params para filtros si se implementan
       const response = await apiClient.get("/rewards/requests");
-      setRequests(response.data);
+      setRequests(response.data.data.requests);
     } catch (err) {
       console.error("Error fetching reward requests:", err);
       setError(

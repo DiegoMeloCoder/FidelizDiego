@@ -1,4 +1,3 @@
-// backend/services/rewardRequestService.js
 const { RewardRequest, User, Company } = require('../models');
 const { Op } = require('sequelize');
 const AppError = require('../utils/AppError');
