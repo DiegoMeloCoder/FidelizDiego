@@ -16,7 +16,7 @@ function GlobalRedemptionHistory() {
       try {
         // Llama al nuevo endpoint para el historial global del manager
         const response = await apiClient.get('/history/manager/redemptions/global');
-        setHistory(response.data);
+        setHistory(response.data.data.history);
       } catch (err) {
         console.error("Error fetching global redemption history:", err);
         setError(err.message || 'Failed to load global redemption history.');
