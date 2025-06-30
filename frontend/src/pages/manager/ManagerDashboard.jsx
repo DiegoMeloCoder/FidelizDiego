@@ -42,7 +42,7 @@ function ManagerDashboard() {
       try {
         // Fetch main stats
         const statsResponse = await apiClient.get("/stats/manager");
-        setStats(statsResponse.data);
+        setStats(statsResponse.data.data.stats);
       } catch (err) {
         console.error("Error fetching manager stats:", err);
         setError(err.message || "Failed to load dashboard data.");
@@ -86,11 +86,11 @@ function ManagerDashboard() {
       try {
         // Fetch common interest based on selected company (or global)
         const interestResponse = await apiClient.get(interestUrl);
-        setCommonInterest(interestResponse.data);
+        setCommonInterest(interestResponse.data.data);
 
         // Fetch top reward requests based on selected company (or global)
         const requestsResponse = await apiClient.get(requestsUrl);
-        setTopRequests(requestsResponse.data);
+        setTopRequests(requestsResponse.data.data.requests);
 
         // Remove placeholder data setting (already removed)
       } catch (err) {

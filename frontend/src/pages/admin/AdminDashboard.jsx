@@ -85,7 +85,7 @@ function AdminDashboard() {
         setStatsError("");
         try {
           const response = await apiClient.get("/stats/admin");
-          setStats(response.data); // Guardar los datos recibidos (employeeCount, rewardCount)
+          setStats(response.data.data.stats); // Guardar los datos recibidos (employeeCount, rewardCount)
         } catch (error) {
           console.error("Error fetching dashboard stats:", error);
           setStatsError(
@@ -116,7 +116,7 @@ function AdminDashboard() {
           const response = await apiClient.get(
             "/stats/company/common-interest"
           );
-          setCommonInterest(response.data);
+          setCommonInterest(response.data.data);
         } catch (error) {
           console.error("Error fetching common interest:", error);
           setInterestError(

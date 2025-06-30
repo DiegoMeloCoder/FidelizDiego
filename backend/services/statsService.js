@@ -9,18 +9,6 @@ const { Op } = require('sequelize');
 const AppError = require('../utils/AppError');
 
 /**
- * Calcula la mediana de un array de números.
- * @private
- */
-const _calculateMedian = (values) => {
-  if (values.length === 0) return 0;
-  values.sort((a, b) => a - b);
-  const half = Math.floor(values.length / 2);
-  if (values.length % 2) return values[half];
-  return (values[half - 1] + values[half]) / 2.0;
-};
-
-/**
  * Obtiene las estadísticas del dashboard para un Admin.
  * @param {number} companyId - El ID de la compañía del admin.
  * @returns {Promise<{employeeCount: number, rewardCount: number}>}
