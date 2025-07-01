@@ -1,22 +1,36 @@
-'use strict';
+const AppError = require('../utils/AppError');
 
-// Controller function to handle successful image uploads
-const handleRewardImageUpload = (req, res) => {
-  // Multer-S3 adds the 'location' property to req.file upon successful upload
+/**
+ * Un manejador genérico para después de una subida de archivo exitosa con multer-s3.
+ * Asume que el middleware de multer ya se ejecutó y adjuntó `req.file`.
+ * Responde con la URL pública del archivo subido.
+ */
+const handleUploadSuccess = (req, res, next) => {
+  // El middleware 'multer-s3' añade la propiedad 'location' a req.file si la subida fue exitosa.
   if (!req.file || !req.file.location) {
-    // This case should ideally be caught by multer's error handling,
-    // but added as a safeguard.
-    console.error('Upload controller reached without file location.');
-    return res.status(400).json({ message: 'File upload failed or file location is missing.' });
+    // Esta es una salvaguarda. Si llegamos aquí sin un archivo, algo salió mal en el middleware.
+    // Usamos nuestro manejador de errores global para una respuesta consistente.
+    console.error(
+      'Controlador de subida alcanzado sin la ubicación del archivo en req.file.'
+    );
+    return next(
+      new AppError(
+        'La subida del archivo falló o la ubicación del archivo está ausente.',
+        400
+      )
+    );
   }
 
-  // Return the public URL of the uploaded image
+  // Respondemos con el formato JSend estandarizado.
   res.status(200).json({
-    message: 'Image uploaded successfully.',
-    imageUrl: req.file.location, // The URL provided by S3
+    status: 'success',
+    message: 'Archivo subido exitosamente.',
+    data: {
+      imageUrl: req.file.location, // La URL pública que S3 nos proporciona.
+    },
   });
 };
 
 module.exports = {
-  handleRewardImageUpload,
+  handleUploadSuccess,
 };

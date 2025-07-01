@@ -16,7 +16,7 @@ router.post(
   authenticate, // 1. Check if user is logged in (valid Firebase token)
   authorize(['Admin']), // 2. Check if user has 'Admin' role (MATCH CASE FROM DB)
   uploadRewardImage.single('rewardImage'), // 3. Handle the file upload using multer-s3. Expects field name 'rewardImage'
-  uploadController.handleRewardImageUpload // 4. If upload successful, controller sends back the URL
+  uploadController.handleUploadSuccess // 4. If upload successful, controller sends back the URL
 );
 
 // Route for uploading company logos
@@ -27,7 +27,7 @@ router.post(
   authorize(['Manager']), // 2. Check role is 'Manager'
   uploadCompanyLogo.single('companyLogo'), // 3. Handle upload using logo middleware. Expects field 'companyLogo'
   // Reuse the same controller function as it just returns the URL
-  uploadController.handleRewardImageUpload // 4. Controller sends back the URL
+  uploadController.handleUploadSuccess // 4. Controller sends back the URL
 );
 
 // Route for uploading GLOBAL reward images (Manager only)
@@ -39,7 +39,7 @@ router.post(
   // Reuse the reward image upload config, as it saves to the correct folder ('rewards/')
   uploadRewardImage.single('rewardImage'), // 3. Handle upload. Expects field 'rewardImage'
   // Reuse the same controller function
-  uploadController.handleRewardImageUpload // 4. Controller sends back the URL
+  uploadController.handleUploadSuccess // 4. Controller sends back the URL
 );
 
 
