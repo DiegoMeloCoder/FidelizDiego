@@ -12,6 +12,9 @@ router.get('/', companyController.getAllCompanies);
 router.post('/', companyController.createCompany);
 router.get('/:companyId', companyController.getCompanyById);
 router.put('/:companyId', companyController.updateCompany);
-router.patch('/:companyId/toggle-status', companyController.toggleCompanyStatus); // Usar PATCH para cambio de estado
+router.patch(
+  '/:companyId/toggle-status',
+  companyController.toggleCompanyStatus
+); // Usar PATCH para cambio de estado
 
 module.exports = router;

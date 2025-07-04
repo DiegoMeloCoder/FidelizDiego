@@ -39,5 +39,4 @@ router.use('/reports', reportRoutes);
 router.use('/anomalies', anomalyRoutes);
 router.use('/engagement', engagementRoutes);
 
-// TODO: Añadir aquí futuras rutas (ej. /ranking)
 module.exports = router;
