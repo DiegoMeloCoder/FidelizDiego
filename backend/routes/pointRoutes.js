@@ -1,6 +1,5 @@
 const express = require('express');
 const pointController = require('../controllers/pointController');
-// Importar checkSubscription
 const { authenticate, authorize, checkSubscription } = require('../middleware/auth'); 
 
 const router = express.Router();

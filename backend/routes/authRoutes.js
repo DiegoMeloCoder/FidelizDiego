@@ -4,7 +4,7 @@ const {
   authenticate,
   authorize,
   checkSubscription,
-} = require('../middleware/auth'); // Importar middlewares
+} = require('../middleware/auth');
 
 const router = express.Router();
 

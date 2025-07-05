@@ -1,6 +1,5 @@
 const express = require('express');
 const justificationController = require('../controllers/justificationController');
-// Importar checkSubscription
 const { authenticate, authorize, checkTenant, checkSubscription } = require('../middleware/auth'); 
 
 const router = express.Router();

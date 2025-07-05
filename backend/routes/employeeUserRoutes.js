@@ -1,6 +1,5 @@
 const express = require('express');
 const employeeUserController = require('../controllers/employeeUserController');
-// Importar checkSubscription
 const {
   authenticate,
   authorize,

@@ -1,6 +1,5 @@
 const express = require('express');
 const reportController = require('../controllers/reportController');
-// Import checkSubscription
 const { authenticate, authorize, checkSubscription } = require('../middleware/auth'); 
 
 const router = express.Router();
