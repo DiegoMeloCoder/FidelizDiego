@@ -1,6 +1,5 @@
 const express = require('express');
 const historyController = require('../controllers/historyController');
-// Importar checkSubscription
 const {
   authenticate,
   authorize,
@@ -9,55 +8,42 @@ const {
 
 const router = express.Router();
 
-// Rutas para Admin
-// Permitir ver historial si está activa o pendiente
-router.get(
-  '/admin/points',
+// --- Sub-Router para Admin ---
+const adminRouter = express.Router();
+adminRouter.use(
   authenticate,
-  authorize('Admin'), // Solo Admin
-  checkSubscription({ allowPending: true }), // Permitir acceso limitado
-  historyController.getPointAssignmentHistory
+  authorize('Admin'),
+  checkSubscription({ allowPending: true })
 );
-router.get(
-  '/admin/redemptions',
-  authenticate,
-  authorize('Admin'), // Solo Admin
-  checkSubscription({ allowPending: true }), // Permitir acceso limitado
-  historyController.getRedemptionHistoryAdmin
-);
+adminRouter.get('/points', historyController.getPointAssignmentHistory);
+adminRouter.get('/redemptions', historyController.getRedemptionHistoryAdmin);
+// Montamos el sub-router
+router.use('/admin', adminRouter);
 
-// Rutas para Employee
-// Permitir ver historial si está activa o pendiente
-router.get(
-  '/employee/points',
+// --- Sub-Router para Employee ---
+const employeeRouter = express.Router();
+employeeRouter.use(
   authenticate,
-  authorize('Employee'), // Solo Employee
-  checkSubscription({ allowPending: true }), // Permitir acceso limitado
-  historyController.getMyPointHistory
+  authorize('Employee'),
+  checkSubscription({ allowPending: true })
 );
-router.get(
-  '/employee/redemptions',
-  authenticate,
-  authorize('Employee'), // Solo Employee
-  checkSubscription({ allowPending: true }), // Permitir acceso limitado
-  historyController.getMyRedemptionHistory
-);
+employeeRouter.get('/points', historyController.getMyPointHistory);
+employeeRouter.get('/redemptions', historyController.getMyRedemptionHistory);
+// Montamos el sub-router
+router.use('/employee', employeeRouter);
 
-// Ruta para Ranking (accesible por Admin y Employee)
-// Permitir ver ranking si está activa o pendiente
+// --- Rutas con Múltiples Roles o Roles Únicos ---
 router.get(
   '/ranking',
   authenticate,
-  authorize(['Admin', 'Employee']), // Permitir ambos roles
-  checkSubscription({ allowPending: true }), // Permitir acceso limitado
+  authorize(['Admin', 'Employee']),
+  checkSubscription({ allowPending: true }),
   historyController.getRanking
 );
-
-// Rutas para Manager
 router.get(
   '/manager/redemptions/global',
   authenticate,
-  authorize('Manager'), // Solo Manager
+  authorize('Manager'),
   historyController.getManagerGlobalRedemptionHistory
 );
 
