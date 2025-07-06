@@ -1,11 +1,8 @@
-'use strict';
-
 const express = require('express');
-const multer = require('multer'); // Import multer itself for error handling
+const multer = require('multer');
 const uploadController = require('../controllers/uploadController');
-// Import BOTH upload middlewares
 const { uploadRewardImage, uploadCompanyLogo } = require('../config/s3Config');
-const { authenticate, authorize } = require('../middleware/auth'); // Import auth middleware
+const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -54,7 +51,6 @@ router.use((error, req, res, next) => {
     console.error('Upload error:', error);
     return res.status(400).json({ message: error.message || 'An unexpected error occurred during file upload.' });
   }
-  // Everything went fine, proceed.
   next();
 });
 

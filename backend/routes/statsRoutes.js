@@ -1,6 +1,5 @@
 const express = require('express');
 const statsController = require('../controllers/statsController');
-// Importar checkSubscription
 const { authenticate, authorize, checkSubscription } = require('../middleware/auth'); 
 
 const router = express.Router();
@@ -10,8 +9,8 @@ const router = express.Router();
 router.get(
     '/admin',
     authenticate,
-    authorize('Admin'), // Solo Admin puede acceder
-    checkSubscription({ allowPending: true }), // Permitir acceso limitado
+    authorize('Admin'),
+    checkSubscription({ allowPending: true }),
     statsController.getAdminDashboardStats
 );
 
@@ -19,7 +18,7 @@ router.get(
 router.get(
     '/manager',
     authenticate,
-    authorize('Manager'), // Solo Manager puede acceder
+    authorize('Manager'),
     statsController.getManagerDashboardStats
 );
 
@@ -28,9 +27,8 @@ router.get(
 router.get(
     '/company/common-interest',
     authenticate,
-    authorize(['Admin', 'Manager']), // Permitir ambos roles
-    checkSubscription({ allowPending: true }), // Permitir ver si está activa o pendiente
-    // checkTenant(), // Aplicar checkTenant para asegurar companyId en req.dbUser (si es necesario para Manager)
+    authorize(['Admin', 'Manager']),
+    checkSubscription({ allowPending: true }),
     statsController.getCompanyCommonInterest
 );
 
@@ -39,8 +37,7 @@ router.get(
 router.get(
     '/company/top-reward-requests',
     authenticate,
-    authorize(['Manager']), // Solo Manager puede ver esto por ahora
-    // checkTenant(), // Aplicar checkTenant para asegurar companyId en req.dbUser (si es necesario)
+    authorize(['Manager']),
     statsController.getTopRewardRequests
 );
 

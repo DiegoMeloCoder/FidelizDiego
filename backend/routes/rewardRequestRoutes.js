@@ -4,29 +4,29 @@ const { authenticate, authorize, checkTenant } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Ruta para que un empleado cree una nueva solicitud de recompensa
-// Requiere autenticación y que el usuario sea un empleado con compañía asignada
-router.post('/',
+// Ruta para que un empleado cree una nueva solicitud
+router.post(
+  '/',
   authenticate,
-  authorize(['Employee']), // authorize ya verifica que el rol sea Employee
-  // checkTenant() no es necesario aquí, el controlador verifica companyId en req.dbUser
+  authorize(['Employee']),
   rewardRequestController.createRewardRequest
 );
 
 // Ruta para listar solicitudes (Admin/Manager)
-// El filtrado por compañía se maneja en el controlador basado en rol y query params
-router.get('/',
+router.get(
+  '/',
   authenticate,
   authorize(['Admin', 'Manager']),
   rewardRequestController.getRewardRequests
 );
 
-// Ruta para actualizar el estado de una solicitud (Admin/Manager)
-router.patch('/:id',
+// Ruta para actualizar el estado de una solicitud
+router.patch(
+  '/:id',
   authenticate,
   authorize(['Admin', 'Manager']),
+  checkTenant('RewardRequest', 'id'),
   rewardRequestController.updateRewardRequestStatus
 );
-
 
 module.exports = router;
