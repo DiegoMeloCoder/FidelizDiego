@@ -39,11 +39,21 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
-    // En producción, podemos manejar tipos de error específicos si es necesario.
-    let error = { ...err, message: err.message };
-    if (error.name === 'SequelizeValidationError')
-      error = new AppError('Datos de entrada inválidos.', 400);
+    let error = { ...err, message: err.message, name: err.name }; // Copiar el nombre del error también
 
-    sendErrorProd(err, res);
+    // Convertir errores específicos de Sequelize en errores operacionales
+    if (error.name === 'SequelizeValidationError') {
+      const errors = Object.values(err.errors).map((el) => el.message);
+      const message = `Datos de entrada inválidos. ${errors.join('. ')}`;
+      error = new AppError(message, 400);
+    }
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      error = new AppError(
+        'El valor proporcionado ya existe y debe ser único.',
+        409
+      ); // 409 Conflict
+    }
+
+    sendErrorProd(error, res);
   }
 };

@@ -1,4 +1,3 @@
-'use strict';
 const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -65,11 +64,13 @@ module.exports = (sequelize) => {
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT', // No permitir borrar recompensa si hay canjes asociados (o SET NULL)
       },
-      puntosCosto: { // Guardar el costo en el momento del canje
+      puntosCosto: {
+        // Guardar el costo en el momento del canje
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      fechaCanje: { // Sequelize maneja createdAt, pero podemos tener uno específico
+      fechaCanje: {
+        // Sequelize maneja createdAt, pero podemos tener uno específico
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW,

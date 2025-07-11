@@ -1,4 +1,3 @@
-'use strict';
 const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -42,16 +41,24 @@ module.exports = (sequelize) => {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE', // If company is deleted, remove its requests
       },
-      requestedItem: { // Reemplaza requestText
+      requestedItem: {
+        // Reemplaza requestText
         type: DataTypes.STRING,
         allowNull: true, // Permitir nulos temporalmente
       },
-      additionalNotes: { // Nuevo campo opcional
+      additionalNotes: {
+        // Nuevo campo opcional
         type: DataTypes.TEXT,
         allowNull: true,
       },
       status: {
-        type: DataTypes.ENUM('new', 'reviewed', 'planned', 'implemented', 'rejected'),
+        type: DataTypes.ENUM(
+          'new',
+          'reviewed',
+          'planned',
+          'implemented',
+          'rejected'
+        ),
         allowNull: false,
         defaultValue: 'new',
       },

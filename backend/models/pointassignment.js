@@ -1,4 +1,3 @@
-'use strict';
 const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -40,7 +39,8 @@ module.exports = (sequelize) => {
         autoIncrement: true,
         allowNull: false,
       },
-      adminId: { // Quién asignó
+      adminId: {
+        // Quién asignó
         type: DataTypes.STRING, // Coincide con User.id (Firebase UID)
         allowNull: false,
         references: {
@@ -50,7 +50,8 @@ module.exports = (sequelize) => {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL', // Opcional: si se borra el admin, mantener el registro?
       },
-      empleadoId: { // Quién recibió
+      empleadoId: {
+        // Quién recibió
         type: DataTypes.STRING, // Coincide con User.id (Firebase UID)
         allowNull: false,
         references: {
@@ -76,14 +77,16 @@ module.exports = (sequelize) => {
         validate: {
           isInt: { msg: 'La cantidad debe ser un número entero.' }, // Asegurar que sea entero
           notNull: { msg: 'La cantidad no puede ser nula.' }, // Redundante con allowNull, pero explícito
-          notZero(value) { // Validación personalizada para no ser cero
+          notZero(value) {
+            // Validación personalizada para no ser cero
             if (value === 0) {
               throw new Error('La cantidad no puede ser cero.');
             }
-          }
+          },
         },
       },
-      fechaAsignacion: { // Sequelize maneja createdAt, pero podemos tener uno específico si es necesario
+      fechaAsignacion: {
+        // Sequelize maneja createdAt, pero podemos tener uno específico si es necesario
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW,
@@ -98,7 +101,8 @@ module.exports = (sequelize) => {
         onUpdate: 'CASCADE',
         onDelete: 'RESTRICT', // No permitir borrar una justificación si está en uso
       },
-      justificacionTexto: { // Guardar el texto en el momento de la asignación por si la justificación original cambia/se borra
+      justificacionTexto: {
+        // Guardar el texto en el momento de la asignación por si la justificación original cambia/se borra
         type: DataTypes.STRING,
         allowNull: false,
       },
