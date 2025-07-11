@@ -20,7 +20,7 @@ router.post(
 // POST /api/v1/uploads/images/logos
 router.post(
   '/images/logos',
-  authenticate,       // 1. Check login
+  authenticate, // 1. Check login
   authorize(['Manager']), // 2. Check role is 'Manager'
   uploadCompanyLogo.single('companyLogo'), // 3. Handle upload using logo middleware. Expects field 'companyLogo'
   // Reuse the same controller function as it just returns the URL
@@ -31,7 +31,7 @@ router.post(
 // POST /api/v1/uploads/images/rewards/global
 router.post(
   '/images/rewards/global',
-  authenticate,       // 1. Check login
+  authenticate, // 1. Check login
   authorize(['Manager']), // 2. Check role is 'Manager'
   // Reuse the reward image upload config, as it saves to the correct folder ('rewards/')
   uploadRewardImage.single('rewardImage'), // 3. Handle upload. Expects field 'rewardImage'
@@ -39,20 +39,25 @@ router.post(
   uploadController.handleUploadSuccess // 4. Controller sends back the URL
 );
 
-
 // Add a basic error handler for multer errors (like file size limit or type)
 router.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     // A Multer error occurred when uploading.
     console.error('Multer error:', error);
-    return res.status(400).json({ message: `File upload error: ${error.message}` });
+    return res
+      .status(400)
+      .json({ message: `File upload error: ${error.message}` });
   } else if (error) {
     // An unknown error occurred when uploading (e.g., file type filter).
     console.error('Upload error:', error);
-    return res.status(400).json({ message: error.message || 'An unexpected error occurred during file upload.' });
+    return res
+      .status(400)
+      .json({
+        message:
+          error.message || 'An unexpected error occurred during file upload.',
+      });
   }
   next();
 });
-
 
 module.exports = router;
