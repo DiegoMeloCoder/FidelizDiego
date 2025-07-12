@@ -5,6 +5,7 @@ import { auth } from "../../firebase/config";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import logger from "../../utils/logger.js";
 import Button from "../ui/Button";
+import NavItem from "../ui/NavItem";
 import {
   HomeIcon, // Dashboard
   UserCircleIcon, // Profile
@@ -23,6 +24,63 @@ import {
   InboxArrowDownIcon, // Icon for Reward Requests
 } from "@heroicons/react/24/outline"; // Using outline style
 
+// --- Estructuras de Datos para la Navegación ---
+const managerNavItems = [
+  { to: "/manager", icon: HomeIcon, text: "Dashboard" },
+  { to: "/manager/companies", icon: BuildingOffice2Icon, text: "Companies" },
+  { to: "/manager/admins", icon: UserGroupIcon, text: "Admins" },
+  { to: "/manager/rewards", icon: GiftIcon, text: "Global Rewards" },
+  {
+    to: "/manager/history/global-redemptions",
+    icon: ArchiveBoxIcon,
+    text: "Global Redemptions",
+  },
+  {
+    to: "/manager/anomalies",
+    icon: ExclamationTriangleIcon,
+    text: "Anomalies",
+  },
+  {
+    to: "/manager/reward-requests",
+    icon: InboxArrowDownIcon,
+    text: "Reward Requests",
+  },
+];
+
+const adminNavItems = [
+  { to: "/admin", icon: HomeIcon, text: "Panel" },
+  { to: "/admin/employees", icon: UsersIcon, text: "Colaboradores" },
+  { to: "/admin/rewards", icon: GiftIcon, text: "Recompensas" },
+  {
+    to: "/admin/justifications",
+    icon: DocumentMagnifyingGlassIcon,
+    text: "Justificaciones",
+  },
+  {
+    to: "/admin/history/points",
+    icon: ClipboardDocumentListIcon,
+    text: "Historial de Puntos",
+  },
+  {
+    to: "/admin/history/redemptions",
+    icon: ArchiveBoxIcon,
+    text: "Historial de Canjes",
+  },
+  { to: "/admin/ranking", icon: ChartBarIcon, text: "Ranking" },
+];
+
+const employeeNavItems = [
+  { to: "/employee", icon: HomeIcon, text: "Panel" },
+  { to: "/employee/rewards", icon: GiftIcon, text: "Catálogo de Recompensas" },
+  {
+    to: "/employee/history",
+    icon: ClipboardDocumentListIcon,
+    text: "Mi Historial",
+  },
+  { to: "/employee/ranking", icon: ChartBarIcon, text: "Ranking" },
+  { to: "/employee/profile", icon: UserCircleIcon, text: "Mi Perfil" },
+];
+
 function AppLayout() {
   const { currentUser, userData } = useAuth();
   // TODO: Fetch company name based on userData.companyId if needed elsewhere, or pass it down if already fetched.
@@ -31,7 +89,6 @@ function AppLayout() {
   const companyName = userData?.companyData?.nombre || "Company"; // Assuming company data is fetched and stored in userData
 
   const navigate = useNavigate();
-  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -45,29 +102,7 @@ function AppLayout() {
     }
   };
 
-  const isActive = (path) => {
-    // Exact match for root paths like /admin, /employee, /manager
-    if (path === "/admin" || path === "/employee" || path === "/manager") {
-      return location.pathname === path;
-    }
-    // StartsWith match for nested paths
-    return (
-      location.pathname === path ||
-      (path !== "/" && location.pathname.startsWith(path) && path.length > 1)
-    );
-  };
-
-  // Refined styles using brand colors - Improved contrast for dark sidebar
-  const linkBaseClasses =
-    "group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-100 hover:bg-brand-primary hover:text-white transition-colors duration-150"; // Base text lighter (e.g., gray-100)
-  const activeLinkClasses = "bg-brand-primary text-white shadow-inner"; // Active link uses primary color
-  const iconClasses =
-    "mr-3 flex-shrink-0 h-5 w-5 text-gray-300 group-hover:text-gray-100 transition-colors duration-150"; // Lighter base icon color (e.g., gray-300)
-  const activeIconClasses = "text-white"; // Active icon remains white
-
   // Extract company details for easier access
-  const companyLogoUrl = userData?.company?.logoUrl;
-  const companyMotto = userData?.company?.motto;
   const companyDisplayName = userData?.company?.nombre || "Company"; // Use fetched name or default
   const companyColors = userData?.company; // Get the whole company object for colors
 
@@ -116,12 +151,11 @@ function AppLayout() {
     <div className="flex flex-col h-full">
       {/* Header Section */}
       <div className="px-4 py-5 border-b border-gray-700/50 flex flex-col items-center">
-        {/* Logo */}
         <div className="h-16 w-auto mb-3 flex items-center justify-center">
-          {companyLogoUrl ? (
+          {userData?.company?.logoUrl ? (
             <img
-              src={companyLogoUrl}
-              alt={`Logo de ${companyDisplayName}`}
+              src={userData.company.logoUrl}
+              alt={`Logo de ${userData.company.nombre}`}
               className="max-h-16 max-w-full object-contain"
             />
           ) : (
@@ -130,13 +164,11 @@ function AppLayout() {
             </h1>
           )}
         </div>
-        {/* Motto */}
-        {companyMotto && (
+        {userData?.company?.motto && (
           <p className="text-xs text-center text-gray-300 mb-4 px-2">
-            "{companyMotto}"
+            "{userData.company.motto}"
           </p>
         )}
-        {/* User Info */}
         {userData && (
           <div className="text-center w-full">
             <span className="block text-sm font-semibold text-white uppercase tracking-wider mb-1">
@@ -145,10 +177,10 @@ function AppLayout() {
             {(userData.role === "Admin" || userData.role === "Employee") && (
               <span
                 className="block text-xs text-gray-300 mt-0.5 truncate"
-                title={companyDisplayName}
+                title={userData.company?.nombre}
               >
                 <BuildingOffice2Icon className="inline-block h-3 w-3 mr-1 align-text-bottom text-gray-400" />
-                {companyDisplayName}
+                {userData.company?.nombre || "Company"}
               </span>
             )}
           </div>
@@ -157,291 +189,39 @@ function AppLayout() {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1.5 overflow-y-auto">
-        {userData?.role === "Manager" && (
-          <>
-            <Link
-              to="/manager"
-              className={`${linkBaseClasses} ${
-                isActive("/manager") ? activeLinkClasses : ""
-              }`}
+        {userData?.role === "Manager" &&
+          managerNavItems.map((item) => (
+            <NavItem
+              key={item.to}
+              to={item.to}
+              icon={item.icon}
               onClick={() => setIsSidebarOpen(false)}
             >
-              <HomeIcon
-                className={`${iconClasses} ${
-                  isActive("/manager") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Dashboard
-            </Link>
-            <Link
-              to="/manager/companies"
-              className={`${linkBaseClasses} ${
-                isActive("/manager/companies") ? activeLinkClasses : ""
-              }`}
+              {item.text}
+            </NavItem>
+          ))}
+        {userData?.role === "Admin" &&
+          adminNavItems.map((item) => (
+            <NavItem
+              key={item.to}
+              to={item.to}
+              icon={item.icon}
               onClick={() => setIsSidebarOpen(false)}
             >
-              <BuildingOffice2Icon
-                className={`${iconClasses} ${
-                  isActive("/manager/companies") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Companies
-            </Link>
-            <Link
-              to="/manager/admins"
-              className={`${linkBaseClasses} ${
-                isActive("/manager/admins") ? activeLinkClasses : ""
-              }`}
+              {item.text}
+            </NavItem>
+          ))}
+        {userData?.role === "Employee" &&
+          employeeNavItems.map((item) => (
+            <NavItem
+              key={item.to}
+              to={item.to}
+              icon={item.icon}
               onClick={() => setIsSidebarOpen(false)}
             >
-              <UserGroupIcon
-                className={`${iconClasses} ${
-                  isActive("/manager/admins") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Admins
-            </Link>
-            <Link
-              to="/manager/rewards"
-              className={`${linkBaseClasses} ${
-                isActive("/manager/rewards") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <GiftIcon
-                className={`${iconClasses} ${
-                  isActive("/manager/rewards") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Global Rewards
-            </Link>
-            <Link
-              to="/manager/history/global-redemptions"
-              className={`${linkBaseClasses} ${
-                isActive("/manager/history/global-redemptions")
-                  ? activeLinkClasses
-                  : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <ArchiveBoxIcon
-                className={`${iconClasses} ${
-                  isActive("/manager/history/global-redemptions")
-                    ? activeIconClasses
-                    : ""
-                }`}
-              />{" "}
-              Global Redemptions
-            </Link>
-            <Link
-              to="/manager/anomalies"
-              className={`${linkBaseClasses} ${
-                isActive("/manager/anomalies") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <ExclamationTriangleIcon
-                className={`${iconClasses} ${
-                  isActive("/manager/anomalies") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Anomalies
-            </Link>
-            <Link
-              to="/manager/reward-requests"
-              className={`${linkBaseClasses} ${
-                isActive("/manager/reward-requests") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <InboxArrowDownIcon
-                className={`${iconClasses} ${
-                  isActive("/manager/reward-requests") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Reward Requests
-            </Link>
-          </>
-        )}
-        {userData?.role === "Admin" && (
-          <>
-            <Link
-              to="/admin"
-              className={`${linkBaseClasses} ${
-                isActive("/admin") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <HomeIcon
-                className={`${iconClasses} ${
-                  isActive("/admin") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Panel
-            </Link>
-            <Link
-              to="/admin/employees"
-              className={`${linkBaseClasses} ${
-                isActive("/admin/employees") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <UsersIcon
-                className={`${iconClasses} ${
-                  isActive("/admin/employees") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Colaboradores
-            </Link>
-            <Link
-              to="/admin/rewards"
-              className={`${linkBaseClasses} ${
-                isActive("/admin/rewards") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <GiftIcon
-                className={`${iconClasses} ${
-                  isActive("/admin/rewards") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Recompensas
-            </Link>
-            <Link
-              to="/admin/justifications"
-              className={`${linkBaseClasses} ${
-                isActive("/admin/justifications") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <DocumentMagnifyingGlassIcon
-                className={`${iconClasses} ${
-                  isActive("/admin/justifications") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Justificaciones
-            </Link>
-            <Link
-              to="/admin/history/points"
-              className={`${linkBaseClasses} ${
-                isActive("/admin/history/points") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <ClipboardDocumentListIcon
-                className={`${iconClasses} ${
-                  isActive("/admin/history/points") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Historial de Puntos
-            </Link>
-            <Link
-              to="/admin/history/redemptions"
-              className={`${linkBaseClasses} ${
-                isActive("/admin/history/redemptions") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <ArchiveBoxIcon
-                className={`${iconClasses} ${
-                  isActive("/admin/history/redemptions")
-                    ? activeIconClasses
-                    : ""
-                }`}
-              />{" "}
-              Historial de Canjes
-            </Link>
-            <Link
-              to="/admin/ranking"
-              className={`${linkBaseClasses} ${
-                isActive("/admin/ranking") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <ChartBarIcon
-                className={`${iconClasses} ${
-                  isActive("/admin/ranking") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Ranking
-            </Link>
-          </>
-        )}
-        {userData?.role === "Employee" && (
-          <>
-            <Link
-              to="/employee"
-              className={`${linkBaseClasses} ${
-                isActive("/employee") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <HomeIcon
-                className={`${iconClasses} ${
-                  isActive("/employee") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Panel
-            </Link>
-            <Link
-              to="/employee/rewards"
-              className={`${linkBaseClasses} ${
-                isActive("/employee/rewards") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <GiftIcon
-                className={`${iconClasses} ${
-                  isActive("/employee/rewards") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Catálogo de Recompensas
-            </Link>
-            <Link
-              to="/employee/history"
-              className={`${linkBaseClasses} ${
-                isActive("/employee/history") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <ClipboardDocumentListIcon
-                className={`${iconClasses} ${
-                  isActive("/employee/history") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Mi Historial
-            </Link>
-            <Link
-              to="/employee/ranking"
-              className={`${linkBaseClasses} ${
-                isActive("/employee/ranking") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <ChartBarIcon
-                className={`${iconClasses} ${
-                  isActive("/employee/ranking") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Ranking
-            </Link>
-            {/* Add Profile Link */}
-            <Link
-              to="/employee/profile"
-              className={`${linkBaseClasses} ${
-                isActive("/employee/profile") ? activeLinkClasses : ""
-              }`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <UserCircleIcon
-                className={`${iconClasses} ${
-                  isActive("/employee/profile") ? activeIconClasses : ""
-                }`}
-              />{" "}
-              Mi Perfil
-            </Link>
-          </>
-        )}
+              {item.text}
+            </NavItem>
+          ))}
       </nav>
 
       {/* Footer/Logout Section */}
