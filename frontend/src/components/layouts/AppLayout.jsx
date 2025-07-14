@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase/config";
 import { useAuth } from "../../contexts/AuthContext.jsx";
@@ -83,13 +83,40 @@ const employeeNavItems = [
 
 function AppLayout() {
   const { currentUser, userData } = useAuth();
-  // TODO: Fetch company name based on userData.companyId if needed elsewhere, or pass it down if already fetched.
-  // For now, let's assume we might have companyName in userData or fetch it.
-  // Example: const companyName = userData?.companyName || 'Your Company';
-  const companyName = userData?.companyData?.nombre || "Company"; // Assuming company data is fetched and stored in userData
-
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Extract company details for easier access
+  const companyDisplayName = userData?.company?.nombre || "Company";
+
+  // --- Lógica de Theming Dinámico ---
+  useEffect(() => {
+    const root = document.documentElement;
+    const companyColors = userData?.company;
+
+    const clearTheme = () => {
+      root.style.removeProperty("--color-primary");
+      root.style.removeProperty("--color-secondary");
+      root.style.removeProperty("--color-tertiary");
+    };
+
+    if (companyColors) {
+      logger.log("Applying theme colors:", companyColors);
+      if (companyColors.primaryColor)
+        root.style.setProperty("--color-primary", companyColors.primaryColor);
+      if (companyColors.secondaryColor)
+        root.style.setProperty(
+          "--color-secondary",
+          companyColors.secondaryColor
+        );
+      if (companyColors.tertiaryColor)
+        root.style.setProperty("--color-tertiary", companyColors.tertiaryColor);
+    } else {
+      clearTheme();
+    }
+
+    return () => clearTheme();
+  }, [userData]);
 
   const handleLogout = async () => {
     try {
@@ -98,54 +125,8 @@ function AppLayout() {
       navigate("/login");
     } catch (error) {
       console.error("Failed to sign out:", error);
-      // TODO: Add user feedback on error (e.g., toast notification)
     }
   };
-
-  // Extract company details for easier access
-  const companyDisplayName = userData?.company?.nombre || "Company"; // Use fetched name or default
-  const companyColors = userData?.company; // Get the whole company object for colors
-
-  // --- Apply Dynamic Theme Colors ---
-  useEffect(() => {
-    const root = document.documentElement;
-    const primary = companyColors?.primaryColor;
-    const secondary = companyColors?.secondaryColor;
-    const tertiary = companyColors?.tertiaryColor;
-
-    // Function to remove existing theme properties
-    const clearTheme = () => {
-      root.style.removeProperty("--color-primary");
-      root.style.removeProperty("--color-secondary");
-      root.style.removeProperty("--color-tertiary");
-      // Optional: remove a class if you prefer class-based theming
-      // document.body.classList.remove('custom-theme');
-    };
-
-    if (primary || secondary || tertiary) {
-      logger.log("Applying theme colors:", { primary, secondary, tertiary });
-      // Apply colors if they exist
-      if (primary) root.style.setProperty("--color-primary", primary);
-      if (secondary) root.style.setProperty("--color-secondary", secondary);
-      if (tertiary) root.style.setProperty("--color-tertiary", tertiary);
-      // Optional: add a class to body for broader CSS rules
-      // document.body.classList.add('custom-theme');
-    } else {
-      // Clear theme if no colors are defined for the company
-      clearTheme();
-    }
-
-    // Cleanup function to remove styles when component unmounts or user changes
-    return () => {
-      clearTheme();
-    };
-    // Re-run effect if any company color changes
-  }, [
-    companyColors?.primaryColor,
-    companyColors?.secondaryColor,
-    companyColors?.tertiaryColor,
-  ]);
-  // --- End Apply Dynamic Theme Colors ---
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -249,62 +230,42 @@ function AppLayout() {
 
   return (
     <div className="flex h-screen bg-gray-100 font-sans antialiased">
-      {" "}
-      {/* Main background remains light gray */}
-      {/* Static Sidebar for larger screens - Apply brand-secondary background */}
+      {/* Static Sidebar for larger screens */}
       <div className="hidden md:flex md:flex-col md:w-64 bg-brand-secondary text-gray-200 flex-shrink-0 shadow-lg">
-        {" "}
-        {/* Use brand-secondary for sidebar bg */}
         {sidebarContent}
       </div>
+
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
         <header className="md:hidden bg-brand-secondary text-white shadow-md sticky top-0 z-10">
-          {" "}
-          {/* Made header sticky */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center">
-                <h1 className="text-xl font-semibold text-white tracking-tight">
-                  Fideliz
-                </h1>
-              </div>
-              <div className="flex items-center">
-                {/* Optional: Show company name or role on mobile header - Use brand color here too? */}
-                {userData && (
-                  <span className="text-xs text-brand-primary mr-3 hidden sm:block">
-                    {userData.role}{" "}
-                    {(userData.role === "Admin" ||
-                      userData.role === "Employee") &&
-                    companyDisplayName
-                      ? `(${companyDisplayName})`
-                      : ""}
-                  </span>
-                )}
-                <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  type="button"
-                  className="ml-2 bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
-                  aria-controls="mobile-menu"
-                  aria-expanded={isSidebarOpen}
-                >
-                  <span className="sr-only">Abrir menú principal</span>
-                  <Bars3Icon
-                    className={`${isSidebarOpen ? "hidden" : "block"} h-6 w-6`}
-                    aria-hidden="true"
-                  />
-                  <XMarkIcon
-                    className={`${isSidebarOpen ? "block" : "hidden"} h-6 w-6`}
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
+              <h1 className="text-xl font-semibold text-white tracking-tight">
+                Fideliz
+              </h1>
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                type="button"
+                className="ml-2 bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                aria-controls="mobile-menu"
+                aria-expanded={isSidebarOpen}
+              >
+                <span className="sr-only">Abrir menú principal</span>
+                <Bars3Icon
+                  className={`${isSidebarOpen ? "hidden" : "block"} h-6 w-6`}
+                  aria-hidden="true"
+                />
+                <XMarkIcon
+                  className={`${isSidebarOpen ? "block" : "hidden"} h-6 w-6`}
+                  aria-hidden="true"
+                />
+              </button>
             </div>
           </div>
         </header>
 
-        {/* Mobile Sidebar (Slide-over with transition) */}
+        {/* Mobile Sidebar (Slide-over) */}
         <div
           className={`fixed inset-0 flex z-40 md:hidden ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -312,11 +273,7 @@ function AppLayout() {
           role="dialog"
           aria-modal="true"
         >
-          {/* Off-canvas menu - Apply brand-secondary background */}
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-brand-secondary text-gray-200 shadow-xl">
-            {" "}
-            {/* Use brand-secondary for mobile sidebar bg */}
-            {/* Close button inside */}
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
                 type="button"
@@ -327,10 +284,8 @@ function AppLayout() {
                 <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
               </button>
             </div>
-            {/* Sidebar content */}
             {sidebarContent}
           </div>
-          {/* Overlay to close sidebar on click outside */}
           <div
             className="flex-shrink-0 w-14"
             onClick={() => setIsSidebarOpen(false)}
@@ -338,10 +293,8 @@ function AppLayout() {
           ></div>
         </div>
 
-        {/* Main content - Add a top border with brand-tertiary */}
+        {/* Main content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6 md:p-8 border-t-4 border-brand-tertiary">
-          {" "}
-          {/* Added top border with brand-tertiary */}
           <Outlet />
         </main>
       </div>
