@@ -86,9 +86,6 @@ function AppLayout() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Extract company details for easier access
-  const companyDisplayName = userData?.company?.nombre || "Company";
-
   // --- Lógica de Theming Dinámico ---
   useEffect(() => {
     const root = document.documentElement;
