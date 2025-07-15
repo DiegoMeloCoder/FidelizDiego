@@ -14,40 +14,37 @@ function Button({
   onClick,
   type = "button",
   variant = "primary",
-  size = "md", // Added size prop with default
+  size = "md",
   disabled = false,
   className = "",
   ...otherProps
 }) {
-  // Base styles - removed padding/text size, will be handled by size variant
   const baseStyles =
-    "font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center active:scale-95"; // Added transition-all, ease-in-out, active:scale-95
+    "font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center active:scale-95";
 
   // Variant styles
   let variantStyles = "";
   switch (variant) {
     case "secondary":
-      // Use brand-tertiary for bg, FORCE white text for better contrast in most cases, focus on primary
       variantStyles =
-        "bg-brand-tertiary text-white hover:opacity-90 focus:ring-brand-primary"; // Force white text
+        "bg-brand-tertiary text-white hover:opacity-90 focus:ring-brand-primary";
       break;
     case "danger":
       variantStyles =
         "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 hover:shadow-md";
       break;
-    case "landing": // New variant for landing page theme
+    case "landing":
       variantStyles =
-        "bg-landing-primary text-white hover:bg-landing-primary-dark focus:ring-landing-primary hover:shadow-lg hover:scale-105"; // Added hover shadow and scale
+        "bg-landing-primary text-white hover:bg-landing-primary-dark focus:ring-landing-primary hover:shadow-lg hover:scale-105";
       break;
-    case "landing-outline": // New outline variant for landing page
+    case "landing-outline":
       variantStyles =
-        "bg-white text-landing-primary border-2 border-landing-primary hover:bg-landing-primary hover:text-white focus:ring-landing-primary hover:scale-105 hover:shadow-md"; // Thicker border, added hover scale and shadow
+        "bg-white text-landing-primary border-2 border-landing-primary hover:bg-landing-primary hover:text-white focus:ring-landing-primary hover:scale-105 hover:shadow-md";
       break;
     case "primary":
     default:
-      // Use brand-primary for background and focus ring, FORCE white text
       variantStyles =
-        "bg-brand-primary text-white hover:opacity-90 focus:ring-brand-primary"; // Ensure text-white
+        "bg-brand-primary text-white hover:opacity-90 focus:ring-brand-primary";
       break;
   }
 
@@ -55,14 +52,14 @@ function Button({
   let sizeStyles = "";
   switch (size) {
     case "sm":
-      sizeStyles = "px-3 py-1.5 text-xs"; // Adjusted padding and text size
+      sizeStyles = "px-3 py-1.5 text-xs";
       break;
     case "lg":
-      sizeStyles = "px-5 py-2.5 text-base"; // Adjusted padding and text size
+      sizeStyles = "px-5 py-2.5 text-base";
       break;
     case "md":
     default:
-      sizeStyles = "px-4 py-2 text-sm"; // Default padding and text size
+      sizeStyles = "px-4 py-2 text-sm";
       break;
   }
 

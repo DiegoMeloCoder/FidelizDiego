@@ -5,11 +5,17 @@
 // - className: Additional classes
 
 function Spinner({ size = "md", color = "text-indigo-600", className = "" }) {
-  let sizeClass = "w-6 h-6"; // Default md
-  if (size === "sm") sizeClass = "w-4 h-4";
-  if (size === "lg") sizeClass = "w-8 h-8";
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-6 h-6",
+    lg: "w-8 h-8",
+  };
 
-  const mergedClassName = `animate-spin ${sizeClass} ${color} ${className}`;
+  // Usamos el color de la marca por defecto si no se especifica otro.
+  const colorClass = color || "text-brand-primary";
+  const finalSizeClass = sizeClasses[size] || sizeClasses.md;
+
+  const mergedClassName = `animate-spin ${finalSizeClass} ${colorClass} ${className}`;
 
   return (
     <svg
@@ -17,7 +23,7 @@ function Spinner({ size = "md", color = "text-indigo-600", className = "" }) {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      aria-hidden="true" // Hide from screen readers as it's decorative
+      aria-hidden="true"
     >
       <circle
         className="opacity-25"

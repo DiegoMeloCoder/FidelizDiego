@@ -11,10 +11,7 @@ function ProtectedRoute({ allowedRoles, children }) {
   const { currentUser, userData, loading } = useAuth();
 
   // --- 1. Estado de Carga ---
-  // Mientras el AuthContext está determinando el estado del usuario, mostramos un loader.
-  // Esto es crucial para evitar redirecciones incorrectas antes de tener el estado final.
   if (loading) {
-    // Aquí podrías renderizar un componente Spinner global para una mejor UX.
     return <div>Cargando...</div>;
   }
 
@@ -34,7 +31,6 @@ function ProtectedRoute({ allowedRoles, children }) {
   // Esta lógica solo se ejecuta si estamos seguros de que 'userData' no es null.
   if (allowedRoles && allowedRoles.length > 0) {
     if (!allowedRoles.includes(userData.role)) {
-      // El usuario está logueado pero no tiene el rol correcto para esta ruta.
       console.warn(
         `Acceso denegado para el rol '${
           userData.role
@@ -47,7 +43,6 @@ function ProtectedRoute({ allowedRoles, children }) {
   }
 
   // --- 4. Acceso Concedido ---
-  // Si todas las verificaciones anteriores pasaron, el usuario puede acceder al contenido.
   return children ? children : <Outlet />;
 }
 

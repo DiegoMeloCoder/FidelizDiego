@@ -19,7 +19,6 @@ function Input({
   className = "",
   ...otherProps
 }) {
-  // Base styles - Using brand-primary for focus state
   const baseStyles =
     "block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed";
 

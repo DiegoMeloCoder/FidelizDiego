@@ -27,7 +27,6 @@ function NavItem({ to, icon: Icon, children, onClick }) {
 
   return (
     <Link to={to} className={linkClasses} onClick={onClick}>
-      {/* Renderiza el icono solo si se proporciona uno */}
       {Icon && <Icon className={iconClasses} aria-hidden="true" />}
       {children}
     </Link>
