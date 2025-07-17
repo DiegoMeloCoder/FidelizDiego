@@ -28,7 +28,7 @@ function PointsHistoryAdmin() {
         // Fetch history using API
         const response = await apiClient.get("/history/admin/points");
         // Convert date string from API to Date object for formatting
-        const list = response.data.map((entry) => ({
+        const list = response.data.data.history.map((entry) => ({
           ...entry,
           // Assuming fechaAsignacion comes as an ISO string from backend
           fechaAsignacion: entry.fechaAsignacion

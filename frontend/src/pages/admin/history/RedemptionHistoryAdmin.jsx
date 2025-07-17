@@ -26,7 +26,7 @@ function RedemptionHistoryAdmin() {
       try {
         const response = await apiClient.get("/history/admin/redemptions");
         // Convert date string from API to Date object for formatting
-        const list = response.data.map((entry) => ({
+        const list = response.data.data.history.map((entry) => ({
           ...entry,
           fechaCanje: entry.fechaCanje ? new Date(entry.fechaCanje) : null,
         }));

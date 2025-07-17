@@ -30,7 +30,7 @@ function HistoryEmployee() {
         ]);
 
         // Process assigned points history
-        const assignedList = assignedResponse.data.map((entry) => ({
+        const assignedList = assignedResponse.data.data.history.map((entry) => ({
           id: `assign-${entry.id}`,
           type: "assignment",
           date: entry.fechaAsignacion ? new Date(entry.fechaAsignacion) : null,
@@ -41,7 +41,7 @@ function HistoryEmployee() {
         }));
 
         // Process redemption history
-        const redeemedList = redeemedResponse.data.map((entry) => ({
+        const redeemedList = redeemedResponse.data.data.history.map((entry) => ({
           id: `redeem-${entry.id}`,
           type: "redemption",
           date: entry.fechaCanje ? new Date(entry.fechaCanje) : null,

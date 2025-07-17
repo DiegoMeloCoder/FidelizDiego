@@ -29,7 +29,7 @@ function RankingPage() {
         // Fetch ranking using API
         const response = await apiClient.get("/history/ranking"); // Use the new endpoint
         // Add rank based on the order returned by the API
-        const list = response.data.map((employee, index) => ({
+        const list = response.data.data.ranking.map((employee, index) => ({
           ...employee,
           rank: index + 1,
         }));
