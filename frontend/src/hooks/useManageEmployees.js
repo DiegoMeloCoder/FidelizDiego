@@ -1,14 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import apiClient from "../services/api";
-import Swal from "sweetalert2";
-
-// Helper para AppError si no lo tienes en el frontend
-class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-}
 
 export function useManageEmployees() {
   const [employees, setEmployees] = useState([]);
