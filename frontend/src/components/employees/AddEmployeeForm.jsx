@@ -110,6 +110,4 @@ export function AddEmployeeForm({ onAddEmployee }) {
   );
 }
 
-// You might need to adjust the default export depending on your file structure.
-// If this is the only component in the file, this is correct.
 export default AddEmployeeForm;
