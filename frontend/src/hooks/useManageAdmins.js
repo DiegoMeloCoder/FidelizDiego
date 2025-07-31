@@ -2,13 +2,16 @@ import { useState, useEffect, useCallback } from "react";
 import apiClient from "../services/api";
 
 export function useManageAdmins() {
+  // --- Estado de los Datos ---
   const [admins, setAdmins] = useState([]);
   const [companies, setCompanies] = useState([]);
 
+  // --- Estados de Carga y Feedback ---
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // --- Lógica de Feedback ---
   const clearMessages = useCallback(() => {
     setTimeout(() => {
       setError("");
@@ -16,10 +19,12 @@ export function useManageAdmins() {
     }, 4000);
   }, []);
 
+  // --- Lógica de Obtención de Datos ---
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
+      // Ejecutar ambas llamadas en paralelo para mayor eficiencia
       const [adminsResponse, companiesResponse] = await Promise.all([
         apiClient.get("/admins"),
         apiClient.get("/companies"),
@@ -41,6 +46,7 @@ export function useManageAdmins() {
     fetchData();
   }, [fetchData]);
 
+  // --- Lógica de Mutación de Datos (CRUD) ---
   const addAdmin = async (adminData) => {
     const response = await apiClient.post("/admins", adminData);
     const addedAdmin = response.data.data.user;

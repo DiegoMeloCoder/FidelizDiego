@@ -14,12 +14,12 @@ export function AddAdminModal({ isOpen, onClose, onAdd, companies }) {
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
 
-  // Pre-seleccionar la primera compañía cuando el modal se abre o las compañías cargan
+  // Pre-select the first company when the modal opens or when the list of companies loads
   useEffect(() => {
-    if (isOpen && companies.length > 0) {
+    if (isOpen && companies.length > 0 && !companyId) {
       setCompanyId(companies[0].id);
     }
-  }, [isOpen, companies]);
+  }, [isOpen, companies, companyId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +31,7 @@ export function AddAdminModal({ isOpen, onClose, onAdd, companies }) {
     setError("");
     try {
       await onAdd({ nombre: name, email, password, companyId });
-      onClose(); // Cierra el modal en caso de éxito
+      onClose(); // Close the modal on success
     } catch (err) {
       setError(err.message || "No se pudo agregar el admin.");
     } finally {
@@ -40,40 +40,72 @@ export function AddAdminModal({ isOpen, onClose, onAdd, companies }) {
   };
 
   const handleClose = () => {
-    // Resetear el formulario al cerrar
+    // Reset form state when closing
     setName("");
     setEmail("");
     setPassword("");
     setError("");
     setIsAdding(false);
-    if (companies.length > 0) setCompanyId(companies[0].id);
+    if (companies.length > 0) {
+      setCompanyId(companies[0].id);
+    } else {
+      setCompanyId("");
+    }
     onClose();
   };
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add New Admin">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <Input
-          label="Email Address"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          label="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength="6"
-        />
+        <div>
+          <label
+            htmlFor="new-admin-name"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Full Name
+          </label>
+          <Input
+            id="new-admin-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="mt-0 w-full"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="new-admin-email"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Email Address
+          </label>
+          <Input
+            id="new-admin-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="mt-0 w-full"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="new-admin-password"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Password
+          </label>
+          <Input
+            id="new-admin-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength="6"
+            className="mt-0 w-full"
+          />
+        </div>
         <div>
           <label
             htmlFor="assign-company"
@@ -102,7 +134,7 @@ export function AddAdminModal({ isOpen, onClose, onAdd, companies }) {
           </select>
         </div>
         {error && <Alert type="error">{error}</Alert>}
-        <div className="pt-4 flex justify-end space-x-3 border-t">
+        <div className="pt-4 flex justify-end space-x-3 border-t border-gray-200 mt-4">
           <Button
             type="button"
             variant="secondary"
@@ -113,7 +145,7 @@ export function AddAdminModal({ isOpen, onClose, onAdd, companies }) {
           </Button>
           <Button type="submit" disabled={isAdding || companies.length === 0}>
             {isAdding ? (
-              <Spinner size="sm" className="mr-2" />
+              <Spinner size="sm" color="text-white" className="mr-2" />
             ) : (
               <PlusIcon className="h-5 w-5 mr-1.5" />
             )}
