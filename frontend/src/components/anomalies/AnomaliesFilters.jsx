@@ -4,7 +4,7 @@
  * @param {function} onFilterChange - A function to call when any filter value changes.
  * @param {object[]} [companies=[]] - An optional array of company objects for a company filter dropdown.
  */
-function AnomaliesFilters({ filters, onFilterChange, companies = [] }) {
+export function AnomaliesFilters({ filters, onFilterChange, companies = [] }) {
   const handleChange = (e) => {
     onFilterChange({ ...filters, [e.target.name]: e.target.value });
   };

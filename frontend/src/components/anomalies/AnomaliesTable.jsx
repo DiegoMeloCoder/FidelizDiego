@@ -42,7 +42,7 @@ const getStatusBadgeClass = (status) => {
  * @param {function} onStatusUpdate - A function to call when updating an anomaly's status.
  * @param {number|null} updatingId - The ID of the anomaly currently being updated, to show a spinner.
  */
-function AnomaliesTable({ anomalies, onStatusUpdate, updatingId }) {
+export function AnomaliesTable({ anomalies, onStatusUpdate, updatingId }) {
   return (
     <div className="overflow-x-auto bg-white rounded-lg shadow">
       <table className="min-w-full divide-y divide-gray-200">
