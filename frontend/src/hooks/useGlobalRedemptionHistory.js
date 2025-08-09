@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "../../services/api";
+import apiClient from "../services/api";
 
 export function useGlobalRedemptionHistory() {
   const [history, setHistory] = useState([]);
