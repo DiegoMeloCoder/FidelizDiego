@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "../../services/api";
-import { useAuth } from "../../contexts/AuthContext";
+import apiClient from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 export function useManageJustifications() {
   const { userData } = useAuth();
