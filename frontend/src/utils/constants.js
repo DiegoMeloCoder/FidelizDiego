@@ -1,0 +1,16 @@
+export const PREDEFINED_TAGS = [
+  "Deportes",
+  "Tecnología",
+  "Viajes",
+  "Hogar",
+  "Gastronomía",
+  "Moda",
+  "Bienestar",
+  "Lectura",
+  "Música",
+  "Cine/Series",
+  "Mascotas",
+  "Videojuegos",
+  "Arte/Cultura",
+  "Aire Libre",
+];

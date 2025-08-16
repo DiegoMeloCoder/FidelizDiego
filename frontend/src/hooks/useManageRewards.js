@@ -56,7 +56,7 @@ export function useManageRewards() {
         const uploadResponse = await uploadFunction(imageFile);
         uploadedImageUrl = uploadResponse.imageUrl;
       } catch (uploadError) {
-        throw new Error(`Image upload failed: ${uploadError.message}`);
+        throw new Error(`La subida de la imagen falló: ${uploadError.message}`);
       }
     }
 
@@ -82,7 +82,7 @@ export function useManageRewards() {
         const uploadResponse = await uploadFunction(imageFile);
         imageUrlPayload = uploadResponse.imageUrl;
       } catch (uploadError) {
-        throw new Error(`Image upload failed: ${uploadError.message}`);
+        throw new Error(`La subida de la imagen falló: ${uploadError.message}`);
       }
     } else if (removeImage) {
       imageUrlPayload = null;
