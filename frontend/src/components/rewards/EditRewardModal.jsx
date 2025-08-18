@@ -66,10 +66,19 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
   const handleSave = async (e) => {
     e.preventDefault();
     const pointsNum = parseInt(points, 10);
+    const stockNum = stock === "" ? null : parseInt(stock, 10);
+
     if (!name.trim() || isNaN(pointsNum) || pointsNum <= 0) {
-      setError("Please enter a valid name and positive points value.");
+      setError(
+        "Por favor, ingresa un nombre válido y un valor de puntos positivo."
+      );
       return;
     }
+    if (stockNum !== null && stockNum < 0) {
+      setError("La cantidad (stock) no puede ser un número negativo.");
+      return;
+    }
+
     setIsSaving(true);
     setError("");
     try {
@@ -78,7 +87,7 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
         {
           nombre: name,
           pointsRequired: pointsNum,
-          stock: stock === "" ? null : parseInt(stock, 10),
+          stock: stockNum,
           isActive,
           tags,
         },
@@ -87,7 +96,7 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
       );
       onClose();
     } catch (err) {
-      setError(err.message || "Failed to save changes.");
+      setError(err.message || "No se pudieron guardar los cambios.");
     } finally {
       setIsSaving(false);
     }
@@ -104,32 +113,57 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
     >
       <form onSubmit={handleSave} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="edit-reward-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Nombre de Recompensa
+            </label>
+            <Input
+              id="edit-reward-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="edit-reward-points"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Puntos Requeridos
+            </label>
+            <Input
+              id="edit-reward-points"
+              type="number"
+              value={points}
+              onChange={(e) => setPoints(e.target.value)}
+              required
+              min="1"
+            />
+          </div>
+        </div>
+        <div>
+          <label
+            htmlFor="edit-reward-stock"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Cantidad (Opcional)
+          </label>
           <Input
-            label="Nombre de Recompensa"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <Input
-            label="Puntos Requeridos"
+            id="edit-reward-stock"
             type="number"
-            value={points}
-            onChange={(e) => setPoints(e.target.value)}
-            required
-            min="1"
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+            placeholder="Vacío = Infinito"
+            min="0"
           />
         </div>
-        <Input
-          label="Cantidad (Vacío = Infinito)"
-          type="number"
-          value={stock}
-          onChange={(e) => setStock(e.target.value)}
-          min="0"
-        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Etiquetas
+            Etiquetas (Opcional)
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {PREDEFINED_TAGS.map((tag) => (
@@ -151,19 +185,19 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Imagen de Recompensa
+            Imagen de la Recompensa (Opcional)
           </label>
           <div className="flex items-center space-x-3">
             {imagePreview ? (
               <img
                 src={imagePreview}
-                alt="New preview"
+                alt="Vista previa de la nueva imagen"
                 className="h-16 w-16 object-cover rounded-md border"
               />
             ) : reward.imageUrl && !removeCurrentImage ? (
               <img
                 src={reward.imageUrl}
-                alt="Current reward"
+                alt="Imagen actual de la recompensa"
                 className="h-16 w-16 object-cover rounded-md border"
               />
             ) : (

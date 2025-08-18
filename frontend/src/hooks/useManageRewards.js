@@ -62,7 +62,7 @@ export function useManageRewards() {
 
     const payload = { ...rewardData, imageUrl: uploadedImageUrl };
     const response = await apiClient.post("/rewards", payload);
-    const addedReward = response.data; // The backend returns the full reward object
+    const addedReward = response.data.data.reward;
 
     setRewards((prev) =>
       [...prev, addedReward].sort((a, b) => a.nombre.localeCompare(b.nombre))
@@ -94,7 +94,7 @@ export function useManageRewards() {
     }
 
     const response = await apiClient.put(`/rewards/${rewardId}`, payload);
-    const updatedReward = response.data;
+    const updatedReward = response.data.data.reward;
     setRewards((prev) =>
       prev.map((r) => (r.id === updatedReward.id ? updatedReward : r))
     );
