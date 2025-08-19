@@ -5,34 +5,20 @@ import Spinner from "../ui/Spinner";
 import Alert from "../ui/Alert";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { PREDEFINED_TAGS } from "../../utils/constants";
+import { ImageUploadInput } from "../ui/ImageUploadInput";
 
 export function AddRewardForm({ onAdd }) {
   // State for form fields
   const [name, setName] = useState("");
   const [points, setPoints] = useState("");
   const [stock, setStock] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [tags, setTags] = useState([]);
+
+  const [imageFile, setImageFile] = useState(null);
 
   // State for UI feedback
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setImageFile(null);
-      setImagePreview(null);
-    }
-  };
 
   const handleTagChange = (tag) => {
     setTags(
@@ -75,7 +61,6 @@ export function AddRewardForm({ onAdd }) {
       setPoints("");
       setStock("");
       setImageFile(null);
-      setImagePreview(null);
       setTags([]);
     } catch (err) {
       setError(err.message || "No se pudo agregar la recompensa.");
@@ -167,30 +152,11 @@ export function AddRewardForm({ onAdd }) {
         </div>
       </div>
 
-      <div>
-        <label
-          htmlFor="new-reward-image"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
-          Imagen de Recompensa (Opcional)
-        </label>
-        <Input
-          id="new-reward-image"
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          className="mt-0 w-full file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-        />
-        {imagePreview && (
-          <div className="mt-2">
-            <img
-              src={imagePreview}
-              alt="Vista previa"
-              className="h-20 w-20 object-cover rounded-md border border-gray-300"
-            />
-          </div>
-        )}
-      </div>
+      <ImageUploadInput
+        label="Imagen de Recompensa (Opcional)"
+        onFileChange={setImageFile}
+        onFileRemove={() => setImageFile(null)}
+      />
 
       {error && <Alert type="error">{error}</Alert>}
 

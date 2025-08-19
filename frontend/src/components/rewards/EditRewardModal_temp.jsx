@@ -4,8 +4,9 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Spinner from "../ui/Spinner";
 import Alert from "../ui/Alert";
-import { PencilSquareIcon, CameraIcon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { PREDEFINED_TAGS } from "../../utils/constants";
+import { ImageUploadInput } from "../ui/ImageUploadInput";
 
 export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
   // State for form fields
@@ -14,8 +15,8 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
   const [stock, setStock] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [tags, setTags] = useState([]);
+
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [removeCurrentImage, setRemoveCurrentImage] = useState(false);
 
   // State for UI feedback
@@ -35,27 +36,9 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
       setTags(reward.tags || []);
       // Reset image state each time the modal opens
       setImageFile(null);
-      setImagePreview(null);
       setRemoveCurrentImage(false);
     }
   }, [reward]);
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setRemoveCurrentImage(false); // A new file overrides the removal flag
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveImageClick = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    setRemoveCurrentImage(true);
-  };
 
   const handleTagChange = (tag) => {
     setTags((prev) =>
@@ -183,48 +166,12 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Imagen de la Recompensa (Opcional)
-          </label>
-          <div className="flex items-center space-x-3">
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Vista previa de la nueva imagen"
-                className="h-16 w-16 object-cover rounded-md border"
-              />
-            ) : reward.imageUrl && !removeCurrentImage ? (
-              <img
-                src={reward.imageUrl}
-                alt="Imagen actual de la recompensa"
-                className="h-16 w-16 object-cover rounded-md border"
-              />
-            ) : (
-              <div className="h-16 w-16 bg-gray-100 rounded-md flex items-center justify-center">
-                <CameraIcon className="h-8 w-8 text-gray-400" />
-              </div>
-            )}
-            <div className="flex-grow">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              {(reward.imageUrl || imagePreview) && !removeCurrentImage && (
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="sm"
-                  onClick={handleRemoveImageClick}
-                  className="mt-2"
-                >
-                  Eliminar Imagen
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        <ImageUploadInput
+          label="Imagen de la Recompensa (Opcional)"
+          existingImageUrl={reward?.imageUrl}
+          onFileChange={setImageFile}
+          onFileRemove={() => setRemoveCurrentImage(true)}
+        />
 
         <div className="flex items-center">
           <input

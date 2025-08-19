@@ -95,7 +95,7 @@ const uploadImage = async (file, endpoint, fieldName = "image") => {
     const response = await apiClient.post(endpoint, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return response.data.data.imageUrl;
+    return response.data.data;
   } catch (error) {
     // Re-lanzamos el error que ya fue procesado y normalizado por nuestro interceptor.
     // De esta forma, el componente que llama a esta función recibe un objeto de error consistente.
