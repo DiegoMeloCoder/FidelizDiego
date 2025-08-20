@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useManageRewards } from "../../hooks/useManageRewards";
 import { AddRewardForm } from "../../components/rewards/AddRewardForm";
-import { EditRewardModal } from "../../components/rewards/EditRewardModal_temp";
+import { EditRewardModal } from "../../components/rewards/EditRewardModal";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
 import Alert from "../../components/ui/Alert";

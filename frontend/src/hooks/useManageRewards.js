@@ -64,9 +64,7 @@ export function useManageRewards() {
     const response = await apiClient.post("/rewards", payload);
     const addedReward = response.data.data.reward;
 
-    setRewards((prev) =>
-      [...prev, addedReward].sort((a, b) => a.nombre.localeCompare(b.nombre))
-    );
+    setRewards((prev) => [addedReward, ...prev]);
     setSuccess(`Recompensa "${addedReward.nombre}" agregada exitosamente.`);
     clearMessages();
   };
