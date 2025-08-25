@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../ui/Button";
 import Spinner from "../ui/Spinner";
 import {
@@ -11,23 +11,52 @@ import {
 } from "@heroicons/react/24/outline";
 
 export function RewardCard({ reward, userPoints, onRedeem, onVote }) {
+  const [currentUserVote, setCurrentUserVote] = useState(
+    reward.userVote || null
+  );
   const [isRedeeming, setIsRedeeming] = useState(false);
-  const [isVoting, setIsVoting] = useState(false);
+  const [votingType, setVotingType] = useState(null);
+
+  useEffect(() => {
+    setCurrentUserVote(reward.userVote || null);
+  }, [reward.userVote]);
 
   const canAfford = userPoints >= reward.pointsRequired;
   const isOutOfStock = reward.stock === 0;
 
   const handleRedeemClick = async () => {
     setIsRedeeming(true);
-    await onRedeem(reward.id, reward.pointsRequired, reward.nombre);
+    await onRedeem(reward);
     setIsRedeeming(false);
   };
 
   const handleVoteClick = async (voteType) => {
-    setIsVoting(true);
-    await onVote(reward.id, voteType);
-    setIsVoting(false);
+    setVotingType(voteType);
+
+    const newVoteType = currentUserVote === voteType ? null : voteType;
+    setCurrentUserVote(newVoteType);
+
+    try {
+      await onVote(reward.id, voteType);
+    } catch (err) {
+      setCurrentUserVote(reward.userVote || null);
+      throw err
+    } finally {
+      setVotingType(null);
+    }
   };
+
+  const likeButtonClasses = `p-1 rounded-full transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 ${
+    currentUserVote === "like"
+      ? "text-green-600 bg-green-100"
+      : "text-gray-400 hover:text-green-500 hover:bg-green-100"
+  }`;
+
+  const dislikeButtonClasses = `p-1 rounded-full transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 ${
+    currentUserVote === "dislike"
+      ? "text-red-600 bg-red-100"
+      : "text-gray-400 hover:text-red-500 hover:bg-red-100"
+  }`;
 
   return (
     <div className="bg-white border rounded-lg shadow-md flex flex-col overflow-hidden transition-shadow hover:shadow-xl">
@@ -97,10 +126,10 @@ export function RewardCard({ reward, userPoints, onRedeem, onVote }) {
         <div className="flex justify-center space-x-3 mb-3">
           <button
             onClick={() => handleVoteClick("like")}
-            disabled={isVoting}
-            className="p-1 rounded-full text-gray-400 hover:text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 transition"
+            disabled={!!votingType}
+            className={likeButtonClasses}
           >
-            {isVoting ? (
+            {votingType === "like" ? (
               <Spinner size="xs" />
             ) : (
               <HandThumbUpIcon className="h-5 w-5" />
@@ -108,10 +137,10 @@ export function RewardCard({ reward, userPoints, onRedeem, onVote }) {
           </button>
           <button
             onClick={() => handleVoteClick("dislike")}
-            disabled={isVoting}
-            className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition"
+            disabled={!!votingType}
+            className={dislikeButtonClasses}
           >
-            {isVoting ? (
+            {votingType === "dislike" ? (
               <Spinner size="xs" />
             ) : (
               <HandThumbDownIcon className="h-5 w-5" />

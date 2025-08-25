@@ -93,9 +93,22 @@ const getRewardsByCompanyService = async (dbUser) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Fetch all votes for the current user in a single query for efficiency.
+    const userVotes = await RewardVote.findAll({
+      where: { userId: userId },
+      attributes: ['rewardId', 'voteType'],
+    });
+
+    // Create a simple map for fast lookups ({ rewardId: 'like', ... })
+    const userVotesMap = userVotes.reduce((acc, vote) => {
+      acc[vote.rewardId] = vote.voteType;
+      return acc;
+    }, {});
+
     // Recommendation flags/scores (Enhanced Logic)
     const recommendedRewards = rewards.map((rewardInstance) => {
       const reward = rewardInstance.toJSON();
+      reward.userVote = userVotesMap[reward.id] || null;
       let recommendationScore = 0;
       const reasons = [];
       const rewardTags = reward.tags || [];

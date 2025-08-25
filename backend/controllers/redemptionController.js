@@ -7,7 +7,7 @@ const AppError = require('../utils/AppError'); // Para validaciones de entrada
  */
 const redeemReward = catchAsync(async (req, res, next) => {
   const employeeUserId = req.dbUser.id; // Obtenido del middleware 'authorize'
-  const employeeCompanyId = req.dbUser.companyId; // Obtenido del middleware 'authorize'
+  // const employeeCompanyId = req.dbUser.companyId; // Obtenido del middleware 'authorize'
   const { rewardId } = req.params;
 
   // Validación básica de entrada (idealmente en un middleware de validación)
@@ -24,7 +24,6 @@ const redeemReward = catchAsync(async (req, res, next) => {
   // Llamada al servicio que contiene toda la lógica de negocio y transacciones
   const result = await redemptionService.redeemRewardService(
     employeeUserId,
-    employeeCompanyId,
     parsedRewardId
   );
 
