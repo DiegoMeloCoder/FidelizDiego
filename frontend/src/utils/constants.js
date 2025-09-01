@@ -1,4 +1,4 @@
-export const PREDEFINED_TAGS = [
+export const PREDEFINED_CATEGORIES = [
   "Deportes",
   "Tecnología",
   "Viajes",
@@ -13,4 +13,18 @@ export const PREDEFINED_TAGS = [
   "Videojuegos",
   "Arte/Cultura",
   "Aire Libre",
+];
+
+export const PREDEFINED_REWARD_SUGGESTIONS = [
+  "Suscripción Streaming (Música)",
+  "Suscripción Streaming (Video)",
+  "Bono Restaurante",
+  "Bono Ropa/Moda",
+  "Entradas Cine",
+  "Experiencia Aventura",
+  "Artículo Deportivo",
+  "Artículo Tecnológico",
+  "Donación Caridad",
+  "Día Libre Adicional",
+  "Otro (ver notas)",
 ];

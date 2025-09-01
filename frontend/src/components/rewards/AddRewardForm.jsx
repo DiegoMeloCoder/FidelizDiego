@@ -4,7 +4,7 @@ import Input from "../ui/Input";
 import Spinner from "../ui/Spinner";
 import Alert from "../ui/Alert";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { PREDEFINED_TAGS } from "../../utils/constants";
+import { PREDEFINED_CATEGORIES } from "../../utils/constants";
 import { ImageUploadInput } from "../ui/ImageUploadInput";
 
 export function AddRewardForm({ onAdd }) {
@@ -135,7 +135,7 @@ export function AddRewardForm({ onAdd }) {
           Etiquetas de Recompensa (Opcional)
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {PREDEFINED_TAGS.map((tag) => (
+          {PREDEFINED_CATEGORIES.map((tag) => (
             <label
               key={tag}
               className="flex items-center space-x-2 cursor-pointer"

@@ -3,7 +3,7 @@ import Input from "../ui/Input";
 import Button from "../ui/Button";
 import Alert from "../ui/Alert";
 import Spinner from "../ui/Spinner";
-import { PREDEFINED_INTERESTS } from "../../utils/constants";
+import { PREDEFINED_CATEGORIES } from "../../utils/constants";
 
 export function UpdateProfileForm({ userData, onUpdate }) {
   const [phoneNumber, setPhoneNumber] = useState(userData.phoneNumber || "");
@@ -72,7 +72,7 @@ export function UpdateProfileForm({ userData, onUpdate }) {
           Mis Intereses
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {PREDEFINED_INTERESTS.map((interest) => (
+          {PREDEFINED_CATEGORIES.map((interest) => (
             <label
               key={interest}
               className="flex items-center space-x-2 cursor-pointer"
