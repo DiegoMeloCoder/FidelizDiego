@@ -1,81 +1,19 @@
-import { useState, useEffect } from "react";
-// Firestore imports removed
-import apiClient from "../../../services/api"; // Import API client
-import { useAuth } from "../../../contexts/AuthContext.jsx";
+import { useEmployeeHistory } from "../../../hooks/useEmployeeHistory";
 import Spinner from "../../../components/ui/Spinner";
 import Alert from "../../../components/ui/Alert";
-import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline"; // Icon
+import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+
+// Helper function to format dates, keeping it within the component as it's specific to this view.
+const formatDate = (date) => {
+  if (!date) return "N/A";
+  return date.toLocaleString("es-CO", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+};
 
 function HistoryEmployee() {
-  const { currentUser } = useAuth();
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const fetchHistory = async () => {
-      // currentUser is needed for API calls which rely on the token
-      if (!currentUser) {
-        setError("Usuario no ha iniciado sesión.");
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError("");
-      try {
-        // Fetch both histories concurrently using API client
-        const [assignedResponse, redeemedResponse] = await Promise.all([
-          apiClient.get("/history/employee/points"),
-          apiClient.get("/history/employee/redemptions"),
-        ]);
-
-        // Process assigned points history
-        const assignedList = assignedResponse.data.data.history.map((entry) => ({
-          id: `assign-${entry.id}`,
-          type: "assignment",
-          date: entry.fechaAsignacion ? new Date(entry.fechaAsignacion) : null,
-          amount: entry.cantidad,
-          description: `Puntos asignados por ${
-            entry.admin?.nombre || entry.admin?.email || "Admin"
-          } (${entry.justificacionTexto})`,
-        }));
-
-        // Process redemption history
-        const redeemedList = redeemedResponse.data.data.history.map((entry) => ({
-          id: `redeem-${entry.id}`,
-          type: "redemption",
-          date: entry.fechaCanje ? new Date(entry.fechaCanje) : null,
-          amount: -entry.puntosCosto,
-          description: `Canjeado: ${
-            entry.reward?.nombre || "Recompensa desconocida"
-          }`,
-        }));
-
-        // Combine and Sort
-        const combinedList = [...assignedList, ...redeemedList];
-        combinedList.sort(
-          (a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0)
-        );
-
-        setHistory(combinedList);
-      } catch (err) {
-        console.error("Error fetching history:", err);
-        setError(err.message || "No se pudo cargar el historial.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
-  }, [currentUser]);
-
-  const formatDate = (date) => {
-    if (!date) return "N/A";
-    return date.toLocaleString("es-CO", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  };
+  const { history, loading, error } = useEmployeeHistory();
 
   const thStyle =
     "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
@@ -90,7 +28,6 @@ function HistoryEmployee() {
 
       {error && <Alert type="error">{error}</Alert>}
 
-      {/* History List - Improved Styling */}
       <div className="overflow-x-auto border border-gray-200 rounded-md">
         {loading ? (
           <div className="flex justify-center items-center p-10">
@@ -98,7 +35,7 @@ function HistoryEmployee() {
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
-            <thead>
+            <thead className="bg-gray-50">
               <tr>
                 <th className={thStyle}>Fecha</th>
                 <th className={thStyle}>Descripción</th>
