@@ -1,64 +1,21 @@
-import { useState, useEffect } from "react";
-// Firestore imports removed
-import apiClient from "../../../services/api"; // Import API client
-import { useAuth } from "../../../contexts/AuthContext.jsx";
+import { useAdminPointsHistory } from "../../../hooks/useAdminPointsHistory";
 import Spinner from "../../../components/ui/Spinner";
 import Alert from "../../../components/ui/Alert";
-import { DocumentTextIcon } from "@heroicons/react/24/outline"; // Optional icon
+import { DocumentTextIcon } from "@heroicons/react/24/outline";
+
+// Función auxiliar para formatear la fecha, específica para esta vista.
+const formatDate = (date) => {
+  if (!date) return "N/A";
+  return date.toLocaleString("es-CO", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+};
 
 function PointsHistoryAdmin() {
-  const { userData } = useAuth();
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { history, loading, error } = useAdminPointsHistory();
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      // Use nested company ID check
-      if (!userData?.company?.id) {
-        setError(
-          "La información de la empresa del administrador no está disponible."
-        );
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError("");
-      try {
-        // Fetch history using API
-        const response = await apiClient.get("/history/admin/points");
-        // Convert date string from API to Date object for formatting
-        const list = response.data.data.history.map((entry) => ({
-          ...entry,
-          // Assuming fechaAsignacion comes as an ISO string from backend
-          fechaAsignacion: entry.fechaAsignacion
-            ? new Date(entry.fechaAsignacion)
-            : null,
-        }));
-        setHistory(list);
-      } catch (err) {
-        console.error("Error fetching points history:", err);
-        setError(
-          err.message ||
-            "No se pudo cargar el historial de asignación de puntos."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
-  }, [userData?.companyId]);
-
-  const formatDate = (date) => {
-    if (!date) return "N/A";
-    return date.toLocaleString("es-CO", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  };
-
-  // Define Tailwind classes for table cells - Refined
+  // Clases de Tailwind para la tabla.
   const thStyle =
     "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
   const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
@@ -72,7 +29,6 @@ function PointsHistoryAdmin() {
 
       {error && <Alert type="error">{error}</Alert>}
 
-      {/* Lista de Historial - Estilo Mejorado */}
       <div className="overflow-x-auto border border-gray-200 rounded-md">
         {loading ? (
           <div className="flex justify-center items-center p-10">
@@ -80,7 +36,7 @@ function PointsHistoryAdmin() {
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
-            <thead>
+            <thead className="bg-gray-50">
               <tr>
                 <th className={thStyle}>Fecha</th>
                 <th className={thStyle}>Empleado</th>
