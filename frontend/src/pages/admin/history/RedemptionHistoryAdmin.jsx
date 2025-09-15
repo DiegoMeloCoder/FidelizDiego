@@ -1,66 +1,20 @@
-import { useState, useEffect } from "react";
-import apiClient from "../../../services/api";
-import { useAuth } from "../../../contexts/AuthContext.jsx";
+import { useAdminRedemptionHistory } from "../../../hooks/useAdminRedemptionHistory";
 import Spinner from "../../../components/ui/Spinner";
 import Alert from "../../../components/ui/Alert";
-import { ArchiveBoxIcon } from "@heroicons/react/24/outline"; // Icon
+import { ArchiveBoxIcon } from "@heroicons/react/24/outline";
+
+// Función auxiliar para formatear la fecha, específica para esta vista.
+const formatDate = (date) => {
+  if (!date) return "N/A";
+  return date.toLocaleString("es-CO", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+};
 
 function RedemptionHistoryAdmin() {
-  const { userData } = useAuth(); // Needed for company check, though API handles filtering
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { history, loading, error } = useAdminRedemptionHistory();
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      // Check if admin data (including company id) is loaded
-      if (!userData?.company?.id) {
-        setError(
-          "La información de la empresa del administrador no está disponible."
-        );
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError("");
-      try {
-        const response = await apiClient.get("/history/admin/redemptions");
-        // Convert date string from API to Date object for formatting
-        const list = response.data.data.history.map((entry) => ({
-          ...entry,
-          fechaCanje: entry.fechaCanje ? new Date(entry.fechaCanje) : null,
-        }));
-        setHistory(list);
-      } catch (err) {
-        console.error("Error fetching redemption history (Admin):", err);
-        setError(err.message || "No se pudo cargar el historial de canjes.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Fetch only if userData is available (meaning user profile is loaded)
-    if (userData) {
-      fetchHistory();
-    } else {
-      // If userData is null but useAuth isn't loading, it means profile fetch failed earlier
-      // or user is not an admin with a company. Handle appropriately.
-      setLoading(false);
-      setError(
-        "Los datos del usuario no están disponibles para cargar el historial."
-      );
-    }
-  }, [userData]); // Depend on userData to re-fetch if it changes (e.g., after login)
-
-  const formatDate = (date) => {
-    if (!date) return "N/A";
-    return date.toLocaleString("es-CO", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  };
-
-  // Define Tailwind classes for table cells
   const thStyle =
     "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
   const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
@@ -74,7 +28,6 @@ function RedemptionHistoryAdmin() {
 
       {error && <Alert type="error">{error}</Alert>}
 
-      {/* Lista de Historial */}
       <div className="overflow-x-auto border border-gray-200 rounded-md">
         {loading ? (
           <div className="flex justify-center items-center p-10">
@@ -82,7 +35,7 @@ function RedemptionHistoryAdmin() {
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
-            <thead>
+            <thead className="bg-gray-50">
               <tr>
                 <th className={thStyle}>Fecha</th>
                 <th className={thStyle}>Empleado</th>
