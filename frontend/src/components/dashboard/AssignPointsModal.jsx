@@ -4,6 +4,7 @@ import apiClient from "../../services/api";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Modal from "../ui/Modal";
+import Select from "../ui/Select";
 import Spinner from "../ui/Spinner";
 import Alert from "../ui/Alert";
 import {
@@ -159,40 +160,26 @@ export function AssignPointsModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <Alert type="error">{error}</Alert>}
 
-          <div>
-            <label
-              htmlFor="employee-select"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Seleccionar Empleado
-            </label>
-            <select
-              id="employee-select"
-              value={selectedEmployeeId}
-              onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              className="block w-full mt-1 border-gray-300 rounded-md shadow-sm"
-              required
-            >
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.nombre || emp.email}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            id="employee-select"
+            label="Seleccionar Empleado"
+            value={selectedEmployeeId}
+            onChange={(e) => setSelectedEmployeeId(e.target.value)}
+            required
+          >
+            {employees.map((emp) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.nombre || emp.email}
+              </option>
+            ))}
+          </Select>
 
           <div>
-            <label
-              htmlFor="justification-select"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Seleccionar Justificación
-            </label>
-            <select
+            <Select
               id="justification-select"
+              label="Seleccionar Justificación"
               value={selectedJustificationId}
               onChange={(e) => setSelectedJustificationId(e.target.value)}
-              className="block w-full mt-1 border-gray-300 rounded-md shadow-sm"
               required
             >
               {justifications.map((jus) => (
@@ -200,7 +187,7 @@ export function AssignPointsModal({
                   {jus.textoJustificacion}
                 </option>
               ))}
-            </select>
+            </Select>
             {loadingSuggestion && (
               <p className="text-xs text-gray-500 mt-1">
                 Cargando sugerencia...

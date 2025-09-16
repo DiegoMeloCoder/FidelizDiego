@@ -139,7 +139,12 @@ export function useAdminDashboard() {
     loadingModalData,
 
     // Propiedades y manejadores del Reporte
-    reportDates,
+    reportData: {
+      dates: reportDates,
+      isGenerating: isGeneratingReport,
+      error: reportError,
+      report: generatedReport,
+    },
     setReportDates,
     isGeneratingReport,
     reportError,
