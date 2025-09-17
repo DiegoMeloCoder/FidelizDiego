@@ -1,5 +1,6 @@
 import { useLogin } from "../hooks/useLogin";
 import { LoginForm } from "../components/auth/LoginForm";
+import Spinner from "../components/ui/Spinner";
 import loginVisual from "../assets/logos/login-visual.png";
 
 function LoginPage() {
@@ -11,8 +12,20 @@ function LoginPage() {
     error,
     loading,
     handleLogin,
+    authLoading,
   } = useLogin();
 
+  // Mientras el AuthContext verifica la sesión, mostramos un spinner para evitar parpadeos.
+  // Esto previene que un usuario ya logueado vea el formulario antes de ser redirigido.
+  if (authLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gray-100">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  // Si no está cargando y no hay usuario, mostramos la página de login completa.
   return (
     <div className="min-h-screen flex bg-gray-50">
       <div className="hidden lg:flex lg:w-1/2 bg-landing-primary items-center justify-center p-12 relative overflow-hidden">

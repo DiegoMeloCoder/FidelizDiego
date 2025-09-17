@@ -16,11 +16,6 @@ export function LoginForm({
   loading,
   onSubmit,
 }) {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit();
-  };
-
   return (
     <div className="w-full max-w-md">
       <div className="mb-8 text-center">
@@ -37,7 +32,7 @@ export function LoginForm({
         <h1 className="text-3xl font-bold text-center text-gray-900">
           Iniciar Sesión
         </h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={onSubmit} className="space-y-6">
           <div>
             <label
               htmlFor="email"
