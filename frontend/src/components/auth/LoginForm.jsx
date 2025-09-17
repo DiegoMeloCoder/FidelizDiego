@@ -1,10 +1,10 @@
-import { Link } from 'react-router-dom';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
-import fidelizTextLogo from '../../assets/logos/TEXTOFIDELIZ.png';
+import { Link } from "react-router-dom";
+import Button from "../ui/Button";
+import Input from "../ui/Input";
+import fidelizTextLogo from "../../assets/logos/TEXTOFIDELIZ.png";
 
 /**
- * Componente de UI "tonto" para el formulario de inicio de sesión.
+ * Componente de UI para el formulario de inicio de sesión.
  * Recibe todo el estado y los manejadores como props.
  */
 export function LoginForm({
@@ -85,7 +85,7 @@ export function LoginForm({
               className="w-full justify-center py-3 text-base"
               size="lg"
             >
-              {loading ? 'Ingresando...' : 'Ingresar'}
+              {loading ? "Ingresando..." : "Ingresar"}
             </Button>
           </div>
         </form>
