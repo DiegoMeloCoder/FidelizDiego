@@ -8,7 +8,6 @@ import Alert from "../../components/ui/Alert";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 
 function AdminDashboard() {
-  // El hook ahora maneja toda la lógica compleja y el estado.
   const {
     companyName,
     stats,
