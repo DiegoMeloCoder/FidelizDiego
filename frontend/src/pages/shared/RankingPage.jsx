@@ -1,52 +1,11 @@
-import { useState, useEffect } from "react";
-// Firestore imports removed
-import apiClient from "../../services/api"; // Import API client
-import { useAuth } from "../../contexts/AuthContext.jsx";
+import { useRanking } from "../../hooks/useRanking";
 import Spinner from "../../components/ui/Spinner";
 import Alert from "../../components/ui/Alert";
-import { ChartBarIcon, StarIcon } from "@heroicons/react/24/outline"; // Icons
+import { ChartBarIcon, StarIcon } from "@heroicons/react/24/outline";
 
 function RankingPage() {
-  const { currentUser, userData } = useAuth();
-  const [ranking, setRanking] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const limitCount = 20; // Limit to top 20 for now
+  const { ranking, loading, error, limitCount, currentUser } = useRanking();
 
-  useEffect(() => {
-    const fetchRanking = async () => {
-      // Use nested company ID check
-      if (!userData?.company?.id) {
-        setError(
-          "La información de la empresa del usuario no está disponible."
-        );
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError("");
-      try {
-        // Fetch ranking using API
-        const response = await apiClient.get("/history/ranking"); // Use the new endpoint
-        // Add rank based on the order returned by the API
-        const list = response.data.data.ranking.map((employee, index) => ({
-          ...employee,
-          rank: index + 1,
-        }));
-        // Limit client-side if needed, although backend could also limit
-        setRanking(list.slice(0, limitCount));
-      } catch (err) {
-        console.error("Error fetching ranking:", err);
-        setError(err.message || "No se pudo cargar el ranking.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRanking();
-  }, [userData?.companyId]); // Re-fetch if companyId changes
-
-  // Define Tailwind classes for table cells - Refined
   const thStyle =
     "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50";
   const tdStyle = "px-4 py-4 whitespace-nowrap text-sm";
@@ -60,7 +19,6 @@ function RankingPage() {
 
       {error && <Alert type="error">{error}</Alert>}
 
-      {/* Lista de Ranking - Estilo Mejorado */}
       <div className="overflow-x-auto border border-gray-200 rounded-md">
         {loading ? (
           <div className="flex justify-center items-center p-10">
@@ -68,7 +26,7 @@ function RankingPage() {
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
-            <thead>
+            <thead className="bg-gray-50">
               <tr>
                 <th className={`${thStyle} w-20 text-center`}>Posición</th>
                 <th className={thStyle}>Nombre</th>
@@ -82,7 +40,7 @@ function RankingPage() {
                     colSpan="3"
                     className={`${tdStyle} text-center text-gray-500 py-6`}
                   >
-                    No se encontraron empleados para el ranking en esta empresa.
+                    No se encontraron empleados para el ranking.
                   </td>
                 </tr>
               ) : (
