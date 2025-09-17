@@ -4,7 +4,7 @@ import ReactPlayer from "react-player/youtube";
 import { Link } from "react-router-dom";
 
 function ViewDemoPage() {
-  const youtubeVideoUrl = "https://www.youtube.com/watch?v=Zcb8yPEItwA";
+  const youtubeVideoUrl = "https://www.youtube.com/watch?";
 
   return (
     <div className="flex flex-col min-h-screen">
