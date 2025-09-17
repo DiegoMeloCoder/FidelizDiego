@@ -6,7 +6,7 @@ Este proyecto es una plataforma SaaS diseñada para ayudar a las empresas a impl
 
 *   **Frontend:** React (Vite), Tailwind CSS, React Router, Axios
 *   **Backend:** Node.js, Express.js, Sequelize (ORM)
-*   **Base de Datos:** PostgreSQL
+*   **Base de Datos:** PostgreSQL si
 *   **Autenticación:** Firebase Authentication
 *   **Almacenamiento de Archivos:** AWS S3 (para logos de empresa e imágenes de recompensas)
 *   **Otros:** Docker (opcional para desarrollo), ESLint, Prettier
