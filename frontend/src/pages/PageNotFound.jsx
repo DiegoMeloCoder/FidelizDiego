@@ -1,7 +1,11 @@
-import { Link } from "react-router-dom";
+import Button from "../components/ui/Button";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 function NotFoundPage() {
+  const goBack = () => {
+    window.history.back();
+  };
+
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center py-12">
       <ExclamationTriangleIcon className="h-16 w-16 text-yellow-500 mb-4" />
@@ -11,16 +15,9 @@ function NotFoundPage() {
       <p className="text-lg text-gray-600 mb-6">
         Lo sentimos, la página que buscas no existe o ha sido movida.
       </p>
-      <Link
-        to="#"
-        onClick={(e) => {
-          e.preventDefault();
-          window.history.back();
-        }}
-        className="inline-block px-6 py-2 bg-brand-primary text-white rounded-lg font-semibold shadow hover:bg-brand-secondary transition"
-      >
+      <Button onClick={goBack} variant="primary">
         Volver a la página anterior
-      </Link>
+      </Button>
     </div>
   );
 }
