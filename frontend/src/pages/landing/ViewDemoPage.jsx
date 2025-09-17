@@ -1,4 +1,3 @@
-import React from 'react';
 import LandingNavbar from '../../components/landing/LandingNavbar';
 import LandingFooter from '../../components/landing/LandingFooter';
 import ReactPlayer from 'react-player/youtube';
