@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 // Firestore imports removed
 import apiClient from "../../services/api"; // Import API client
 import { useAuth } from "../../contexts/AuthContext.jsx";
