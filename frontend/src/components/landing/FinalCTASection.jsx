@@ -21,7 +21,7 @@ function FinalCTASection() {
         </p>
          {/* Adjusted button layout for mobile */}
         <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-          <div className="inline-flex rounded-md shadow w-full sm:w-auto">
+          <div className="inline-flex rounded-md shadow-sm w-full sm:w-auto">
             <Link
               to={meetingPath} // Changed from <a> to <Link>
               // Ensure button takes full width on mobile
@@ -30,7 +30,7 @@ function FinalCTASection() {
               Agendar Reunión
             </Link>
           </div>
-          <div className="inline-flex rounded-md shadow w-full sm:w-auto">
+          <div className="inline-flex rounded-md shadow-sm w-full sm:w-auto">
             <Link
               to={demoPath} // Path already correct, just ensuring consistency
               // Ensure button takes full width on mobile

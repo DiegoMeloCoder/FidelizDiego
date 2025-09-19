@@ -144,7 +144,7 @@ export function AddRewardForm({ onAdd }) {
                 type="checkbox"
                 checked={tags.includes(tag)}
                 onChange={() => handleTagChange(tag)}
-                className="rounded text-brand-primary focus:ring-brand-primary"
+                className="rounded-xs text-brand-primary focus:ring-brand-primary"
               />
               <span className="text-sm text-gray-700">{tag}</span>
             </label>

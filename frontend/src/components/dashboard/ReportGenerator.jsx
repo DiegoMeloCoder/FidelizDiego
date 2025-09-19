@@ -41,7 +41,7 @@ export function ReportGenerator({
   };
 
   return (
-    <div className="bg-white p-5 rounded-lg shadow border border-gray-200 space-y-4">
+    <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 space-y-4">
       <h2 className="text-xl font-semibold text-gray-800 flex items-center">
         <DocumentChartBarIcon className="h-6 w-6 mr-2 text-brand-primary" />
         Generar Reporte con IA
@@ -112,7 +112,7 @@ export function ReportGenerator({
             </Button>
           </div>
 
-          <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded border border-gray-200">
+          <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded-xs border border-gray-200">
             {report.summary.split("\n").map((line, index) => (
               <p
                 key={index}

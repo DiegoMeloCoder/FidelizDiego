@@ -49,7 +49,7 @@ function Modal({ isOpen, onClose, title, children, size = "md" }) {
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none focus:outline-none"
+            className="text-gray-400 hover:text-gray-600 text-2xl leading-none focus:outline-hidden"
             aria-label="Close modal"
           >
             &times;

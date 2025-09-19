@@ -46,13 +46,13 @@ export function RewardCard({ reward, userPoints, onRedeem, onVote }) {
     }
   };
 
-  const likeButtonClasses = `p-1 rounded-full transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500 ${
+  const likeButtonClasses = `p-1 rounded-full transition focus:outline-hidden focus:ring-2 focus:ring-offset-1 focus:ring-green-500 ${
     currentUserVote === "like"
       ? "text-green-600 bg-green-100"
       : "text-gray-400 hover:text-green-500 hover:bg-green-100"
   }`;
 
-  const dislikeButtonClasses = `p-1 rounded-full transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 ${
+  const dislikeButtonClasses = `p-1 rounded-full transition focus:outline-hidden focus:ring-2 focus:ring-offset-1 focus:ring-red-500 ${
     currentUserVote === "dislike"
       ? "text-red-600 bg-red-100"
       : "text-gray-400 hover:text-red-500 hover:bg-red-100"

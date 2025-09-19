@@ -194,7 +194,7 @@ export function AssignPointsModal({
               </p>
             )}
             {suggestion && !loadingSuggestion && (
-              <p className="text-xs text-gray-600 bg-gray-100 p-1.5 rounded mt-1">
+              <p className="text-xs text-gray-600 bg-gray-100 p-1.5 rounded-xs mt-1">
                 💡 {suggestion}
               </p>
             )}
@@ -247,7 +247,7 @@ export function AssignPointsModal({
               {generatedMessages.map((msg, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between text-sm text-indigo-800 bg-indigo-100/50 p-2 rounded"
+                  className="flex items-center justify-between text-sm text-indigo-800 bg-indigo-100/50 p-2 rounded-xs"
                 >
                   <span>{msg}</span>
                   <Button

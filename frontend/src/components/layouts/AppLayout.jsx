@@ -216,7 +216,7 @@ function AppLayout() {
           onClick={handleLogout}
           variant="secondary"
           size="sm"
-          className="w-full justify-center !bg-gray-700 hover:!bg-gray-600 !text-gray-300 hover:!text-white"
+          className="w-full justify-center bg-gray-700! hover:bg-gray-600! text-gray-300! hover:text-white!"
         >
           <ArrowLeftEndOnRectangleIcon className="h-4 w-4 mr-1.5" />
           Cerrar sesión
@@ -244,7 +244,7 @@ function AppLayout() {
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 type="button"
-                className="ml-2 bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                className="ml-2 bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
                 aria-controls="mobile-menu"
                 aria-expanded={isSidebarOpen}
               >
@@ -274,7 +274,7 @@ function AppLayout() {
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
                 type="button"
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white"
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <span className="sr-only">Cerrar barra lateral</span>

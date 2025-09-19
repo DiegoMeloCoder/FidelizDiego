@@ -87,7 +87,7 @@ export function EditAdminModal({ admin, isOpen, onClose, onSave }) {
             type="checkbox"
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
-            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+            className="h-4 w-4 text-indigo-600 border-gray-300 rounded-xs focus:ring-indigo-500"
           />
           <label
             htmlFor="edit-admin-active"

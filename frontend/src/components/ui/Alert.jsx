@@ -55,7 +55,7 @@ function Alert({ children, type = "info", className = "", onClose }) {
       {onClose && (
         <button
           onClick={onClose}
-          className="-mt-1 -mr-1.5 ml-3 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-current"
+          className="-mt-1 -mr-1.5 ml-3 p-1 rounded-md focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-offset-current"
           aria-label="Cerrar"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

@@ -23,7 +23,7 @@ function Select({
   className = "",
 }) {
   const selectClasses =
-    "block w-full mt-1 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:opacity/50 disabled:cursor-not-allowed";
+    "block w-full mt-1 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-hidden focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:opacity/50 disabled:cursor-not-allowed";
 
   return (
     <div className={className}>

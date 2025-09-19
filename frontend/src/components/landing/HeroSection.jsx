@@ -10,7 +10,7 @@ function HeroSection() {
   return (
     // Added subtle gradient background, adjusted padding, and animation class
     // TODO: Implement true scroll-reveal with Intersection Observer for better performance and UX
-    <section className="bg-gradient-to-b from-white to-green-50 py-16 sm:py-20 md:py-24 animate-fadeInUp">
+    <section className="bg-linear-to-b from-white to-green-50 py-16 sm:py-20 md:py-24 animate-fadeInUp">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Grid layout for larger screens, stacks on smaller screens */}
         <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-center"> {/* Increased gap from 12 to 16 */}
@@ -28,7 +28,7 @@ function HeroSection() {
             </p>
             {/* Call to Action Buttons - Adjusted spacing and layout for mobile */}
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:justify-center lg:justify-start gap-3 sm:gap-4">
-              <div className="rounded-md shadow w-full sm:w-auto">
+              <div className="rounded-md shadow-sm w-full sm:w-auto">
                 <Link
                   to={meetingPath} // Changed from <a> to <Link>
                   // Adjusted padding and text size for buttons
@@ -37,7 +37,7 @@ function HeroSection() {
                   Agendar Reunión
                 </Link>
               </div>
-              <div className="rounded-md shadow w-full sm:w-auto">
+              <div className="rounded-md shadow-sm w-full sm:w-auto">
                 <Link
                   to={demoPath} // Path already correct, just ensuring consistency
                   // Adjusted padding and text size for buttons

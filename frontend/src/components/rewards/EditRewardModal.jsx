@@ -158,7 +158,7 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
                   type="checkbox"
                   checked={tags.includes(tag)}
                   onChange={() => handleTagChange(tag)}
-                  className="rounded text-brand-primary focus:ring-brand-primary"
+                  className="rounded-xs text-brand-primary focus:ring-brand-primary"
                 />
                 <span className="text-sm text-gray-700">{tag}</span>
               </label>
@@ -179,7 +179,7 @@ export function EditRewardModal({ reward, isOpen, onClose, onSave }) {
             type="checkbox"
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
-            className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+            className="h-4 w-4 text-indigo-600 border-gray-300 rounded-xs"
           />
           <label
             htmlFor="edit-reward-active"

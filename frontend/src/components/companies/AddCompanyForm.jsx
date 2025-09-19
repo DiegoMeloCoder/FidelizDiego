@@ -105,10 +105,10 @@ export function AddCompanyForm({ onAddCompany }) {
               <img
                 src={logoPreview}
                 alt="Logo preview"
-                className="h-12 w-12 object-contain rounded border border-gray-300"
+                className="h-12 w-12 object-contain rounded-xs border border-gray-300"
               />
             ) : (
-              <div className="h-12 w-12 bg-gray-200 rounded flex items-center justify-center text-gray-400">
+              <div className="h-12 w-12 bg-gray-200 rounded-xs flex items-center justify-center text-gray-400">
                 <CameraIcon className="h-6 w-6" />
               </div>
             )}

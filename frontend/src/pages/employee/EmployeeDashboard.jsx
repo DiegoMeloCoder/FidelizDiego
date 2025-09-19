@@ -35,7 +35,7 @@ function EmployeeDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link to="/employee/rewards" className="block group">
-          <div className="bg-white p-5 rounded-lg shadow border border-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
+          <div className="bg-white p-5 rounded-lg shadow-sm border border-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
             <div className="bg-tertiary p-3 rounded-full">
               <GiftIcon className="h-6 w-6 text-primary" />
             </div>
@@ -51,7 +51,7 @@ function EmployeeDashboard() {
         </Link>
 
         <Link to="/employee/history" className="block group">
-          <div className="bg-white p-5 rounded-lg shadow border border-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
+          <div className="bg-white p-5 rounded-lg shadow-sm border border-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
             <div className="bg-tertiary p-3 rounded-full">
               <ClipboardDocumentListIcon className="h-6 w-6 text-primary" />
             </div>
@@ -68,7 +68,7 @@ function EmployeeDashboard() {
       </div>
 
       {/* Placeholder for recent activity feed */}
-      {/* <div className="bg-white p-6 rounded-lg shadow mt-6">
+      {/* <div className="bg-white p-6 rounded-lg shadow-sm mt-6">
         <h2 className="text-xl font-semibold text-gray-700 mb-3">Recent Activity</h2>
          List recent point gains/redemptions here
       </div> */}

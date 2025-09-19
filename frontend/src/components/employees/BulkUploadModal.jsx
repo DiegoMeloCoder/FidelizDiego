@@ -182,7 +182,7 @@ export function BulkUploadModal({ isOpen, onClose, onUpload }) {
             {results.success.length > 0 && (
               <div className="mb-4">
                 <h4 className="font-semibold text-green-700">{`${results.success.length} Empleado(s) Creado(s) Exitosamente:`}</h4>
-                <div className="max-h-40 overflow-y-auto border rounded p-2 bg-green-50 text-xs space-y-1">
+                <div className="max-h-40 overflow-y-auto border rounded-xs p-2 bg-green-50 text-xs space-y-1">
                   {results.success.map((s, i) => (
                     <p key={i}>
                       <strong>{s.name}</strong> ({s.email})
@@ -206,7 +206,7 @@ export function BulkUploadModal({ isOpen, onClose, onUpload }) {
             {results.errors.length > 0 && (
               <div>
                 <h4 className="font-semibold text-red-700">{`${results.errors.length} Error(es):`}</h4>
-                <ul className="list-disc list-inside text-sm text-red-600 space-y-1 max-h-40 overflow-y-auto border rounded p-2 bg-red-50">
+                <ul className="list-disc list-inside text-sm text-red-600 space-y-1 max-h-40 overflow-y-auto border rounded-xs p-2 bg-red-50">
                   {results.errors.map((e, i) => (
                     <li key={i}>
                       <strong>{e.email}:</strong> {e.error}

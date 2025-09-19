@@ -149,7 +149,7 @@ function TestimonialsSection() {
            <button
              onClick={scrollPrev}
              disabled={prevBtnDisabled}
-             className="pointer-events-auto bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity/50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-landing-primary focus:ring-offset-2 transition"
+             className="pointer-events-auto bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity/50 disabled:cursor-not-allowed focus:outline-hidden focus:ring-2 focus:ring-landing-primary focus:ring-offset-2 transition"
              aria-label="Previous testimonial"
            >
              <PrevIcon />
@@ -157,7 +157,7 @@ function TestimonialsSection() {
            <button
              onClick={scrollNext}
              disabled={nextBtnDisabled}
-             className="pointer-events-auto bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity/50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-landing-primary focus:ring-offset-2 transition"
+             className="pointer-events-auto bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity/50 disabled:cursor-not-allowed focus:outline-hidden focus:ring-2 focus:ring-landing-primary focus:ring-offset-2 transition"
              aria-label="Next testimonial"
            >
              <NextIcon />

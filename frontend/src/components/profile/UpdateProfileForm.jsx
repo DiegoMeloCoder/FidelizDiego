@@ -40,7 +40,7 @@ export function UpdateProfileForm({ userData, onUpdate }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 p-6 bg-white rounded-lg shadow"
+      className="space-y-4 p-6 bg-white rounded-lg shadow-sm"
     >
       <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">
         Información Personal
@@ -81,7 +81,7 @@ export function UpdateProfileForm({ userData, onUpdate }) {
                 type="checkbox"
                 checked={selectedInterests.includes(interest)}
                 onChange={() => handleInterestChange(interest)}
-                className="rounded text-brand-primary focus:ring-brand-primary"
+                className="rounded-xs text-brand-primary focus:ring-brand-primary"
               />
               <span className="text-sm text-gray-700">{interest}</span>
             </label>

@@ -141,16 +141,16 @@ export function EditCompanyModal({ company, isOpen, onClose, onSave }) {
               <img
                 src={logoPreview}
                 alt="New logo preview"
-                className="h-12 w-12 object-contain rounded border border-gray-300"
+                className="h-12 w-12 object-contain rounded-xs border border-gray-300"
               />
             ) : company.logoUrl && !removeCurrentLogo ? (
               <img
                 src={company.logoUrl}
                 alt="Current logo"
-                className="h-12 w-12 object-contain rounded border border-gray-300"
+                className="h-12 w-12 object-contain rounded-xs border border-gray-300"
               />
             ) : (
-              <div className="h-12 w-12 bg-gray-200 rounded flex items-center justify-center text-gray-400">
+              <div className="h-12 w-12 bg-gray-200 rounded-xs flex items-center justify-center text-gray-400">
                 <CameraIcon className="h-6 w-6" />
               </div>
             )}
@@ -226,7 +226,7 @@ export function EditCompanyModal({ company, isOpen, onClose, onSave }) {
             id="edit-status"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="block w-full px-3 py-2 mt-1 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>

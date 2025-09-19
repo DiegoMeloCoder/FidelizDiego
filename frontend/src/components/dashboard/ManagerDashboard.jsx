@@ -15,7 +15,7 @@ export function ManagerStatsCards({ stats }) {
   const { companyStats } = stats;
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-      <div className="bg-white p-5 rounded-lg shadow border flex items-center space-x-4">
+      <div className="bg-white p-5 rounded-lg shadow-sm border flex items-center space-x-4">
         <div className="bg-blue-100 p-3 rounded-full">
           <BuildingOffice2Icon className="h-6 w-6 text-blue-600" />
         </div>
@@ -26,7 +26,7 @@ export function ManagerStatsCards({ stats }) {
           </p>
         </div>
       </div>
-      <div className="bg-white p-5 rounded-lg shadow border flex items-center space-x-4">
+      <div className="bg-white p-5 rounded-lg shadow-sm border flex items-center space-x-4">
         <div className="bg-green-100 p-3 rounded-full">
           <CheckCircleIcon className="h-6 w-6 text-green-600" />
         </div>
@@ -37,7 +37,7 @@ export function ManagerStatsCards({ stats }) {
           </p>
         </div>
       </div>
-      <div className="bg-white p-5 rounded-lg shadow border flex items-center space-x-4">
+      <div className="bg-white p-5 rounded-lg shadow-sm border flex items-center space-x-4">
         <div className="bg-red-100 p-3 rounded-full">
           <XCircleIcon className="h-6 w-6 text-red-600" />
         </div>
@@ -83,7 +83,7 @@ export function EngagementStats({
         <select
           id="company-filter"
           name="company-filter"
-          className="mt-1 block w-full md:w-1/3 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          className="mt-1 block w-full md:w-1/3 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           value={selectedCompanyId}
           onChange={onFilterChange}
           disabled={loading}
@@ -106,7 +106,7 @@ export function EngagementStats({
 
       {!loading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          <div className="bg-white p-5 rounded-lg shadow border">
+          <div className="bg-white p-5 rounded-lg shadow-sm border">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
               <HeartIcon className="h-5 w-5 mr-2 text-pink-500" />
               Most Common Interest ({selectedCompanyName})
@@ -124,7 +124,7 @@ export function EngagementStats({
               </p>
             )}
           </div>
-          <div className="bg-white p-5 rounded-lg shadow border">
+          <div className="bg-white p-5 rounded-lg shadow-sm border">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
               <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2 text-cyan-500" />
               Top Reward Requests ({selectedCompanyName})

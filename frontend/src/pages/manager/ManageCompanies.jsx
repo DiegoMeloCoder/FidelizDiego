@@ -129,10 +129,10 @@ function ManageCompanies() {
                         <img
                           src={company.logoUrl}
                           alt={`${company.nombre} logo`}
-                          className="h-10 w-10 object-contain rounded border border-gray-200"
+                          className="h-10 w-10 object-contain rounded-xs border border-gray-200"
                         />
                       ) : (
-                        <div className="h-10 w-10 bg-gray-100 rounded flex items-center justify-center text-gray-400">
+                        <div className="h-10 w-10 bg-gray-100 rounded-xs flex items-center justify-center text-gray-400">
                           <CameraIcon className="h-5 w-5" />
                         </div>
                       )}

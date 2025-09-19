@@ -39,7 +39,7 @@ export function SuggestRewardForm({ onSuggest }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 p-6 bg-white rounded-lg shadow"
+      className="space-y-4 p-6 bg-white rounded-lg shadow-sm"
     >
       <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">
         Sugerir una Recompensa
@@ -62,7 +62,7 @@ export function SuggestRewardForm({ onSuggest }) {
           value={requestedItem}
           onChange={(e) => setRequestedItem(e.target.value)}
           required
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm rounded-md"
+          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-hidden focus:ring-brand-primary focus:border-brand-primary sm:text-sm rounded-md"
         >
           <option value="" disabled>
             -- Selecciona una opción --

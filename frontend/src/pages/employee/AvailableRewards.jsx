@@ -72,7 +72,7 @@ function AvailableRewards() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg shadow border">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg shadow-sm border">
         <h1 className="text-3xl font-bold text-gray-800 flex items-center">
           <GiftIcon className="h-7 w-7 mr-2 text-rose-600" />
           Recompensas Disponibles
