@@ -17,11 +17,11 @@ function NavItem({ to, icon: Icon, children, onClick }) {
   const active = isActive();
 
   // Clases de Tailwind para los estilos. Se aplican condicionalmente.
-  const linkClasses = `group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-100 hover:bg-brand-primary hover:text-white transition-colors duration-150 ${
-    active ? "bg-brand-primary text-white shadow-inner" : ""
+  const linkClasses = `group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-100 hover:bg-primary hover:text-white transition-colors duration-150 ${
+    active ? "bg-primary text-white shadow-inner" : ""
   }`;
 
-  const iconClasses = `mr-3 flex-shrink-0 h-5 w-5 text-gray-300 group-hover:text-gray-100 transition-colors duration-150 ${
+  const iconClasses = `mr-3 shrink-0 h-5 w-5 text-gray-300 group-hover:text-gray-100 transition-colors duration-150 ${
     active ? "text-white" : ""
   }`;
 

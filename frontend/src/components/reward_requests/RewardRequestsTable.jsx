@@ -8,7 +8,7 @@ const statusStyles = {
 
 export function RewardRequestsTable({ requests, onStatusUpdate }) {
   return (
-    <div className="overflow-x-auto border border-gray-200 rounded-md shadow-sm">
+    <div className="overflow-x-auto border border-gray-200 rounded-md shadow-xs">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>

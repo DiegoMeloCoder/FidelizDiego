@@ -22,7 +22,7 @@ function ScheduleMeetingPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <LandingNavbar />
-      <main className="flex-grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="lg:grid lg:grid-cols-12 lg:gap-12">
             <aside className="lg:col-span-4 xl:col-span-3 mb-10 lg:mb-0">

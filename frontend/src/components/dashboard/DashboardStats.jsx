@@ -7,9 +7,9 @@ import { UsersIcon, GiftIcon, HeartIcon } from "@heroicons/react/24/outline";
 export function DashboardStats({ stats, commonInterest }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-      <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary flex items-center space-x-4">
-        <div className="bg-brand-tertiary p-3 rounded-full">
-          <UsersIcon className="h-6 w-6 text-brand-primary" />
+      <div className="bg-white p-5 rounded-lg shadow border border-tertiary flex items-center space-x-4">
+        <div className="bg-tertiary p-3 rounded-full">
+          <UsersIcon className="h-6 w-6 text-primary" />
         </div>
         <div>
           <p className="text-sm font-medium text-gray-500">Empleados Activos</p>
@@ -19,9 +19,9 @@ export function DashboardStats({ stats, commonInterest }) {
         </div>
       </div>
 
-      <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary flex items-center space-x-4">
-        <div className="bg-brand-tertiary p-3 rounded-full">
-          <GiftIcon className="h-6 w-6 text-brand-primary" />
+      <div className="bg-white p-5 rounded-lg shadow border border-tertiary flex items-center space-x-4">
+        <div className="bg-tertiary p-3 rounded-full">
+          <GiftIcon className="h-6 w-6 text-primary" />
         </div>
         <div>
           <p className="text-sm font-medium text-gray-500">
@@ -33,9 +33,9 @@ export function DashboardStats({ stats, commonInterest }) {
         </div>
       </div>
 
-      <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary flex items-center space-x-4">
-        <div className="bg-brand-tertiary p-3 rounded-full">
-          <HeartIcon className="h-6 w-6 text-brand-primary" />
+      <div className="bg-white p-5 rounded-lg shadow border border-tertiary flex items-center space-x-4">
+        <div className="bg-tertiary p-3 rounded-full">
+          <HeartIcon className="h-6 w-6 text-primary" />
         </div>
         <div>
           <p className="text-sm font-medium text-gray-500">

@@ -57,7 +57,7 @@ function AllianceLogosGrid() {
             {[...logos, ...logos].map((logo, index) => (
               <div 
                 key={`${logo.name}-${index}`} 
-                className="flex-shrink-0 px-4 sm:px-6 flex items-center justify-center h-28 transition-transform duration-200 ease-in-out hover:scale-110" // Added hover effect
+                className="shrink-0 px-4 sm:px-6 flex items-center justify-center h-28 transition-transform duration-200 ease-in-out hover:scale-110" // Added hover effect
               >
                 {logo.src ? (
                   // Render actual image if src exists

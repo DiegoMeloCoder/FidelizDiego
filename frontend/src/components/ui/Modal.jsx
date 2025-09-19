@@ -36,11 +36,11 @@ function Modal({ isOpen, onClose, title, children, size = "md" }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 transition-opacity duration-300 ease-in-out"
       onClick={onClose}
     >
       <div
-        className={`bg-white rounded-lg shadow-xl w-full ${sizeClass} transform transition-all duration-300 ease-in-out scale-100 opacity-100 overflow-hidden`}
+        className={`bg-white rounded-lg shadow-xl w-full ${sizeClass} transform transition-all duration-300 ease-in-out scale-100 opacity/100 overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center p-4 border-b border-brand-tertiary">

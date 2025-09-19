@@ -13,11 +13,11 @@ function EmployeeDashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-brand-secondary">
+      <h1 className="text-3xl font-bold text-secondary">
         ¡Bienvenido, {displayName}!
       </h1>
 
-      <div className="bg-brand-primary text-white p-6 rounded-lg shadow-lg flex items-center justify-between">
+      <div className="bg-primary text-white p-6 rounded-lg shadow-lg flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-white/80 uppercase tracking-wider">
             Tu Saldo de Puntos
@@ -30,17 +30,17 @@ function EmployeeDashboard() {
             )}
           </p>
         </div>
-        <StarIcon className="h-12 w-12 text-yellow-300 opacity-80" />
+        <StarIcon className="h-12 w-12 text-yellow-300 opacity/80" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link to="/employee/rewards" className="block group">
-          <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
-            <div className="bg-brand-tertiary p-3 rounded-full">
-              <GiftIcon className="h-6 w-6 text-brand-primary" />
+          <div className="bg-white p-5 rounded-lg shadow border border-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
+            <div className="bg-tertiary p-3 rounded-full">
+              <GiftIcon className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-gray-800 group-hover:text-brand-primary transition-colors duration-200">
+              <p className="text-lg font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">
                 Ver Catálogo de Recompensas
               </p>
               <p className="text-sm text-gray-500">
@@ -51,12 +51,12 @@ function EmployeeDashboard() {
         </Link>
 
         <Link to="/employee/history" className="block group">
-          <div className="bg-white p-5 rounded-lg shadow border border-brand-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
-            <div className="bg-brand-tertiary p-3 rounded-full">
-              <ClipboardDocumentListIcon className="h-6 w-6 text-brand-primary" />
+          <div className="bg-white p-5 rounded-lg shadow border border-tertiary hover:shadow-md transition-shadow duration-200 flex items-center space-x-4">
+            <div className="bg-tertiary p-3 rounded-full">
+              <ClipboardDocumentListIcon className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-lg font-semibold text-gray-800 group-hover:text-brand-primary transition-colors duration-200">
+              <p className="text-lg font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">
                 Ver Mi Historial
               </p>
               <p className="text-sm text-gray-500">

@@ -72,7 +72,7 @@ export function RewardCard({ reward, userPoints, onRedeem, onVote }) {
         )}
       </div>
 
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-4 flex flex-col grow">
         <div className="flex items-center space-x-2 mb-2">
           {reward.companyId === null && (
             <span className="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
@@ -89,7 +89,7 @@ export function RewardCard({ reward, userPoints, onRedeem, onVote }) {
           )}
         </div>
 
-        <h3 className="text-lg font-semibold text-gray-800 mb-1 flex-grow">
+        <h3 className="text-lg font-semibold text-gray-800 mb-1 grow">
           {reward.nombre}
         </h3>
 

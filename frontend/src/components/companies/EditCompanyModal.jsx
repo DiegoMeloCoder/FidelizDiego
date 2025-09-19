@@ -154,7 +154,7 @@ export function EditCompanyModal({ company, isOpen, onClose, onSave }) {
                 <CameraIcon className="h-6 w-6" />
               </div>
             )}
-            <div className="flex-grow">
+            <div className="grow">
               <Input
                 id="edit-logo"
                 type="file"
@@ -226,7 +226,7 @@ export function EditCompanyModal({ company, isOpen, onClose, onSave }) {
             id="edit-status"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="block w-full px-3 py-2 mt-1 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           >
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>

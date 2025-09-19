@@ -25,7 +25,7 @@ function FinalCTASection() {
             <Link
               to={meetingPath} // Changed from <a> to <Link>
               // Ensure button takes full width on mobile
-              className="w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-landing-primary bg-white hover:bg-gray-50 transition duration-150 ease-in-out"
+              className="w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-landing-primary bg-white hover:bg-gray-100 transition duration-150 ease-in-out"
             >
               Agendar Reunión
             </Link>
@@ -34,7 +34,7 @@ function FinalCTASection() {
             <Link
               to={demoPath} // Path already correct, just ensuring consistency
               // Ensure button takes full width on mobile
-              className="w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-landing-primary-dark hover:bg-opacity-75 transition duration-150 ease-in-out" // Example using dark variant for contrast
+              className="w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-landing-primary-dark hover:bg-black/75 transition duration-150 ease-in-out" // Example using dark variant for contrast
             >
               Ver Demo
             </Link>

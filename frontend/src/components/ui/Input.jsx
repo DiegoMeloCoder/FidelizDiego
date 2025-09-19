@@ -20,7 +20,7 @@ function Input({
   ...otherProps
 }) {
   const baseStyles =
-    "block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed";
+    "block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-xs appearance-none focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:opacity/50 disabled:cursor-not-allowed";
 
   // Merge classes
   const mergedClassName = `${baseStyles} ${className}`;

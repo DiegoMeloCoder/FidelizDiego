@@ -57,7 +57,7 @@ export function ImageUploadInput({
         {label}
       </label>
       <div className="flex items-center space-x-3">
-        <div className="flex-shrink-0 h-16 w-16">
+        <div className="shrink-0 h-16 w-16">
           {preview && !isRemoving ? (
             <img
               src={preview}
@@ -71,7 +71,7 @@ export function ImageUploadInput({
           )}
         </div>
 
-        <div className="flex-grow">
+        <div className="grow">
           <Input
             ref={fileInputRef}
             type="file"

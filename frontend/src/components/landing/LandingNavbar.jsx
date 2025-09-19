@@ -24,11 +24,11 @@ function LandingNavbar() {
   const demoPath = '/demo'; // Updated to internal path
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
+    <nav className="bg-white shadow-xs sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
+          <div className="shrink-0 flex items-center">
             <Link to="/" className='flex items-center gap-1'>
               <img className="w-8 h-auto self-center" src={fidelizLogo} alt="Fideliz Logo" />
               <img className="h-6 w-auto" src={fidelizTextLogo} alt="Fideliz Logo" /> {/* Increased height further */}

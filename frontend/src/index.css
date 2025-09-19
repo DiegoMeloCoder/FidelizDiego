@@ -1,15 +1,22 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Add keyframes for the logo scroll animation */
-@layer utilities {
-  @keyframes scroll {
-    to {
-      transform: translateX(-50%);
-    }
-  }
+@theme {
+  /* -- Colores de Marca Dinámicos -- */
+  --color-primary: #4f46e5;
+  --color-secondary: #374151;
+  --color-tertiary: #d1d5db;
 
+  /* -- Colores Estáticos de la Landing Page -- */
+  --color-landing-primary-light: #6cba42;
+  --color-landing-primary: #339a2d;
+  --color-landing-primary-dark: #2c5c2e;
+  --color-landing-lime: #92c71a;
+  --color-landing-teal: #118361;
+  --color-landing-olive: #4a7722;
+  --color-landing-muted: #90b77f;
+  --color-landing-accent: #64b055;
+
+  --animate-fadeInUp: fadeInUp 0.7s ease-out forwards;
   @keyframes fadeInUp {
     from {
       opacity: 0;
@@ -18,6 +25,13 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  --animate-scroll: scroll 40s linear infinite;
+  @keyframes scroll {
+    to {
+      transform: translateX(-50%);
     }
   }
 }

@@ -45,11 +45,11 @@ function Alert({ children, type = "info", className = "", onClose }) {
     <div role="alert" className={mergedClassName}>
       {/* Renderizamos el icono desde Heroicons */}
       <IconComponent
-        className="w-5 h-5 mr-3 flex-shrink-0"
+        className="w-5 h-5 mr-3 shrink-0"
         aria-hidden="true"
       />
 
-      <div className="flex-grow">{children}</div>
+      <div className="grow">{children}</div>
 
       {/* El botón de cierre permanece igual */}
       {onClose && (

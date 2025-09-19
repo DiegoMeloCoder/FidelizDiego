@@ -9,7 +9,7 @@ function ViewDemoPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <LandingNavbar />
-      <main className="flex-grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl font-extrabold text-landing-primary sm:text-5xl tracking-tight">
             ¡Mira cómo funciona Fideliz!

@@ -5,7 +5,7 @@ function TermsAndConditionsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <LandingNavbar />
-      <main className="flex-grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto bg-white p-8 sm:p-10 rounded-lg shadow-lg">
           <h1 className="text-3xl font-extrabold text-landing-primary mb-8 text-center tracking-tight">
             Términos y Condiciones

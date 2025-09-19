@@ -20,14 +20,14 @@ function Button({
   ...otherProps
 }) {
   const baseStyles =
-    "font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center active:scale-95";
+    "font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ease-in-out disabled:opacity/50 disabled:cursor-not-allowed inline-flex items-center justify-center active:scale-95";
 
   // Variant styles
   let variantStyles = "";
   switch (variant) {
     case "secondary":
       variantStyles =
-        "bg-brand-tertiary text-white hover:opacity-90 focus:ring-brand-primary";
+        "bg-tertiary text-white hover:opacity/90 focus:ring-primary";
       break;
     case "danger":
       variantStyles =
@@ -44,7 +44,7 @@ function Button({
     case "primary":
     default:
       variantStyles =
-        "bg-brand-primary text-white hover:opacity-90 focus:ring-brand-primary";
+        "bg-primary text-white hover:opacity/90 focus:ring-primary";
       break;
   }
 

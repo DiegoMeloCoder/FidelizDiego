@@ -24,7 +24,7 @@ export function RewardRequestsFilters({
           name="status"
           value={filters.status || ""}
           onChange={handleChange}
-          className="block w-full sm:w-auto px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm capitalize"
+          className="block w-full sm:w-auto px-3 py-2 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm capitalize"
         >
           <option value="">All</option>
           {statusOptions.map((status) => (
@@ -48,7 +48,7 @@ export function RewardRequestsFilters({
             name="companyId"
             value={filters.companyId || ""}
             onChange={handleChange}
-            className="block w-full sm:w-auto px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="block w-full sm:w-auto px-3 py-2 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           >
             <option value="">All Companies</option>
             {companies.map((c) => (

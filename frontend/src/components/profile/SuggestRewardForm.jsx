@@ -88,7 +88,7 @@ export function SuggestRewardForm({ onSuggest }) {
           value={additionalNotes}
           onChange={(e) => setAdditionalNotes(e.target.value)}
           placeholder="Si seleccionaste 'Otro', detalla tu sugerencia aquí..."
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-xs focus:border-brand-primary focus:ring-brand-primary sm:text-sm"
           required={requestedItem === "Otro (ver notas)"}
         />
       </div>

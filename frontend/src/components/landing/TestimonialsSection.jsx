@@ -18,10 +18,10 @@ const StarRating = ({ rating = 5 }) => (
 const TestimonialCard = ({ quote, name, title, company, rating }) => (
   // Added transition and hover effect, including scale
   <div className="bg-white p-6 rounded-lg shadow-md flex flex-col h-full transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-102"> {/* Added h-full for consistent height in carousel and hover:scale-102 */}
-    <div className="flex-shrink-0">
+    <div className="shrink-0">
       <StarRating rating={rating} />
     </div>
-    <blockquote className="mt-4 flex-grow">
+    <blockquote className="mt-4 grow">
       <p className="text-lg text-gray-700 leading-relaxed">"{quote}"</p> {/* Added leading-relaxed */}
     </blockquote>
     <footer className="mt-6">
@@ -137,7 +137,7 @@ function TestimonialsSection() {
           <div className="flex -ml-4"> {/* Negative margin to counteract padding on slides */}
             {testimonials.map((testimonial, index) => (
               // Slide - Ensure cards have consistent height for better visual alignment in carousel
-              <div key={index} className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 pl-4 flex"> {/* Adjust width and add flex for h-full on card */}
+              <div key={index} className="shrink-0 w-full sm:w-1/2 lg:w-1/3 pl-4 flex"> {/* Adjust width and add flex for h-full on card */}
                 <TestimonialCard {...testimonial} />
               </div>
             ))}
@@ -149,7 +149,7 @@ function TestimonialsSection() {
            <button
              onClick={scrollPrev}
              disabled={prevBtnDisabled}
-             className="pointer-events-auto bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-landing-primary focus:ring-offset-2 transition"
+             className="pointer-events-auto bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity/50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-landing-primary focus:ring-offset-2 transition"
              aria-label="Previous testimonial"
            >
              <PrevIcon />
@@ -157,7 +157,7 @@ function TestimonialsSection() {
            <button
              onClick={scrollNext}
              disabled={nextBtnDisabled}
-             className="pointer-events-auto bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-landing-primary focus:ring-offset-2 transition"
+             className="pointer-events-auto bg-white rounded-full p-2 shadow-md hover:bg-gray-100 disabled:opacity/50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-landing-primary focus:ring-offset-2 transition"
              aria-label="Next testimonial"
            >
              <NextIcon />

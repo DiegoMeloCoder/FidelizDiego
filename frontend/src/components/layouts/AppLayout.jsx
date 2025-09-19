@@ -228,14 +228,14 @@ function AppLayout() {
   return (
     <div className="flex h-screen bg-gray-100 font-sans antialiased">
       {/* Static Sidebar for larger screens */}
-      <div className="hidden md:flex md:flex-col md:w-64 bg-brand-secondary text-gray-200 flex-shrink-0 shadow-lg">
+      <div className="hidden md:flex md:flex-col md:w-64 bg-secondary text-gray-200 shrink-0 shadow-lg">
         {sidebarContent}
       </div>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
-        <header className="md:hidden bg-brand-secondary text-white shadow-md sticky top-0 z-10">
+        <header className="md:hidden bg-secondary text-white shadow-md sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <h1 className="text-xl font-semibold text-white tracking-tight">
@@ -270,7 +270,7 @@ function AppLayout() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-brand-secondary text-gray-200 shadow-xl">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-secondary text-gray-200 shadow-xl">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
                 type="button"
@@ -284,7 +284,7 @@ function AppLayout() {
             {sidebarContent}
           </div>
           <div
-            className="flex-shrink-0 w-14"
+            className="shrink-0 w-14"
             onClick={() => setIsSidebarOpen(false)}
             aria-hidden="true"
           ></div>

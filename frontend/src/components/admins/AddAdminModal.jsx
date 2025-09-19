@@ -118,7 +118,7 @@ export function AddAdminModal({ isOpen, onClose, onAdd, companies }) {
             value={companyId}
             onChange={(e) => setCompanyId(e.target.value)}
             required
-            className="block w-full px-3 py-2 mt-1 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="block w-full px-3 py-2 mt-1 border border-gray-300 bg-white rounded-md shadow-xs focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           >
             {companies.length === 0 ? (
               <option value="" disabled>
