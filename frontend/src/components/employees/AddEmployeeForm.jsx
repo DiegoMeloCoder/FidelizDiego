@@ -56,6 +56,7 @@ export function AddEmployeeForm({ onAddEmployee }) {
             onChange={(e) => setName(e.target.value)}
             placeholder="Juan Pérez"
             required
+            autoComplete="name"
             className="mt-0 w-full"
           />
         </div>
@@ -73,6 +74,7 @@ export function AddEmployeeForm({ onAddEmployee }) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="juan.perez@empresa.com"
             required
+            autoComplete="email"
             className="mt-0 w-full"
           />
         </div>
@@ -91,6 +93,7 @@ export function AddEmployeeForm({ onAddEmployee }) {
             placeholder="Mín. 6 caracteres"
             required
             minLength="6"
+            autoComplete="new-password"
             className="mt-0 w-full"
           />
         </div>
