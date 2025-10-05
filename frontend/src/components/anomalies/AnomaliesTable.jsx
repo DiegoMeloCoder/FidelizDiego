@@ -18,6 +18,7 @@ const formatDateTime = (isoString) => {
       minute: "2-digit",
     });
   } catch (e) {
+    console.error(e);
     return "Invalid Date";
   }
 };
