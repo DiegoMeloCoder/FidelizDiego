@@ -90,13 +90,13 @@ export function useAdminDashboard() {
         ),
       });
     } catch (err) {
-      // Usar Swal para un error crítico dentro del modal
+      console.error("Error al cargar datos para el modal de asignación:", err);
       Swal.fire(
         "Error",
         "No se pudieron cargar los datos necesarios para asignar puntos.",
         "error"
       );
-      setIsModalOpen(false); // Cerrar el modal si los datos no se pueden cargar
+      setIsModalOpen(false);
     } finally {
       setLoadingModalData(false);
     }
